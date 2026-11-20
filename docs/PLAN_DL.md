@@ -29,7 +29,7 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | T3 | Verify licence and recommended folds on PhysioNet | OF + MM | — | done | OF + MM | — | 2026-11-14 |
 | T4 | Local project structure, `.gitignore`, environment file; GitHub repository later | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
 | T5 | Download script, label construction, fold split, `Dataset`/`DataLoader` | MM | OF | done | MM (drafted with the assistant) | OF | 2026-11-20 |
-| T6 | EDA: class balance, co-occurrence, demographics, signal quality, example traces | OF | MM | todo | | | |
+| T6 | EDA: class balance, co-occurrence, demographics, signal quality, example traces | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
 | T7 | Evaluation module: macro AUROC, bootstrap CI, JSON logging, `make_numbers.py` | MM | OF | todo | | | |
 | T8 | Shared training loop (zero_grad, forward, loss, backward, step; train/eval modes) | OF + MM | — | todo | | | |
 | T9 | Dense baseline + ablations | OF | MM | todo | | | |
@@ -84,3 +84,4 @@ Each task is worked in one chat of the Claude project; names, scope and start pr
 - 2026-11-20: T5 done (8 tests pass on Oriana's laptop, commit 9993fd0); reviewed by OF.
 - 2026-11-20: this file moved to `ptbxl-dl/docs/` (DECISIONS D11).
 - 2026-11-20: T1 closed (reviewed by MM, confirmed by OF and MM in chat DL 00).
+- 2026-11-20: T6 done (EDA script, notebook, figures and `results/logs/eda.json`, executed by OF on Oriana's laptop; O3 closed in DECISIONS D12); reviewed by MM.

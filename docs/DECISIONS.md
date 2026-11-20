@@ -44,6 +44,7 @@ Multi-label classification of the **5 diagnostic superclasses**: NORM, MI, STTC,
 - How to treat records with no diagnostic superclass and statements with likelihood 0: **[open]**, decided after the EDA.
 - **2026-11-20 (OF + MM), likelihood:** a record gets a superclass if any of its SCP codes is a diagnostic statement of that class, **whatever its likelihood** (including 0). Source: `example_physionet.py`, shipped with PTB-XL 1.0.3. Check: with this rule the counts are NORM 9514, MI 5469, STTC 5235, CD 4898, HYP 2649, equal to the table of the PhysioNet page; requiring likelihood > 0 gives STTC 5108. Counts computed by the assistant; they count only once reproduced by the T5 test on Oriana's laptop.
 - **2026-11-20 (OF + MM), records without superclass (O3, provisional):** 411 records (same check). They stay in the cache, flagged `has_superclass = False`, and the DataLoader leaves them out of train, validation and test by default, with an option to include them. Reason: a vector of five zeros would teach "none of the classes", but these records simply have no diagnostic statement. Chat 02 closes O3 after the EDA (including their distribution across folds).
+- **2026-11-20 (OF + MM), O3 closed:** records without superclass stay out of train, validation and test (see D12).
 
 ## D3. Data split — DECIDED
 
@@ -129,14 +130,25 @@ Reference points to verify through that flow before citing any number:
 - Each model chat ends with a block note in `ptbxl-dl/docs/blocks/`, which is what the report chats read.
 - **2026-11-20 (DL 00, decided for OF and MM at their request):** the project folder is `C:\Users\ori\DL`, outside OneDrive. `DECISIONS.md`, `PLAN_DL.md` and `AI_USAGE_LOG.md` move to `ptbxl-dl/docs/` as their only copy, so they are versioned and backed up on GitHub with the code; this makes them public. `CHATS_DL.md`, `HANDOFF.md` and `contexto_DL/` stay internal in the folder root and are copied to OneDrive (`MASTER\DL_backup`) with `backup_dl.bat`, which never deletes anything in the copy. Raw data and the cache are not backed up: they are re-downloaded, checked with `SHA256SUMS.txt` and rebuilt. Every chat closes with commit and push of `ptbxl-dl/` and a run of `backup_dl.bat`.
 
+## D12. Exploratory data analysis — DECIDED (2026-11-20)
+
+Decided by OF and MM in chat DL 02.
+
+- Code: `src/eda.py` writes `results/logs/eda.json` and the figures `report/figures/eda_*` in one complete run; a short notebook `notebooks/02_eda.ipynb` calls its functions and shows the figures. Every EDA number in the reports comes from `eda.json`.
+- Scope: labels, co-occurrence, demographics, folds and signal quality are described over all records, broken down by split (train / validation / test); describing the test distribution does not influence training. Anything that could guide preprocessing (per-lead signal statistics, amplitudes) is computed on the training folds only. Example traces come from training records with a single superclass, drawn with seed 42.
+- `eda.json` layout: `scalars` (flat name -> number, read by `make_numbers.py`), `tables` (small tables behind the figures), `meta` (date, git commit, package versions).
+- Signal quality: the free-text quality columns (`baseline_drift`, `static_noise`, `burst_noise`, `electrodes_problems`, `extra_beats`, `pacemaker`) are turned into present/absent flags and described; no record is excluded, so the official folds stay intact.
+- Codings: `age` = 300 means older than 89 (`ptbxl_v102_changelog.txt`, line 2); these records form a separate ">89" group and are left out of means and histograms. The meaning of `sex` 0/1 is not stated in the dataset files nor in `contexto_DL/`: reported as "sex 0 / sex 1", **[verify]** until chat 09 finds a literal quote. Height and weight: only the number of missing values is reported.
+- O3, proposed rule: (a) records without superclass stay out of the three splits; (c) chat 08 may use the training-fold ones without labels for pre-training (decided with O1). Closed once the EDA has been run on Oriana's laptop.
+- **2026-11-20 (OF + MM), O3 closed with rule (a) + (c).** Evidence from `python -m src.eda`, run by OF on Oriana's laptop (`results/logs/eda.json`, keys `n_nosuper_*`, `nosuper_per_fold`, `nosuper_codes`): almost all of these records carry a rhythm statement and most carry only rhythm statements (pacemaker, atrial fibrillation, atrial flutter are the most frequent codes); in PTB-XL rhythm statements are not diagnostic, so they give no superclass. A target of five zeros would therefore be a false label ("no pathology"), not a real negative. They are spread evenly over the ten folds, so leaving them out does not unbalance any split. `include_no_superclass=False` (the default of `make_loaders`) stays as it is.
+
 ## Open items
 
 | # | Item | Blocks |
 |---|---|---|
 | O1 | Pretext task for the pre-training (D7) | Transfer-learning block only |
-| O3 | Handling of records without diagnostic superclass (D2); provisional rule since 2026-11-20 | Final rule after EDA (chat 02) |
 
-Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository under Oriana's account, 2026-11-20).
+Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository under Oriana's account, 2026-11-20). O3 (records without superclass left out; D12, 2026-11-20).
 
 ## Change log
 
@@ -146,3 +158,5 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-20: data location and integrity check (D1); likelihood rule and provisional O3 rule (D2); repository, owner and environment (D5); O4 closed. Decided by OF and MM in chat DL 01.
 - 2026-11-20: normalisation rule (D3). Decided by OF and MM in chat DL 01.
 - 2026-11-20: folder, location of the coordination files and backup rule (D11). Decided in chat DL 00.
+- 2026-11-20: EDA scope, outputs and data codings (D12). Decided by OF and MM in chat DL 02.
+- 2026-11-20: O3 closed (D12), after running the EDA part 1 on Oriana's laptop. Decided by OF and MM in chat DL 02.
