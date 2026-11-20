@@ -174,10 +174,11 @@ the input z-score: same size, same training.
   `results/predictions/<run_id>.npz` before calling
   `runlog.environment()`, and `git status --porcelain` lists untracked
   files, so every full run sees at least its own new file and is marked
-  "dirty". The same holds for the trivial run of chat 03. Proposed fix for
-  chat 00/03 (not done here, it is shared code): `git status --porcelain
-  --untracked-files=no`, so that only changes to tracked files (i.e. to the
-  code) count.
+  "dirty". The same holds for the trivial run of chat 03. Fixed afterwards
+  in chat 03 (2026-11-20, DECISIONS D14, AI Error Bounty B5): the flag now
+  looks only at the code under `src/` (`git status --porcelain
+  --untracked-files=all -- src`), and logs carry `"schema": 2`. The Dense
+  logs keep schema 1, where `git_dirty` is always true and says nothing.
 
 ## For the next chats
 
