@@ -24,7 +24,7 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | ID | Task | Owner | Reviewer | Status | Done by | Reviewed by | Date |
 |---|---|---|---|---|---|---|---|
 | T0 | Dataset shortlist (8 candidates) and choice | OF + MM | — | done | OF + MM | — | 2026-11-14 |
-| T1 | `DECISIONS.md` and `PLAN_DL.md` first version | OF | MM | doing | OF + MM (drafted with the assistant) | | |
+| T1 | `DECISIONS.md` and `PLAN_DL.md` first version | OF | MM | done | OF + MM (drafted with the assistant) | MM | 2026-11-20 |
 | T2 | Decide the transfer-learning approach: own pre-trained model (not confirmed with the professor; raise it in the class discussion) | OF + MM | — | done | OF + MM | — | 2026-11-14 |
 | T3 | Verify licence and recommended folds on PhysioNet | OF + MM | — | done | OF + MM | — | 2026-11-14 |
 | T4 | Local project structure, `.gitignore`, environment file; GitHub repository later | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
@@ -83,3 +83,4 @@ Each task is worked in one chat of the Claude project; names, scope and start pr
 - 2026-11-20: T4 done (repository orianafe16/ptbxl-DL, environment checked); T5 started. Rule confirmed by OF and MM: each task is executed by its owner and reviewed by the other, all on Oriana's laptop.
 - 2026-11-20: T5 done (8 tests pass on Oriana's laptop, commit 9993fd0); reviewed by OF.
 - 2026-11-20: this file moved to `ptbxl-dl/docs/` (DECISIONS D11).
+- 2026-11-20: T1 closed (reviewed by MM, confirmed by OF and MM in chat DL 00).
