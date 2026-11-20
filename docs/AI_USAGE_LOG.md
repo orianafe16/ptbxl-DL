@@ -18,6 +18,8 @@ Source for the AI appendix of the four reports. Append only. Lives in `ptbxl-dl/
 | 2026-11-20 | DL 00 Coordination | OF + MM | Add the professor's message of 20/11 to the course material and revise the whole project and plan against it | Message saved in `contexto_DL/` with the standard header; gap analysis (3-page summary, RNN + attention and self-attention as explicit studies, self-supervised pre-training, zero-shot, autoregressive generation, draft by 1 December); D0, D6, D7, D9 amended, D13 (ECG-GPT) added; plan and chat guide updated, chat DL 13 added | [to confirm by OF and MM]; owner of D13 proposed by the assistant, not yet confirmed |
 | 2026-11-20 | DL 03 Evaluation and training | OF + MM | Propose the evaluation and training-loop decisions (metrics, thresholds, bootstrap, loop defaults, run log, `make_numbers.py`); revise them after the professor's message of 20/11 | Proposals A1-A5, B1-B9, C1-C6 with course sources (summaries 13/11 and 16/10, FeedForward slides 24 and 58, LogLikelihood slide 29, HAR and quickstart notebooks); redesign of the loop as task-agnostic, with metrics accumulated batch by batch for the generator; accepted as D14 and as a dated entry in D4 | Read and accepted by OF and MM ("sí a todo") |
 | 2026-11-20 | DL 03 Evaluation and training | OF + MM | Write the evaluation module, the shared loop, the run log, the comparison tool, `make_numbers.py` and their tests (T7, T8); write the block note | `src/metrics.py`, `src/tasks.py`, `src/train.py`, `src/runlog.py`, `src/compare.py`, `src/models/`, `report/make_numbers.py`, `report/runs.json`, 3 test files, paths in `src/config.py` and `src/eda.py`, `.gitignore` and README updates, `docs/blocks/03_eval_train.md`; all tests run by the assistant on a clean CPU copy (40 passed) and the end-to-end run tried on a synthetic cache before delivery; copies in the folder checked with SHA-256 | Executed on Oriana's laptop (T7 by MM, T8 by OF and MM): `pytest` 44 passed; `--fast` run; `trivial_e2e_s42_20261120-183809` with `--final`; `make_numbers.py` 295 macros. The assistant recomputed the metrics from the saved predictions (equal to the JSON) and compiled `numbers.tex`; T7 reviewed by OF |
+| 2026-11-20 | DL 04 Dense | OF + MM | Read the project files and the course material of the block; propose and decide the Dense block ("adelante con lo más adecuado", full final version at once) | Decision D15 (architecture, 11 configurations, three seeds for every ablation, selection rule fixed before the runs, outputs) with course sources (FeedForward slides 29-45, weekly summary 30/10); two literature points left as [verify]; slide-numbering mismatch of the chat card found (ablation slides are 46-49 in the `.pptx`) | Accepted by OF and MM before any run |
+| 2026-11-20 | DL 04 Dense | OF + MM | Write the Dense model, the ablation/final/report script and its tests; analyse the results; write the block note (T9) | `src/models/dense.py`, `src/dense_experiments.py`, `tests/test_dense.py` (27 tests, then 28), `.gitignore` and README updates; pipeline tried on a synthetic cache with figures inspected and tables compiled with pdfLaTeX before delivery; folder copies checked with SHA-256; after the runs, metrics and paired differences recomputed from the saved predictions (equal to the summary), real tables compiled, `docs/blocks/04_dense.md` | Executed by OF on Oriana's laptop: `pytest`, `all --fast`, `run` (33 runs), `final` (3 runs), `report`, `make_numbers.py`; reviewed by MM |
 
 ## 2. AI Error Bounty candidates
 
@@ -59,6 +61,22 @@ Template:
 - Correction: the full file sent again; this time every file sent was compared with SHA-256 against the tested version in the folder (17 files, all equal) before reporting.
 - Reproduction (how to check it again): not in git (the incomplete copy was never committed); the evidence is the two sizes above. Same root cause as B2: the copy is taken before the last edits are saved. Rule adopted: always compare the folder's copy with the intended file before saying it is written.
 
+### B4 — `report --fast` stopped when the trivial run was listed
+- Date, chat, detected by: 2026-11-20, DL 04 Dense; detected by the assistant itself when it found no `dense_summary_fast.json` among the outputs of OF's smoke test, and reproduced on a synthetic cache.
+- Prompt: OF and MM asked for the complete Dense block; the assistant wrote `src/dense_experiments.py`, whose `all --fast` step should test the whole pipeline.
+- Wrong answer: in `--fast` mode, `build_summary` paired the final runs with the trivial model on the test fold. The `--fast` runs only see 256 random test records, the trivial run the whole fold, so `paired_diff` stopped with "differ in test_ecg_id". The assistant's own tests did not catch it because their temporary `runs.json` had no trivial run.
+- Evidence that it was wrong: the smoke test left no `_fast` summary, tables or figures; the same call on a synthetic cache with a full-fold trivial run raises `ValueError: ... differ in test_ecg_id`.
+- Correction: no trivial comparison with `--fast` (the full runs, which use the same test records, were not affected); the test fixture now lists a full-fold trivial run, plus a regression test.
+- Reproduction (how to check it again): in `src/dense_experiments.py::build_summary` remove `and not fast` from the trivial-comparison condition and run `python -m pytest -q tests/test_dense.py`: `test_fast_summary_skips_the_trivial_comparison` fails.
+
+### B5 — Wrong cause given for `git_dirty: true` in the trivial run
+- Date, chat, detected by: 2026-11-20, DL 04 Dense; detected by the assistant from the `git status --short` pasted by OF.
+- Prompt: in chat DL 03 the assistant explained why the log of `trivial_e2e_s42_20261120-183809` says `git_dirty: true`.
+- Wrong answer: "the run was made before the code was committed" (`docs/blocks/03_eval_train.md`, HANDOFF entry of chat 03), stated as the cause.
+- Evidence that it was wrong: every Dense run, all made after commit `fcc3c3b` with code identical to it, also says `git_dirty: true`. `run_experiment` writes the run's own predictions file before `runlog.environment()` runs `git status --porcelain`, which lists untracked files, so any full run is "dirty".
+- Correction: cause written in `docs/blocks/04_dense.md` and HANDOFF; fix proposed for chat 00/03 (`--untracked-files=no`), not applied in chat 04 because `src/runlog.py` is shared code.
+- Reproduction (how to check it again): with a clean working tree, run `python -m src.train --model trivial --max-epochs 1 --tag check` and read `meta.git_dirty` in its log: `true`.
+
 ## 3. Notes on unverified assistant statements
 
 Statements the assistant flagged itself as unverified, and their outcome.
@@ -74,3 +92,7 @@ Statements the assistant flagged itself as unverified, and their outcome.
 | 2026-11-20 | NORM together with mild conduction findings (IRBBB, IVCD, 1AVB) is clinically usual | Not stated as a fact: [verify], chat 09 |
 | 2026-11-20 | How the Strodthoff et al. benchmark treats records without superclass | [verify], chat 09 |
 | 2026-11-20 | Adam is less sensitive to the learning rate than SGD (reason given for the default optimiser, D14) | General knowledge, not from a course source: [verify], chat 09, before it is written in a report |
+| 2026-11-20 | Dropout 0.5 is the usual rate for hidden layers (D15) | [verify], chat 09 (Srivastava et al. 2014) |
+| 2026-11-20 | Batch norm before the activation is the placement of Ioffe and Szegedy 2015 (D15) | [verify], chat 09 |
+| 2026-11-20 | Without batch norm, raw mV beat z-score because the ECG in mV is already on a small scale (block note 04) | Hypothesis of the assistant, not tested; written as such |
+| 2026-11-20 | The limb-lead bands in the first-layer weights reflect that limb leads are linear combinations of each other (block note 04) | [verify], chat 09 |

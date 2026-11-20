@@ -13,6 +13,7 @@ import torch
 
 
 from src import dense_experiments as dx
+from src import runlog
 from src.models import MODELS
 from src.models.dense import DenseNet
 
@@ -158,7 +159,20 @@ def pipeline(tmp_path_factory):
     paths = dx.Paths(logs=root / "logs", predictions=root / "pred",
                      checkpoints=root / "ckpt", figures=root / "fig",
                      tables=root / "tab", runs_file=root / "runs.json")
-    paths.runs_file.write_text("{}", encoding="utf-8")
+    # A trivial final run on the whole (synthetic) test fold, as in the real
+    # report/runs.json: the --fast runs only see a subset of that fold.
+    paths.predictions.mkdir(parents=True)
+    rng = np.random.default_rng(1)
+    n = 30
+    np.savez(paths.predictions / "trivial.npz",
+             test_prob=rng.random((n, 5)).astype(np.float32),
+             test_true=(rng.random((n, 5)) < 0.3).astype(np.float32),
+             test_patient_id=np.arange(n), test_ecg_id=np.arange(n))
+    runlog.write_run({"run_id": "trivial_full", "final": True, "fast": False,
+                      "scalars": {"val_macro_auroc": 0.7},
+                      "predictions": str(paths.predictions / "trivial.npz")},
+                     paths.logs)
+    paths.runs_file.write_text('{"trivial": "trivial_full"}', encoding="utf-8")
     seeds = (42, 43)
     cache = synthetic_cache()
     dx.run_ablations(seeds, None, fast=True, cache=cache, paths=paths)
@@ -218,4 +232,14 @@ def test_figures_written(pipeline):
 
 def test_fast_summary_is_not_registered(pipeline):
     paths = pipeline[0]
-    assert json.loads(paths.runs_file.read_text(encoding="utf-8")) == {}
+    runs = json.loads(paths.runs_file.read_text(encoding="utf-8"))
+    assert runs == {"trivial": "trivial_full"}
+
+
+def test_fast_summary_skips_the_trivial_comparison(pipeline):
+    """Regression test (chat DL 04, 2026-11-20): with a trivial run on the
+    whole test fold in runs.json, `report --fast` stopped with "differ in
+    test_ecg_id", because --fast runs only see a subset of that fold."""
+    summary = pipeline[3]
+    assert summary["trivial_run"] == "trivial_full"
+    assert not any(k.startswith("diff_trivial") for k in summary["scalars"])

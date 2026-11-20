@@ -352,7 +352,9 @@ def build_summary(paths: Paths = Paths(), fast: bool = False,
             s[f"final_first_{key}_hi"] = first[f"{key}_hi"]
         for c in config.CLASSES:
             s[f"final_first_test_f1_{c}"] = first[f"test_f1_{c}"]
-        if trivial is not None and trivial.get("final"):
+        # --fast runs see a random subset of the test fold, the trivial run
+        # the whole fold: they cannot be paired, so no comparison then.
+        if trivial is not None and trivial.get("final") and not fast:
             diffs = []
             for r in final_recs:
                 print(f"paired difference {r['run_id']} - trivial on test ...")

@@ -32,7 +32,7 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | T6 | EDA: class balance, co-occurrence, demographics, signal quality, example traces | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
 | T7 | Evaluation module: macro AUROC, bootstrap CI, JSON logging, `make_numbers.py` | MM | OF | done | MM (drafted with the assistant) | OF | 2026-11-20 |
 | T8 | Shared training loop (zero_grad, forward, loss, backward, step; train/eval modes) | OF + MM | — | done | OF + MM (drafted with the assistant) | — | 2026-11-20 |
-| T9 | Dense baseline + ablations | OF | MM | doing | | | |
+| T9 | Dense baseline + ablations | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
 | T10 | CNN 1D + ablations | OF | MM | todo | | | |
 | T11 | LSTM/GRU (+bidirectional) and RNN + attention model + ablations | MM | OF | todo | | | |
 | T12 | Self-attention step by step (single layer, attention maps) and Transformer + ablations | MM | OF | todo | | | |
@@ -95,3 +95,4 @@ No fixed calendar; the team moves on as blocks close. Dependencies:
 - 2026-11-20: T6 done (EDA script, notebook, figures and `results/logs/eda.json`, executed by OF on Oriana's laptop; O3 closed in DECISIONS D12); reviewed by MM.
 - 2026-11-20: plan revised after the professor's message of 20/11: T11, T12, T13, T19, T20 reworded; T23 (ECG-GPT), T24 (zero-shot) and T25 (draft due 1 December) added; chat DL 13 added; no fixed calendar.
 - 2026-11-20: T7 and T8 done (evaluation module, task-agnostic training loop, run logs, `make_numbers.py`; DECISIONS D14). 44 tests pass and the end-to-end run of the trivial model produced its JSON log and `numbers.tex` on Oriana's laptop; T7 reviewed by OF.
+- 2026-11-20: T9 done (Dense model, 11 configurations x 3 seeds on validation, final model on test with 3 seeds, summary, tables and figures; DECISIONS D15). Executed by OF on Oriana's laptop; reviewed by MM.
