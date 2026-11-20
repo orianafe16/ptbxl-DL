@@ -68,6 +68,7 @@ Use the stratified folds shipped with the dataset (`strat_fold`), which keep all
 - Seeds: 3 seeds for the final model of each architecture; ablations with 1 seed unless a difference is within the CI, then 3. **[open]** to raise if time allows.
 - Every run writes `results/logs/<run_id>.json` (config, seed, per-epoch curves, final metrics, software versions). No number is typed by hand in the reports: `report/make_numbers.py` generates them from these files.
 - Results are only reported after one of us has executed the run on Oriana's laptop.
+- **2026-11-20 (OF + MM, chat DL 03), confidence intervals for ablations:** D3 keeps every ablation on the validation fold, so the "difference within the CI" rule above is applied with bootstrap intervals computed on **validation**. Bootstrap intervals on the **test** fold are computed only for final models (`--final`). Implementation details in D14.
 
 ## D5. Framework and environment — DECIDED
 
@@ -170,6 +171,35 @@ Decided by OF and MM in chat DL 00 after the professor's message of 20/11 (D0, a
 - Owner: Oriana, reviewer: María (proposed by the assistant in chat DL 00 to balance the blocks; **to be confirmed by OF and MM**).
 - Fallback if the ECG generator does not train within a reasonable time: autoregressive character-level text generation built on the class notebooks (`Sampling_in_Text_Generation.ipynb`, `TO_DO_MLLB_Keras_RNN_TextGeneration.ipynb`, and the "simple autoregressive LLM-style model" of the weekly summary of 20/11), with the pre-training of D7 done separately on ECG.
 
+## D14. Evaluation module, training loop and run logs — DECIDED (2026-11-20)
+
+Decided by OF and MM in chat DL 03 (tasks T7 and T8), after the professor's message of 20/11: the loop must also serve the generative model of D13.
+
+**Evaluation (`src/metrics.py`)**
+- Probabilities are `sigmoid(logits)`, applied outside the model. AUROC per class with scikit-learn; macro AUROC is the plain mean of the five.
+- F1 thresholds: for each class, the threshold that maximises its F1 on validation, searched on the grid 0.01, 0.02, ..., 0.99 (ties: the lowest threshold). The same thresholds are applied to the test fold. Reported: F1 per class and macro F1 (mean of the five). Not chosen: a fixed 0.5 for every class, which penalises the rare classes (HYP).
+- Bootstrap: 1000 resamples, percentile interval (2.5 %, 97.5 %), seed 42. The **patient** is the resampling unit (all records of a drawn patient enter together, as many times as the patient is drawn), because records of the same patient are correlated; resampling records would give intervals that are too narrow. Only the predictions are resampled; the model is not retrained. A resample in which a class has no positive or no negative record is discarded and counted in the log.
+- Paired comparison: the resamples depend only on the patients and the seed, so every model evaluated on the same split sees the same resamples. The interval of the difference in macro AUROC between two runs is computed on these resamples (`python -m src.compare`, which writes its own log in `results/logs/`); if it contains 0, neither model is declared better. To make this possible, each run stores its validation (and, for final runs, test) probabilities in `results/predictions/<run_id>.npz`.
+- Perplexity for the generative model (D13): exp of the mean cross-entropy **per token**, accumulated over all tokens of the split (not averaged per batch).
+
+**Training loop (`src/train.py`, `src/tasks.py`)**
+- The loop is task-agnostic. It performs the five steps (zero_grad, forward, loss, backward, step), `model.train()` / `model.eval()`, `torch.no_grad()` in evaluation, early stopping, saving of the best weights and the run log. Everything specific to a task comes from a task object: the loss, the metrics (accumulated batch by batch, so that a generative model never keeps all its logits in memory), and the selection metric with its direction. Two tasks: multi-label classification of the 5 superclasses (selection: validation macro AUROC, higher is better) and next-token prediction (selection: validation cross-entropy, lower is better).
+- The loop receives ready-made DataLoaders and the data description to log; it does not build data. The optimiser only receives the trainable parameters (`requires_grad=True`), so frozen layers (D7) need no special code; the log records total and trainable parameters.
+- Defaults: Adam, learning rate 1e-3, no weight decay, batch size 64, at most 50 epochs, early stopping with patience 5 on the selection metric, no gradient clipping (optional parameter, off by default). The weights of the best epoch are restored at the end and saved to `results/checkpoints/<run_id>.pt` (`state_dict`, not committed). Each model chat may change the defaults; the values used are logged.
+- Seeds: Python `random`, NumPy and PyTorch (CPU and GPU) are seeded at the start of each run, before the model is built; the same seed orders the training batches (`make_loaders`). cuDNN deterministic, without benchmark mode. PyTorch's fully deterministic mode is not enabled (some GPU operations raise errors with it), so two GPU runs may differ slightly; results are compared with a tolerance. Seeds of the final models: 42, 43, 44.
+- Class weights in the loss (`pos_weight`) off by default, available as an option (computed on the training records as negatives / positives per class).
+- The test fold is evaluated only with `--final`; the loop refuses a second final run with the same model, tag and seed (D3).
+- `--fast`: 512 training, 256 validation and 256 test records drawn with the seed, 2 epochs, 50 bootstrap resamples; the log is marked `fast`, its run name ends in `_fast` (so git ignores its log and predictions) and `make_numbers.py` rejects it.
+- Device: GPU if available; no mixed precision.
+- Trivial model for the end-to-end check: logistic regression on the mean and standard deviation of each lead (24 numbers per record).
+
+**Run logs and numbers**
+- Run name: `<model>_<tag>_s<seed>_<YYYYMMDD-HHMMSS>`. One JSON per run in `results/logs/`, with `scalars` (flat name -> number, read by `make_numbers.py`), configuration, model size, the data description returned by `make_loaders`, per-epoch curves, best epoch, results per split, paths of checkpoint and predictions, and `meta` (date, git commit and whether there were uncommitted changes, software versions, device).
+- `report/runs.json` maps a short alias (letters only) to a log file. `make_numbers.py` reads only the files listed there, so an old or test run cannot slip into a report.
+- Macro names: alias + key, where the key is cut at underscores and at letter/digit boundaries, each letter part starts with a capital letter and the rest keeps its case, and each digit is spelled out (`n_with_1_labels` -> `\edaNWithOneLabels`, `prev_train_MI` -> `\edaPrevTrainMI`, `lead_std_V1` -> `\edaLeadStdVOne`). Two keys giving the same name stop the script with an error. A comment with the original key precedes each macro.
+- Format: integers with a thousands separator (`21{,}799`); other numbers with 3 decimals; keys starting with `frac_` or `prev_` also give a percentage macro with suffix `Pct` and 1 decimal. A value that should print as an integer must be stored as an integer in the JSON.
+- Paths of logs, checkpoints, predictions and figures live in `src/config.py`; `src/eda.py` uses them too.
+
 ## Open items
 
 | # | Item | Blocks |
@@ -190,3 +220,4 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-20: EDA scope, outputs and data codings (D12). Decided by OF and MM in chat DL 02.
 - 2026-11-20: O3 closed (D12), after running the EDA part 1 on Oriana's laptop. Decided by OF and MM in chat DL 02.
 - 2026-11-20: professor's message of 20/11 added to D0; D6 (RNN + attention model, self-attention study), D7 (pretext task, zero-shot), D9 (3-page summary, three areas, draft by 1 December) amended; D13 (ECG-GPT) added; O1 closed; O5 and O6 opened. Decided in chat DL 00.
+- 2026-11-20: confidence intervals of the ablations on validation (D4); evaluation module, task-agnostic training loop, run logs and `make_numbers.py` (D14). Decided by OF and MM in chat DL 03.

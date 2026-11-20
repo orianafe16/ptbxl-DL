@@ -40,8 +40,8 @@ from src import config
 from src.data import load_metadata, superclass_labels
 from src.dataset import lead_stats, split_indices
 
-LOG_PATH = config.ROOT / "results" / "logs" / "eda.json"
-FIG_DIR = config.ROOT / "report" / "figures"
+LOG_PATH = config.LOGS_DIR / "eda.json"
+FIG_DIR = config.FIGURES_DIR
 SPLITS = ["train", "val", "test"]
 SPLIT_NAMES = {"train": "Train (folds 1-8)", "val": "Validation (fold 9)",
                "test": "Test (fold 10)"}

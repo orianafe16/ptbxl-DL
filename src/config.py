@@ -15,7 +15,15 @@ RAW_DIR = ROOT / "data" / "raw" / "ptbxl"
 # `python -m src.prepare_data`).
 CACHE_PATH = ROOT / "data" / "cache" / "ptbxl_100hz.npz"
 
-SAMPLING_RATE = 100        # Hz; we use the 100 Hz version only (DECISIONS D1)
+# Outputs (DECISIONS D14). Logs, predictions and figures are committed;
+# checkpoints are not (.gitignore).
+LOGS_DIR = ROOT / "results" / "logs"                 # one JSON per run
+PREDICTIONS_DIR = ROOT / "results" / "predictions"   # probabilities per run
+CHECKPOINT_DIR = ROOT / "results" / "checkpoints"    # best weights per run
+REPORT_DIR = ROOT / "report"
+FIGURES_DIR = REPORT_DIR / "figures"
+
+SAMPLING_RATE = 100       # Hz; we use the 100 Hz version only (DECISIONS D1)
 N_SAMPLES = 1000           # 10 s x 100 Hz
 LEADS = ["I", "II", "III", "AVR", "AVL", "AVF",
          "V1", "V2", "V3", "V4", "V5", "V6"]

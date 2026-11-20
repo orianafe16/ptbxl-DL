@@ -7,7 +7,8 @@ Multi-label classification of the five diagnostic superclasses of PTB-XL
 (12-lead ECG, 100 Hz) with dense, convolutional, recurrent and Transformer
 models, compared under the same data split and evaluation protocol.
 
-Status: project structure only. No results yet.
+Status: data pipeline, exploratory analysis, evaluation module and shared
+training loop in place; model blocks in progress.
 
 ## Structure
 
@@ -44,6 +45,23 @@ python -m src.prepare_data
 
 `src/dataset.py` builds the train (folds 1-8), validation (fold 9) and test
 (fold 10) DataLoaders from the cache.
+
+## Training, evaluation and report numbers
+
+```
+python -m src.train --model trivial --fast     # smoke test (not reported)
+python -m src.train --model trivial            # full run, validation only
+python -m src.train --model trivial --final    # also evaluates the test fold
+python -m src.compare RUN_A RUN_B              # paired bootstrap difference
+python report/make_numbers.py                  # report/numbers.tex
+```
+
+Each run writes `results/logs/<run_id>.json` (configuration, curves,
+metrics with bootstrap intervals, software versions) and
+`results/predictions/<run_id>.npz`; the best weights go to
+`results/checkpoints/` (not committed). `report/make_numbers.py` turns the
+logs listed in `report/runs.json` into LaTeX macros. Decisions: D4 and D14
+in `docs/DECISIONS.md`.
 
 ## Setup (Windows, NVIDIA GPU)
 

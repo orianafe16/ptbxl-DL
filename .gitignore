@@ -13,6 +13,10 @@ __pycache__/
 *.pth
 results/checkpoints/
 
+# Smoke-test runs (--fast): never reported (DECISIONS D14)
+results/logs/*_fast.json
+results/predictions/*_fast.npz
+
 # Editor and OS files
 .vscode/
 Thumbs.db
