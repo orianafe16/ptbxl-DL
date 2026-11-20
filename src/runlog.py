@@ -16,7 +16,12 @@ import torch
 
 from src import config
 
-SCHEMA_VERSION = 1
+# 2: git_dirty looks only at the code under src/ (D14, second entry of
+# 2026-11-20). In logs with schema 1 it is always true and means nothing.
+SCHEMA_VERSION = 2
+
+# Code whose state decides whether a run is "dirty".
+CODE_PATHS = ("src",)
 
 
 def make_run_id(model_name: str, tag: str, seed: int,
@@ -27,26 +32,40 @@ def make_run_id(model_name: str, tag: str, seed: int,
     return f"{model_name}_{tag}_s{seed}_{when:%Y%m%d-%H%M%S}"
 
 
-def _git(*args) -> str | None:
+def _git(*args, cwd: Path = config.ROOT) -> str | None:
     try:
-        return subprocess.run(["git", *args], cwd=config.ROOT,
+        return subprocess.run(["git", *args], cwd=cwd,
                               capture_output=True, text=True,
                               check=True).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
         return None
 
 
+def git_dirty(root: Path = config.ROOT) -> bool | None:
+    """True when the code under src/ differs from the last commit.
+
+    Counted: tracked files changed (staged or not), deleted, or new files
+    not yet added (git still skips what .gitignore excludes, such as
+    __pycache__). Not counted: results/, report/ and docs/. A run writes
+    its own predictions file before this check, so looking at the whole
+    repository made every full run "dirty" (AI Error Bounty B5). None when
+    git is not available.
+    """
+    status = _git("status", "--porcelain", "--untracked-files=all", "--",
+                  *CODE_PATHS, cwd=root)
+    return None if status is None else bool(status)
+
+
 def environment(device: torch.device | None = None) -> dict:
     """Date, git commit and software versions, for reproducibility.
 
-    `git_dirty` is True when there were uncommitted changes: the commit
-    alone then does not describe the code that produced the run.
+    `git_dirty` is True when the code under src/ had uncommitted changes:
+    the commit alone then does not describe the code that produced the run.
     """
-    status = _git("status", "--porcelain")
     return {
         "created": datetime.now().isoformat(timespec="seconds"),
         "git_commit": _git("rev-parse", "--short", "HEAD"),
-        "git_dirty": None if status is None else bool(status),
+        "git_dirty": git_dirty(),
         "python": platform.python_version(),
         "torch": torch.__version__,
         "cuda": torch.version.cuda,

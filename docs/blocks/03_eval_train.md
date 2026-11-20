@@ -11,7 +11,7 @@ Decisions: `docs/DECISIONS.md` D4 (entry of 2026-11-20) and D14.
 | Metrics: AUROC, F1 thresholds, patient bootstrap, paired difference, perplexity | `src/metrics.py` | — |
 | Tasks: 5-superclass classification, next-token prediction | `src/tasks.py` | — |
 | Training loop, early stopping, seeds, PTB-XL command line | `src/train.py` | `python -m src.train --model <name> [--fast] [--final]` |
-| One JSON log per run | `src/runlog.py` | — |
+| One JSON log per run (with the `git_dirty` flag on `src/`) | `src/runlog.py` | — |
 | Paired comparison of two runs | `src/compare.py` | `python -m src.compare RUN_A RUN_B [--split test]` |
 | Model registry and trivial model | `src/models/` | — |
 | LaTeX numbers from the logs | `report/make_numbers.py`, `report/runs.json` | `python report/make_numbers.py` |
@@ -49,7 +49,7 @@ Decisions: `docs/DECISIONS.md` D4 (entry of 2026-11-20) and D14.
 6. **Outputs of a run** `<model>_<tag>_s<seed>_<date-time>`:
    `results/logs/<run_id>.json` (scalars, configuration, data description,
    curves, results, software versions, git commit and whether there were
-   uncommitted changes), `results/predictions/<run_id>.npz`
+   uncommitted changes in `src/`), `results/predictions/<run_id>.npz`
    (probabilities, labels, patient and ECG ids per split, used by
    `src/compare.py`) and `results/checkpoints/<run_id>.pt` (not committed).
    `--fast` runs end in `_fast` and are ignored by git and by
@@ -124,10 +124,16 @@ of each lead) is the **floor** of the final comparison: every real model
 should beat it clearly. Its numbers are in the macros `\trivial...`, never
 typed by hand.
 
-Note: this run was made before the code was committed, so its log says
-`git_dirty: true` with commit `f090231`. The files committed afterwards are
-byte-identical to those that produced it (checked with SHA-256 before the
-run).
+Note on `git_dirty: true` in this log (commit `f090231`): the code of this
+block was indeed not yet committed when the run was made, but that is not
+why the flag is true. With the first version of `src/runlog.py` every full
+run was "dirty", because the run writes its own predictions file, still
+untracked, before `git status --porcelain` is called (AI Error Bounty B5,
+found in chat DL 04; the explanation first given here was wrong). Fixed on
+2026-11-20: the flag now looks only at the code under `src/` and logs carry
+`schema` 2 (D14). In logs with `schema` 1 the flag means nothing. The files
+committed after this run are byte-identical to those that produced it
+(checked with SHA-256 before the run).
 
 ## Problems met and lessons
 
