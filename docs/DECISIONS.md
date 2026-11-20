@@ -238,6 +238,45 @@ Proposed by the assistant in chat DL 04 and accepted by OF and MM, who asked for
 - `report/figures/dense_curves`, `dense_ablations`, `dense_first_layer` (PDF and PNG).
 - With `--fast` the same outputs end in `_fast` and git ignores them.
 
+## D16. CNN block (T10) — DECIDED (2026-11-20)
+
+Proposed by the assistant in chat DL 05 and accepted by OF and MM, who asked for the most suitable option and for the complete (final-version) set of experiments at once. Same protocol as D15 so the two blocks can be compared. Any value below changes only with a dated entry. Code: `src/models/cnn.py`, `src/cnn_experiments.py`, `tests/test_cnn.py`.
+
+**Architecture**
+- Input (batch, 12, 1000): the 12 leads are the input channels and time is the axis the filters slide along (1D convolution, as in the 1D model of `MLLB_Pytorch_HAR_CNN_TODO.ipynb`). Per-lead z-score on (D3); not ablated, because the Dense block showed that batch norm makes the input scaling irrelevant (D15, `docs/blocks/04_dense.md`).
+- Block (ResNet basic block, `PRDL_MLLB_CNN.pptx` slides 46-62): Conv1d(k) → BatchNorm1d → ReLU → Conv1d(k) → BatchNorm1d, plus a shortcut, then ReLU and MaxPool1d(2). The shortcut is the identity when the number of channels does not change (no parameters, slide 55) and a 1×1 convolution + batch norm when it does (slide 56). "Same" padding (k // 2, odd k) keeps the length so that the two paths can be added. That this is exactly the basic block of He et al. 2016 is **[verify]**. Convolutions keep their bias also with batch norm, as in D15.
+- D6 described the CNN baseline as Conv-BN-ReLU-pool blocks; D16 makes each block two convolutions with a skip connection, so that "residual on/off" changes only the shortcut (the same rule as D15: the baseline has every component switched on).
+- Head: global average pooling over time → dropout 0.5 → Linear with 5 logits, no sigmoid (D2). Dropout 0.5 before the classifier as in the class notebook's 1D model.
+- Baseline: 4 blocks with 32, 64, 128, 128 channels, kernel 7, batch norm, residual connections, global average pooling, dropout 0.5. 468,325 parameters (counted by the assistant; the log is the reference), about 1/7 of the Dense baseline. Length 1000 → 62 after the four poolings.
+- Kernel 7 = 70 ms at 100 Hz, in the order of a QRS complex (about 80-100 ms: **[verify]**). The receptive field of one position of the last feature map is 196 samples (about 2 s, two to three beats); it is computed by `CNN1D.receptive_field()` and logged for every configuration.
+- Training: the D14 defaults, identical to D15 (Adam, learning rate 1e-3, batch 64, at most 50 epochs, patience 5 on validation macro AUROC, no weight decay, no class weights).
+
+**Ablations.** One factor at a time; the column "reference" is the configuration each one is compared with (paired bootstrap, D14).
+
+| Tag | Factor | Change | Reference |
+|---|---|---|---|
+| `base` | — | — | — |
+| `kernel3`, `kernel15` | kernel size | kernel 3 or 15 (receptive field 76 or 436 samples) | `base` |
+| `depth2`, `depth6` | number of blocks | 2 blocks (32, 64) or 6 blocks (32, 64, 128, 128, 128, 128); receptive field 40 or 820 samples | `base` |
+| `no_bn` | batch norm | no batch norm (also on the shortcut) | `base` |
+| `no_residual` | residual connections | no shortcut | `base` |
+| `depth6_no_residual` | residual connections × depth | 6 blocks without shortcut: tests the slides' claim that skip connections matter more as the network gets deeper | `depth6` |
+| `flatten` | global pooling vs flatten | flatten the last feature map (128 × 62) into the classifier: one weight per position, no translation invariance in the head | `base` |
+| `no_dropout` | dropout | rate 0 | `base` |
+
+**Protocol** (as D15)
+- Every configuration with seeds 42, 43, 44 on validation (30 runs). Reported per configuration: mean ± SD of the validation macro AUROC, the patient-bootstrap interval of seed 42, and for each seed the paired interval of the difference with its reference trained with the same seed; a factor changes the result only when that interval excludes 0 (table: seeds better / worse).
+- Final CNN: the configuration with the highest mean validation macro AUROC, chosen before the test fold is touched (D3), trained again with `--final` for seeds 42, 43, 44. Reported on test: mean ± SD (macro and per class), intervals of the first seed, and for each seed the paired difference with the trivial model and with the final Dense model trained with the same seed (both on the whole test fold; skipped with `--fast`).
+
+**Interpretation** (final model, seed 42)
+- First-layer filters (`cnn_first_layer`): (a) the 8 filters with the largest weight norm, drawn as 12 leads × k taps; (b) the magnitude frequency response of every first-layer filter (RMS over leads, 0-50 Hz), sorted by peak frequency: the first layer read as a learnt filter bank (`PRDL_MLLB_CNN.pptx` slides 99-102).
+- Feature maps (`cnn_feature_maps`): one validation record per superclass, among the records with a single superclass, drawn with seed 42. Rows: lead II of the (normalised) input; output of block 1 and of the last block (channels × time, aligned with the input), captured with forward hooks as in `Gemini_MNIST_Pytorch_featuremaps.ipynb`; and the class activation map of the record's class, only if the final model uses global average pooling (Zhou et al. 2016: **[verify]**). The CAM needs no extra training: with average pooling and one Linear layer, the logit equals the time mean of the CAM plus the bias (checked in `tests/test_cnn.py`).
+
+**Outputs**
+- `python -m src.cnn_experiments run | final | report` (`all` runs the three steps; `run` and `final` skip what has already been run).
+- `results/logs/cnn_summary.json` (alias `cnn` in `report/runs.json`, macros `\cnn...`); `report/tables/cnn_ablations.tex` and `cnn_final.tex` (macros only); figures `cnn_curves`, `cnn_ablations`, `cnn_first_layer`, `cnn_feature_maps` (PDF and PNG). With `--fast` the outputs end in `_fast` and git ignores them.
+- Generic helpers (paired bootstrap of two runs, macro names, figure style) are imported from `src/dense_experiments.py`, not copied.
+
 ## Open items
 
 | # | Item | Blocks |
@@ -261,3 +300,4 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-20: confidence intervals of the ablations on validation (D4); evaluation module, task-agnostic training loop, run logs and `make_numbers.py` (D14). Decided by OF and MM in chat DL 03.
 - 2026-11-20: Dense block: architecture, ablation grid, three seeds for every ablation, selection of the final model, outputs (D15). Accepted by OF and MM in chat DL 04.
 - 2026-11-20: `git_dirty` restricted to the code under `src/`; log schema 2 (D14). Decided by OF and MM in chat DL 03, after AI Error Bounty B5.
+- 2026-11-20: CNN block: architecture, ablation grid with references, three seeds, selection of the final model, comparison with the final Dense model, interpretation figures, outputs (D16). Accepted by OF and MM in chat DL 05.

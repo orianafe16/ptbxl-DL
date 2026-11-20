@@ -76,6 +76,19 @@ python -m src.dense_experiments final          # selected model, test fold
 python -m src.dense_experiments report         # summary, tables, figures
 ```
 
+1D CNN (decision D16): residual baseline, 10 ablation configurations
+(kernel size, number of blocks, batch norm, skip connections, global pooling
+vs flatten, dropout) with 3 seeds on validation, the final model on the test
+fold compared with the final Dense and trivial models, and interpretation
+figures (first-layer filters, feature maps, class activation maps).
+
+```
+python -m src.cnn_experiments all --fast       # smoke test (not reported)
+python -m src.cnn_experiments run              # ablations, validation only
+python -m src.cnn_experiments final            # selected model, test fold
+python -m src.cnn_experiments report           # summary, tables, figures
+```
+
 ## Setup (Windows, NVIDIA GPU)
 
 ```
