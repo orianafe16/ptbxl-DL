@@ -36,6 +36,15 @@ data/raw/ptbxl/scp_statements.csv
 
 Only the 100 Hz records are used; `records500/` is not needed.
 
+Check the files and build the cache (about 6 minutes, 1 GB):
+
+```
+python -m src.prepare_data
+```
+
+`src/dataset.py` builds the train (folds 1-8), validation (fold 9) and test
+(fold 10) DataLoaders from the cache.
+
 ## Setup (Windows, NVIDIA GPU)
 
 ```
@@ -45,6 +54,7 @@ python -m pip install --upgrade pip
 pip install torch --index-url https://download.pytorch.org/whl/cu126
 pip install -r requirements.txt
 python -m src.check_env
+python -m pytest -q tests
 ```
 
 The `cu126` build needs an NVIDIA driver that supports CUDA 12.6 or later
