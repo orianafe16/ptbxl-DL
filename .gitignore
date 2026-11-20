@@ -1,0 +1,28 @@
+# Raw data and caches: never committed (see docs/DECISIONS.md, D1)
+data/
+
+# Python environment and caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Model weights (large binary files)
+*.pt
+*.pth
+results/checkpoints/
+
+# Editor and OS files
+.vscode/
+Thumbs.db
+.DS_Store
+
+# LaTeX build files
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.synctex.gz

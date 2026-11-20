@@ -1,0 +1,9 @@
+# PyTorch is NOT listed here: it is installed first, with the CUDA build
+# that matches the GPU driver (see README.md, "Setup").
+numpy
+pandas
+scikit-learn
+matplotlib
+wfdb
+pytest
+ipykernel
