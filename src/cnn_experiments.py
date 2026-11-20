@@ -62,6 +62,12 @@ BASE_ARGS = {"channels": [32, 64, 128, 128], "kernel_size": 7,
              "dropout": 0.5}
 DEEP = [32, 64, 128, 128, 128, 128]   # 6 blocks
 
+# Training loss compared at this epoch (D16, second entry): with patience 5
+# every full run lasts at least 6 epochs, so epoch 5 exists in all of them.
+# It measures how fast each network fits the training set (optimisation),
+# which is what skip connections are meant to help (CNN slides 49-51).
+EARLY_EPOCH = 5
+
 
 @dataclass(frozen=True)
 class Ablation:
@@ -272,10 +278,17 @@ def compare_finals(final_recs: list, others: dict, name: str, n_boot: int,
         s[f"n_seeds_compared_{name}"] = len(diffs)
 
 
+def early_train_loss(record: dict) -> float | None:
+    """Training loss of a run at EARLY_EPOCH (None if it stopped before)."""
+    losses = record["history"]["train_loss"]
+    return losses[EARLY_EPOCH - 1] if len(losses) >= EARLY_EPOCH else None
+
+
 def build_summary(paths: Paths = Paths(), fast: bool = False,
-                  seeds=SEEDS) -> dict:
+                  seeds=SEEDS, cache: dict | None = None) -> dict:
     """Collect every number of the block into one log with a flat `scalars`
-    block (read by make_numbers.py under the alias "cnn")."""
+    block (read by make_numbers.py under the alias "cnn"). With the cache,
+    the probabilities of the example records are added too."""
     runs = find_runs(paths, fast=fast, final=False)
     finals = find_runs(paths, fast=fast, final=True)
     n_boot = 50 if fast else 1000
@@ -300,6 +313,9 @@ def build_summary(paths: Paths = Paths(), fast: bool = False,
             [r["scalars"]["best_epoch"] for r in recs]))
         s[f"epoch_time_mean_{t}"] = float(np.mean(
             [np.mean(r["history"]["time_s"]) for r in recs]))
+        early = [early_train_loss(r) for r in recs]
+        if all(v is not None for v in early):
+            s[f"train_loss_ep{EARLY_EPOCH}_mean_{t}"] = float(np.mean(early))
         first = runs.get((t, seeds[0]))
         if first is not None:
             sc = first["scalars"]
@@ -326,6 +342,18 @@ def build_summary(paths: Paths = Paths(), fast: bool = False,
             s[f"n_seeds_better_{t}"] = int(better)
             s[f"n_seeds_worse_{t}"] = int(worse)
             s[f"n_seeds_compared_{t}"] = len(diffs)
+        # Training loss at EARLY_EPOCH minus that of the reference, same seed.
+        gaps = []
+        for seed in seeds:
+            ref = runs.get((ab.reference, seed))
+            if (t, seed) not in runs or ref is None:
+                continue
+            a, b = early_train_loss(runs[(t, seed)]), early_train_loss(ref)
+            if a is not None and b is not None:
+                gaps.append(a - b)
+        if gaps:
+            s[f"train_loss_ep{EARLY_EPOCH}_diff_mean_{t}"] = float(np.mean(gaps))
+            s[f"n_seeds_train_loss_higher_{t}"] = int(sum(g > 0 for g in gaps))
 
     # Final model: the configuration selected on validation, on test.
     selected = None
@@ -371,6 +399,14 @@ def build_summary(paths: Paths = Paths(), fast: bool = False,
                 compare_finals(final_recs, dense, "dense", n_boot, s)
     if trivial is not None:
         s["trivial_val_macro_auroc"] = trivial["scalars"]["val_macro_auroc"]
+
+    # Interpretation of the final model (first seed): first-layer filters
+    # and the example records of the feature-map figure.
+    if final_recs:
+        first_final = {(selected, final_recs[0]["config"]["seed"]): final_recs[0]}
+        s.update(first_layer_numbers(first_final))
+        if cache is not None:
+            s.update(example_numbers(first_final, cache))
 
     return {
         "run_id": SUMMARY_NAME + ("_fast" if fast else ""),
@@ -634,6 +670,48 @@ def filter_responses(weight: np.ndarray, n_fft: int = 256):
     return freqs, np.sqrt((H ** 2).mean(axis=1))
 
 
+PEAK_LOW_HZ, PEAK_HIGH_HZ = 5, 20     # bands used to count filter peaks
+
+
+def first_layer_numbers(finals: dict) -> dict:
+    """Peak frequency of every first-layer filter of the final model (the
+    frequency where its RMS response is largest): median and how many peak
+    below PEAK_LOW_HZ or above PEAK_HIGH_HZ. Empty if the checkpoint is
+    missing (checkpoints are not committed)."""
+    try:
+        model, _ = load_final_model(finals)
+    except FileNotFoundError as e:
+        print(f"first-layer numbers skipped: {e}")
+        return {}
+    W = model.first_conv.weight.detach().numpy()
+    freqs, R = filter_responses(W)
+    peaks = freqs[R.argmax(axis=1)]
+    return {"first_layer_n_filters": int(len(W)),
+            "first_layer_peak_hz_median": float(np.median(peaks)),
+            "first_layer_n_peak_below_5hz": int((peaks < PEAK_LOW_HZ).sum()),
+            "first_layer_n_peak_above_20hz": int((peaks > PEAK_HIGH_HZ).sum())}
+
+
+def example_numbers(finals: dict, cache: dict) -> dict:
+    """For the example record of each class (feature-map figure): its
+    ecg_id, the probability the final model gives to that class (from the
+    run's saved validation predictions) and the class threshold chosen on
+    validation (D14). A record above its threshold is classified as
+    positive for that class."""
+    rec = finals[min(finals, key=lambda k: k[1])]
+    val = dx.load_predictions(rec, "val")
+    out = {}
+    for c, row in example_records(cache).items():
+        eid = int(cache["ecg_id"][row])
+        i = np.flatnonzero(val["ecg_id"] == eid)
+        if len(i) != 1:                # e.g. --fast: not in the subset
+            continue
+        out[f"example_ecg_id_{c}"] = eid
+        out[f"example_prob_{c}"] = float(val["prob"][i[0], config.CLASSES.index(c)])
+        out[f"example_threshold_{c}"] = float(rec["scalars"][f"threshold_{c}"])
+    return out
+
+
 def figure_first_layer(finals: dict, paths: Paths, suffix: str,
                        n_filters: int = 8) -> bool:
     """(a) The first-layer filters with the largest weight norm, as
@@ -778,11 +856,16 @@ def figure_feature_maps(finals: dict, paths: Paths, suffix: str,
         axes[row, 0].set_ylabel(f"{'block 1' if name == 'first' else 'last block'}"
                                 f"\n({A.shape[1]} ch. x {A.shape[2]})",
                                 fontsize=8)
+    prob = 1 / (1 + np.exp(-maps["logits"]))             # sigmoid, outside
     for j, c in enumerate(classes):
         ax = axes[0, j]
+        k = config.CLASSES.index(c)
+        thr = rec["scalars"].get(f"threshold_{c}")
+        verdict = "" if thr is None else (
+            " > " if prob[j, k] > thr else " ≤ ") + f"threshold {thr:.2f}"
         ax.plot(t, X[j, lead2], color=eda.CLASS_COLOURS[c], linewidth=0.8)
-        ax.set_title(f"{c} (ecg_id {int(cache['ecg_id'][examples[c]])})",
-                     fontsize=9)
+        ax.set_title(f"{c} (ecg_id {int(cache['ecg_id'][examples[c]])})\n"
+                     f"p({c}) = {prob[j, k]:.2f}{verdict}", fontsize=9)
     axes[0, 0].set_ylabel("lead II\n(z-score)", fontsize=8)
     if "cam" in maps:
         cam = maps["cam"]                                  # (n, classes, L)
@@ -814,7 +897,9 @@ def figure_feature_maps(finals: dict, paths: Paths, suffix: str,
 def write_report(fast: bool = False, paths: Paths = Paths(), seeds=SEEDS,
                  cache: dict | None = None) -> dict:
     suffix = "_fast" if fast else ""
-    summary = build_summary(paths, fast, seeds)
+    if find_runs(paths, fast=fast, final=True):
+        cache = dx._load_cache(cache)   # signals of the example records
+    summary = build_summary(paths, fast, seeds, cache)
     path = runlog.write_run(summary, paths.logs)
     print(f"summary: {rel(path)} ({len(summary['scalars'])} numbers)")
 
@@ -832,8 +917,6 @@ def write_report(fast: bool = False, paths: Paths = Paths(), seeds=SEEDS,
     figure_curves(runs, paths, suffix, seeds[0])
     figure_ablations(runs, paths, suffix, seeds)
     figure_first_layer(finals, paths, suffix)
-    if finals:
-        cache = dx._load_cache(cache)   # signals of the example records
     figure_feature_maps(finals, paths, suffix, cache)
     print(f"figures: {rel(paths.figures)}/cnn_*{suffix}.pdf|png")
 

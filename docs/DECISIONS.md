@@ -277,6 +277,11 @@ Proposed by the assistant in chat DL 05 and accepted by OF and MM, who asked for
 - `results/logs/cnn_summary.json` (alias `cnn` in `report/runs.json`, macros `\cnn...`); `report/tables/cnn_ablations.tex` and `cnn_final.tex` (macros only); figures `cnn_curves`, `cnn_ablations`, `cnn_first_layer`, `cnn_feature_maps` (PDF and PNG). With `--fast` the outputs end in `_fast` and git ignores them.
 - Generic helpers (paired bootstrap of two runs, macro names, figure style) are imported from `src/dense_experiments.py`, not copied.
 
+**2026-11-20 (OF + MM, chat DL 05), after the full runs (commit 3f9439f): numbers added to the summary.** No run is repeated and no existing number changes (the summary was rebuilt and its 290 previous numbers came out identical); only `report` is run again.
+- Training loss at epoch 5 for every configuration (`train_loss_ep5_mean_<tag>`) and its mean difference with the reference trained with the same seed (`train_loss_ep5_diff_mean_<tag>`, `n_seeds_train_loss_higher_<tag>`). With patience 5 every run lasts at least 6 epochs, so epoch 5 exists in all runs. Reason: the slides' claim about skip connections is about optimisation (training error), which the validation AUROC does not show. The loss is the training-mode loss logged by the loop (dropout active), so configurations with a different dropout are not comparable on it.
+- First-layer filters of the final model (seed 42): median peak frequency and number of filters peaking below 5 Hz and above 20 Hz (`first_layer_*`).
+- Example records of `cnn_feature_maps`: the probability the final model (seed 42) gives to each record's class and the class threshold (`example_prob_<class>`, `example_threshold_<class>`, `example_ecg_id_<class>`), also printed in the figure's column titles. Reason: some examples are misclassified, and their class activation map must be read with that in mind.
+
 ## Open items
 
 | # | Item | Blocks |

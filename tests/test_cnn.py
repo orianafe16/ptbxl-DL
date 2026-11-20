@@ -359,12 +359,62 @@ def test_summary_selection_and_references(pipeline):
     s = summary["scalars"]
     assert s["val_auroc_mean_base"] == pytest.approx(np.mean(scores["base"]))
     assert s["rf_samples_base"] == 196 and s["rf_samples_depth6"] == 820
+    # --fast runs last 2 epochs: no training loss at EARLY_EPOCH
+    assert not any(k.startswith("train_loss_ep") for k in s)
+    assert s["first_layer_n_filters"] == 32
     assert isinstance(s["params_base"], int)
     assert s["n_seeds_compared_no_bn"] == len(seeds)
     # depth6_no_residual is paired with depth6, not with the baseline
     d = cx.dx.paired_diff(runs[("depth6_no_residual", 42)],
                           runs[("depth6", 42)], "val", 50)
     assert s["diff_s42_depth6_no_residual"] == pytest.approx(d["diff"])
+
+
+def test_summary_early_training_loss():
+    """Training loss at EARLY_EPOCH, minus the reference's with the same
+    seed; a run that stopped before that epoch is left out."""
+    def rec(losses):
+        return {"history": {"train_loss": losses}}
+    assert cx.early_train_loss(rec([0.5, 0.4, 0.3, 0.2, 0.1, 0.05])) == 0.1
+    assert cx.early_train_loss(rec([0.5, 0.4])) is None
+
+
+def test_first_layer_numbers(tmp_path):
+    """Peak frequencies are counted on the saved final model."""
+    torch.manual_seed(0)
+    model = CNN1D()
+    path = tmp_path / "m.pt"
+    torch.save(model.state_dict(), path)
+    finals = {("base", 42): {"model": {"args": cx.BASE_ARGS},
+                             "checkpoint": str(path)}}
+    s = cx.first_layer_numbers(finals)
+    assert s["first_layer_n_filters"] == 32
+    assert 0 <= s["first_layer_peak_hz_median"] <= 50
+    assert s["first_layer_n_peak_below_5hz"] + \
+        s["first_layer_n_peak_above_20hz"] <= 32
+    finals[("base", 42)]["checkpoint"] = str(tmp_path / "missing.pt")
+    assert cx.first_layer_numbers(finals) == {}
+
+
+def test_example_numbers(tmp_path):
+    """Probability of each example record's class, read from the saved
+    validation predictions, with the class threshold."""
+    cache = synthetic_cache()
+    examples = cx.example_records(cache)
+    from src.dataset import split_indices
+    val = split_indices(cache)["val"]
+    prob = np.random.default_rng(0).random((len(val), 5)).astype(np.float32)
+    path = tmp_path / "p.npz"
+    np.savez(path, val_prob=prob, val_ecg_id=cache["ecg_id"][val])
+    rec = {"predictions": str(path),
+           "scalars": {f"threshold_{c}": 0.5 for c in config.CLASSES}}
+    s = cx.example_numbers({("base", 42): rec}, cache)
+    for c, row in examples.items():
+        i = int(np.flatnonzero(val == row)[0])
+        assert s[f"example_ecg_id_{c}"] == int(cache["ecg_id"][row])
+        assert s[f"example_prob_{c}"] == pytest.approx(
+            prob[i, config.CLASSES.index(c)])
+        assert s[f"example_threshold_{c}"] == 0.5
 
 
 def test_tables_use_only_defined_macros(pipeline):
