@@ -33,7 +33,7 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | T7 | Evaluation module: macro AUROC, bootstrap CI, JSON logging, `make_numbers.py` | MM | OF | done | MM (drafted with the assistant) | OF | 2026-11-20 |
 | T8 | Shared training loop (zero_grad, forward, loss, backward, step; train/eval modes) | OF + MM | — | done | OF + MM (drafted with the assistant) | — | 2026-11-20 |
 | T9 | Dense baseline + ablations | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
-| T10 | CNN 1D + ablations | OF | MM | todo | | | |
+| T10 | CNN 1D + ablations | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
 | T11 | LSTM/GRU (+bidirectional) and RNN + attention model + ablations | MM | OF | todo | | | |
 | T12 | Self-attention step by step (single layer, attention maps) and Transformer + ablations | MM | OF | todo | | | |
 | T13 | Transfer learning: ECG-GPT (T23) reused on the 5 superclasses, scratch vs frozen vs fine-tuning, 10% and 100% labels | OF + MM | — | todo | | | |
@@ -97,3 +97,4 @@ No fixed calendar; the team moves on as blocks close. Dependencies:
 - 2026-11-20: T7 and T8 done (evaluation module, task-agnostic training loop, run logs, `make_numbers.py`; DECISIONS D14). 44 tests pass and the end-to-end run of the trivial model produced its JSON log and `numbers.tex` on Oriana's laptop; T7 reviewed by OF.
 - 2026-11-20: T9 done (Dense model, 11 configurations x 3 seeds on validation, final model on test with 3 seeds, summary, tables and figures; DECISIONS D15). Executed by OF on Oriana's laptop; reviewed by MM.
 - 2026-11-20: T7/T8 fix after AI Error Bounty B5 (found in chat DL 04): `git_dirty` now looks only at the code under `src/`, log schema 2 (DECISIONS D14). 77 tests pass on Oriana's laptop; a `--fast` run gives `git_dirty: true` before the commit and `false` after it (commit e3e49ff).
+- 2026-11-20: T10 done (1D CNN, 10 configurations x 3 seeds on validation, final model on test with 3 seeds compared with the final Dense and trivial models, summary, tables and interpretation figures; DECISIONS D16). Executed by OF on Oriana's laptop (runs at commit 3f9439f, report at 7eaf6ec); reviewed by MM.

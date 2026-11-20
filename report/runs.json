@@ -1,5 +1,6 @@
 {
   "eda": "eda",
   "trivial": "trivial_e2e_s42_20261120-183809",
-  "dense": "dense_summary"
+  "dense": "dense_summary",
+  "cnn": "cnn_summary"
 }
