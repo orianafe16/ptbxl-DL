@@ -21,6 +21,11 @@ Checked on 2026-11-14 in `contexto_DL/`.
 | Reviewed first assignment (learning strategies) goes into the PRDL report | Notebooks_GuideLines slides 29-36 |
 | AI use documented; AI Error Bounty | Presentation III |
 | PyTorch details are an explicit topic of the MLLB report | Weekly summary 13/11 |
+| Each DL report starts with a structured summary of at most 3 pages (scope, core methodology, main findings, key conclusions) | Professor's message 20/11 |
+| No overly complex tasks or large state-of-the-art models; focus on methodological clarity, not computational scale | Professor's message 20/11 |
+| The report must explicitly cover three areas: (1) core architectures: CNN, RNN (LSTM and GRU), RNN + attention, self-attention, Transformer; (2) learning strategies: a foundational model trained in a self-supervised way, connected to transfer learning, fine-tuning and zero-shot learning; (3) basic generative AI: at least an autoregressive sequence generator (RNN or Transformer, LLM-like) | Professor's message 20/11 |
+| Class notebooks may be used as examples or built upon | Professor's message 20/11 |
+| Initial draft of the DL reports due on 1 December 2026 | Professor's message 20/11 |
 
 ## D1. Dataset — DECIDED (2026-11-14)
 
@@ -87,6 +92,12 @@ Every model shares the same data pipeline, split, loss, metric and logging, so d
 
 Hyperparameter budgets are kept small and equal across families; the search space and budget are logged per run.
 
+**2026-11-20 (OF + MM, chat DL 00), after the professor's message of 20/11 (D0):**
+- *RNN + attention* is a model of its own, not only a pooling ablation: GRU (or LSTM) with an attention layer over its hidden states, as in the class notebook `TODO_MLLB_Embeddings_GRU_Attention_SentimentAnalysis.ipynb`; the attention weights over time are plotted. Ablation: with vs without attention.
+- *Self-attention* is studied step by step before the full Transformer: a single self-attention layer (no feed-forward block, no stacking) on the ECG patches, then the full encoder block (multi-head attention + FFN + skip connections), following the class notebooks 01-03 of `Transformer_Architecture_Intro`. Ablations add: self-attention layer alone vs full block; attention maps.
+- Dense stays as the baseline (minimum set of Presentation III), with a reduced ablation set if time is short.
+- Ablations remain mandatory; a reduced set is acceptable in the 1 December draft and is completed afterwards.
+
 ## D7. Transfer learning / pre-trained model — DECIDED (2026-11-14)
 
 **We pre-train a model ourselves and transfer it.** Team decision by OF and MM; it has not been confirmed with the professor, so it stays a point to raise in the December class discussion.
@@ -98,6 +109,8 @@ Hyperparameter budgets are kept small and equal across families; the search spac
 - The pre-training never sees validation or test folds.
 
 Optional extension if time allows: transfer the same pre-trained model to a second small ECG dataset (candidate: PhysioNet/CinC Challenge 2017, single lead).
+
+**2026-11-20 (OF + MM, chat DL 00): pretext task decided, O1 closed.** The pre-trained model is the autoregressive ECG model of D13: it is trained without labels to predict the next sample of the signal (self-supervised, GPT-like), which is the "foundational model trained in a self-supervised manner" asked for in the professor's message of 20/11. It is then reused on the 5-superclass task with the same lead as its input (lead II): from scratch vs frozen features (linear probe) vs fine-tuning, with 10% and 100% of the training labels. Pre-training may also use the training-fold records without superclass (D12, rule c). Zero-shot learning does not fit an ECG classifier without a shared text-signal space, so it is covered by theory in the PRDL report and by a short experiment on the class notebook `Notebooks/CLIP/Interacting_with_CLIP.ipynb` (task T24).
 
 Not chosen: a public pre-trained ECG model. Caveats found on 2026-11-14: the open models seen (HuBERT-ECG, ECG-FM) included PTB-XL in their pre-training data, HuBERT-ECG is CC BY-NC 4.0 and its base model has about 93 M parameters.
 
@@ -116,6 +129,7 @@ Reference points to verify through that flow before citing any number:
 - Individual in each report: description of the author's own activities, the detailed analysis of the architectures she owns (D6), her discussion and conclusions, and her AI appendix.
 - The contribution table in the reports is generated from the task log in `PLAN_DL.md`, which records who actually did and who reviewed each task.
 - LaTeX on Overleaf with the template of `ML_ref_*_main.tex.txt`; MLLB keeps Section 0 on the AI environment.
+- **2026-11-20 (OF + MM, chat DL 00), after the professor's message of 20/11 (D0):** every DL report (all four) opens with a structured summary of at most 3 pages: scope, core methodology, main findings, key conclusions. The body is organised around the three areas of D0 (core architectures; learning strategies; generative AI) and kept short: depth goes into the author's own blocks, the rest is summarised and attributed. Each author submits her initial draft by 1 December 2026; the draft contains the results already executed and, for each area, at least the design and what is still missing.
 
 ## D10. AI use — DECIDED
 
@@ -124,7 +138,7 @@ Reference points to verify through that flow before citing any number:
 
 ## D11. Working organisation — DECIDED (2026-11-14)
 
-- The work is split into 13 chats of the Claude project (`CHATS_DL.md`): coordination, data, EDA, evaluation and training loop, one chat per architecture, transfer learning and final comparison, literature, one report chat per author, and review.
+- The work is split into chats of the Claude project (`CHATS_DL.md`; 13 chats on 2026-11-14, plus DL 13 Generative on 2026-11-20): coordination, data, EDA, evaluation and training loop, one chat per architecture, transfer learning and final comparison, literature, one report chat per author, and review.
 - Chats share nothing but the local folder. Coordination files live in the `DL/` root: `DECISIONS.md`, `PLAN_DL.md`, `HANDOFF.md`, `AI_USAGE_LOG.md`, `CHATS_DL.md`.
 - Code and results live in `DL/ptbxl-dl/`, the future public repository. `contexto_DL/` (course material) never goes into it.
 - Each model chat ends with a block note in `ptbxl-dl/docs/blocks/`, which is what the report chats read.
@@ -142,13 +156,28 @@ Decided by OF and MM in chat DL 02.
 - O3, proposed rule: (a) records without superclass stay out of the three splits; (c) chat 08 may use the training-fold ones without labels for pre-training (decided with O1). Closed once the EDA has been run on Oriana's laptop.
 - **2026-11-20 (OF + MM), O3 closed with rule (a) + (c).** Evidence from `python -m src.eda`, run by OF on Oriana's laptop (`results/logs/eda.json`, keys `n_nosuper_*`, `nosuper_per_fold`, `nosuper_codes`): almost all of these records carry a rhythm statement and most carry only rhythm statements (pacemaker, atrial fibrillation, atrial flutter are the most frequent codes); in PTB-XL rhythm statements are not diagnostic, so they give no superclass. A target of five zeros would therefore be a false label ("no pathology"), not a real negative. They are spread evenly over the ten folds, so leaving them out does not unbalance any split. `include_no_superclass=False` (the default of `make_loaders`) stays as it is.
 
+## D13. Generative block and self-supervised pre-training (ECG-GPT) — DECIDED (2026-11-20)
+
+Decided by OF and MM in chat DL 00 after the professor's message of 20/11 (D0, areas 2 and 3). One model serves both areas: it is the autoregressive generator (area 3) and the self-supervised pre-trained model reused in D7 (area 2), so the whole report stays on one use case.
+
+- Input: lead II of PTB-XL at 100 Hz, training folds only (folds 1-8, including the records without superclass, D12 rule c). Validation fold 9 for model selection; fold 10 untouched by generation experiments.
+- Tokens: each sample is quantised into a small vocabulary (256 levels as a starting point), so that the signal becomes a sequence of discrete symbols, like the characters of the class text-generation notebooks. Quantisation scheme (uniform on a clipped range vs mu-law) and clipping range taken from training statistics (`eda.json`, `lead_stats_train`): **[open]**, decided in chat DL 13.
+- Models: a small decoder-only (causal) Transformer and an LSTM, both trained with next-token cross-entropy (teacher forcing). Same data, tokens and budget, so the comparison RNN vs Transformer is fair.
+- Evaluation of the generator: validation cross-entropy and perplexity; generated signals inspected visually and compared with real ones with simple statistics (amplitude distribution; heart rate from R peaks if feasible, **[open]**).
+- Generation: sampling with temperature (and top-k), as in `Notebooks/RNN/Sampling_in_Text_Generation.ipynb`; greedy vs sampling.
+- Ablations: LSTM vs causal Transformer; temperature; context length; vocabulary size; causal mask removed (to show why it is needed).
+- Reuse for D7: the trained network without its next-token head gives the features for the 5-superclass task.
+- Owner: Oriana, reviewer: María (proposed by the assistant in chat DL 00 to balance the blocks; **to be confirmed by OF and MM**).
+- Fallback if the ECG generator does not train within a reasonable time: autoregressive character-level text generation built on the class notebooks (`Sampling_in_Text_Generation.ipynb`, `TO_DO_MLLB_Keras_RNN_TextGeneration.ipynb`, and the "simple autoregressive LLM-style model" of the weekly summary of 20/11), with the pre-training of D7 done separately on ECG.
+
 ## Open items
 
 | # | Item | Blocks |
 |---|---|---|
-| O1 | Pretext task for the pre-training (D7) | Transfer-learning block only |
+| O5 | Weekly summary of 20/11 and the "simple autoregressive LLM-style model" notebook it mentions are not yet in `contexto_DL/` | Chat DL 13 (reference implementation) |
+| O6 | Owner of D13 (generative block): Oriana proposed, to be confirmed | PLAN_DL T23 |
 
-Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository under Oriana's account, 2026-11-20). O3 (records without superclass left out; D12, 2026-11-20).
+Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository under Oriana's account, 2026-11-20). O3 (records without superclass left out; D12, 2026-11-20). O1 (pretext task: autoregressive next-sample prediction, D7 and D13, 2026-11-20).
 
 ## Change log
 
@@ -160,3 +189,4 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-20: folder, location of the coordination files and backup rule (D11). Decided in chat DL 00.
 - 2026-11-20: EDA scope, outputs and data codings (D12). Decided by OF and MM in chat DL 02.
 - 2026-11-20: O3 closed (D12), after running the EDA part 1 on Oriana's laptop. Decided by OF and MM in chat DL 02.
+- 2026-11-20: professor's message of 20/11 added to D0; D6 (RNN + attention model, self-attention study), D7 (pretext task, zero-shot), D9 (3-page summary, three areas, draft by 1 December) amended; D13 (ECG-GPT) added; O1 closed; O5 and O6 opened. Decided in chat DL 00.

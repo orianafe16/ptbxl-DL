@@ -10,9 +10,9 @@ Last update: 2026-11-20.
 
 | | Oriana (OF) | María (MM) |
 |---|---|---|
-| Owns | EDA; Dense; CNN; repository and decisions log | Data loading and split; evaluation protocol; RNN (LSTM/GRU, attention); Transformer |
+| Owns | EDA; Dense; CNN; generative autoregressive model (ECG-GPT, owner to be confirmed); repository and decisions log | Data loading and split; evaluation protocol; RNN (LSTM/GRU) and RNN + attention; self-attention and Transformer |
 | Reviews | MM's blocks | OF's blocks |
-| Shared | Transfer learning; final comparison; cross-cutting ablation (12 leads vs 1 lead) | |
+| Shared | Transfer learning and fine-tuning of the pre-trained ECG-GPT; zero-shot experiment; final comparison; cross-cutting ablation (12 leads vs 1 lead) | |
 | Reports | Own PRDL-DL and MLLB-DL | Own PRDL-DL and MLLB-DL |
 
 "Owns" means: proposes the ablations, runs the experiments, checks the code line by line, reads the related literature and writes that analysis in her report. "Reviews" means: re-reads code and results and signs off, or logs the problem found.
@@ -34,18 +34,21 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | T8 | Shared training loop (zero_grad, forward, loss, backward, step; train/eval modes) | OF + MM | — | todo | | | |
 | T9 | Dense baseline + ablations | OF | MM | todo | | | |
 | T10 | CNN 1D + ablations | OF | MM | todo | | | |
-| T11 | LSTM/GRU (+bidirectional, +attention) + ablations | MM | OF | todo | | | |
-| T12 | Transformer + ablations | MM | OF | todo | | | |
-| T13 | Transfer learning experiment: own pre-training, then scratch vs frozen vs fine-tuning | OF + MM | — | todo | | | |
+| T11 | LSTM/GRU (+bidirectional) and RNN + attention model + ablations | MM | OF | todo | | | |
+| T12 | Self-attention step by step (single layer, attention maps) and Transformer + ablations | MM | OF | todo | | | |
+| T13 | Transfer learning: ECG-GPT (T23) reused on the 5 superclasses, scratch vs frozen vs fine-tuning, 10% and 100% labels | OF + MM | — | todo | | | |
 | T14 | Cross-cutting ablation: 12 leads vs single lead | OF + MM | — | todo | | | |
 | T15 | Final comparison table and figures; comparison with published results | OF + MM | — | todo | | | |
 | T16 | Literature: dataset and CNN-related papers | OF | MM | todo | | | |
 | T17 | Literature: RNN/Transformer-related papers | MM | OF | todo | | | |
 | T18 | Reviewed first assignment (learning strategies) for the PRDL reports | each her own | cross | todo | | | |
-| T19 | PRDL-DL report (theory + critical analysis) | each her own | cross | todo | | | |
-| T20 | MLLB-DL report (Section 0 AI environment, code, training, evaluation) | each her own | cross | todo | | | |
+| T19 | PRDL-DL report (theory + critical analysis), opening with a summary of at most 3 pages | each her own | cross | todo | | | |
+| T20 | MLLB-DL report (Section 0 AI environment, code, training, evaluation), opening with a summary of at most 3 pages | each her own | cross | todo | | | |
 | T21 | `AI_USAGE_LOG.md` and AI Error Bounty sheets | each her own entries | cross | todo | | | |
 | T22 | Adversarial review before delivery; preparation of the class discussion and oral defence | OF + MM | — | todo | | | |
+| T23 | Generative autoregressive model (ECG-GPT): tokenisation of lead II, causal Transformer and LSTM, sampling with temperature, ablations (D13) | OF (to confirm) | MM | todo | | | |
+| T24 | Zero-shot learning: theory and a short experiment on the class CLIP notebook | OF + MM | — | todo | | | |
+| T25 | Initial draft of the DL reports submitted (due 1 December 2026) | each her own | — | todo | | | |
 
 ## Chats
 
@@ -60,20 +63,25 @@ Each task is worked in one chat of the Claude project; names, scope and start pr
 | DL 04 Dense | T9 |
 | DL 05 CNN | T10 |
 | DL 06 RNN | T11 |
-| DL 07 Transformer | T12 |
-| DL 08 Transfer learning and comparison | T13, T14, T15 |
+| DL 07 Self-attention and Transformer | T12 |
+| DL 08 Learning strategies and comparison | T13, T14, T15, T24 |
 | DL 09 Literature | T16, T17, T18 |
 | DL 10 Reports Oriana | T19, T20, T21 (OF) |
 | DL 11 Reports María | T19, T20, T21 (MM) |
 | DL 12 Review and defence | T22 |
+| DL 13 Generative (ECG-GPT) | T23 |
 
 ## Order of work
 
-1. T4 (local structure; T2 and T3 are closed).
-2. T5, T6, T7, T8 (data, EDA, evaluation, training loop).
-3. T9 -> T10 -> T11 -> T12, each with its ablations before moving on.
-4. T13, T14, T15.
-5. T16-T21 run in parallel from step 2; drafts ready for the class discussions in the last two course weeks of December; final reports in January.
+No fixed calendar; the team moves on as blocks close. Dependencies:
+
+1. Data (T4, T5) → EDA (T6) and evaluation/training loop (T7, T8).
+2. Model blocks T9-T12 need T5, T7 and T8; they can run in parallel, one per author at a time.
+3. T23 (ECG-GPT) needs T7 and T8; it reuses the causal attention of T12 if that is ready, but does not depend on it.
+4. T13, T14, T15 need T23 and the model blocks; T24 can be done at any time.
+5. T16-T18 (literature) run in parallel from the start.
+6. T25 (draft, 1 December): drafts T19-T20 with the results executed by then, each of the three areas at least designed.
+7. Afterwards: full ablations, final comparison, final reports (January), T22 before each delivery.
 
 ## Change log
 
@@ -85,3 +93,4 @@ Each task is worked in one chat of the Claude project; names, scope and start pr
 - 2026-11-20: this file moved to `ptbxl-dl/docs/` (DECISIONS D11).
 - 2026-11-20: T1 closed (reviewed by MM, confirmed by OF and MM in chat DL 00).
 - 2026-11-20: T6 done (EDA script, notebook, figures and `results/logs/eda.json`, executed by OF on Oriana's laptop; O3 closed in DECISIONS D12); reviewed by MM.
+- 2026-11-20: plan revised after the professor's message of 20/11: T11, T12, T13, T19, T20 reworded; T23 (ECG-GPT), T24 (zero-shot) and T25 (draft due 1 December) added; chat DL 13 added; no fixed calendar.
