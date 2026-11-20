@@ -30,3 +30,7 @@ Thumbs.db
 *.bbl
 *.blg
 *.synctex.gz
+
+# Smoke-test outputs of the model blocks (e.g. src/dense_experiments.py --fast)
+report/figures/*_fast.*
+report/tables/*_fast.tex

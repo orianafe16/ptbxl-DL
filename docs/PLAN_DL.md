@@ -32,7 +32,7 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | T6 | EDA: class balance, co-occurrence, demographics, signal quality, example traces | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
 | T7 | Evaluation module: macro AUROC, bootstrap CI, JSON logging, `make_numbers.py` | MM | OF | done | MM (drafted with the assistant) | OF | 2026-11-20 |
 | T8 | Shared training loop (zero_grad, forward, loss, backward, step; train/eval modes) | OF + MM | — | done | OF + MM (drafted with the assistant) | — | 2026-11-20 |
-| T9 | Dense baseline + ablations | OF | MM | todo | | | |
+| T9 | Dense baseline + ablations | OF | MM | doing | | | |
 | T10 | CNN 1D + ablations | OF | MM | todo | | | |
 | T11 | LSTM/GRU (+bidirectional) and RNN + attention model + ablations | MM | OF | todo | | | |
 | T12 | Self-attention step by step (single layer, attention maps) and Transformer + ablations | MM | OF | todo | | | |

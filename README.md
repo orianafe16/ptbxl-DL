@@ -63,6 +63,19 @@ metrics with bootstrap intervals, software versions) and
 logs listed in `report/runs.json` into LaTeX macros. Decisions: D4 and D14
 in `docs/DECISIONS.md`.
 
+## Model blocks
+
+Dense network (decision D15): baseline, 11 ablation configurations with 3
+seeds on validation, the final model on the test fold, and the summary log,
+tables (`report/tables/`) and figures of the block.
+
+```
+python -m src.dense_experiments all --fast     # smoke test (not reported)
+python -m src.dense_experiments run            # ablations, validation only
+python -m src.dense_experiments final          # selected model, test fold
+python -m src.dense_experiments report         # summary, tables, figures
+```
+
 ## Setup (Windows, NVIDIA GPU)
 
 ```

@@ -200,6 +200,43 @@ Decided by OF and MM in chat DL 03 (tasks T7 and T8), after the professor's mess
 - Format: integers with a thousands separator (`21{,}799`); other numbers with 3 decimals; keys starting with `frac_` or `prev_` also give a percentage macro with suffix `Pct` and 1 decimal. A value that should print as an integer must be stored as an integer in the JSON.
 - Paths of logs, checkpoints, predictions and figures live in `src/config.py`; `src/eda.py` uses them too.
 
+## D15. Dense block (T9) — DECIDED (2026-11-20)
+
+Proposed by the assistant in chat DL 04 and accepted by OF and MM, who asked for the most suitable option and for the complete (final-version) set of experiments at once. Any value below changes only with a dated entry. Code: `src/models/dense.py`, `src/dense_experiments.py`, `tests/test_dense.py`.
+
+**Architecture**
+- The input (batch, 12, 1000) is flattened into 12,000 numbers, lead after lead. Each first-layer unit compares the whole record with one weight pattern, so a beat that appears at another time meets other weights (no translation invariance). This is the limitation of feed-forward networks that motivates the CNN (weekly summary 30/10).
+- Hidden block: Linear → BatchNorm1d → ReLU → Dropout. Batch norm sits before the activation so that the pre-activations stay "close to the zero region where the activation functions usually work" (weekly summary 30/10); that this is the placement of the original paper (Ioffe and Szegedy 2015) is **[verify]**. The Linear layers keep their bias also with batch norm (redundant but harmless; the logged parameter counts include it). PyTorch's default initialisation.
+- Output: Linear layer with 5 logits, no sigmoid (D2).
+- Baseline: 2 hidden layers of 256 units, batch norm on, dropout 0.5 after each hidden layer, per-lead z-score of the input on (D3). About 3.1 M parameters, 98 % of them in the first layer (12,000 × 256). Dropout 0.5 as the usual rate for hidden layers: **[verify]** (Srivastava et al. 2014, cited on FeedForward slide 42).
+- Training: the D14 defaults, the same for every configuration (Adam, learning rate 1e-3, batch 64, at most 50 epochs, patience 5 on validation macro AUROC, no weight decay, no class weights), so that only the ablated factor changes.
+
+**Ablations.** The baseline has every component switched on; each configuration changes one factor and keeps everything else equal.
+
+| Tag | Factor | Change from the baseline |
+|---|---|---|
+| `base` | — | — |
+| `no_norm` | input scaling | no z-score: raw mV, each lead on its own scale (D3 option) |
+| `no_bn` | batch norm | no batch norm |
+| `no_norm_no_bn` | input scaling × batch norm | both off: the only two-factor configuration, to see whether batch norm after the first layer makes up for the missing input scaling (weekly summary 30/10 links the two) |
+| `no_dropout` | dropout | rate 0 |
+| `dropout02` | dropout | rate 0.2 |
+| `depth1`, `depth3`, `depth4` | depth | 1, 3 or 4 hidden layers of 256 units |
+| `width64`, `width1024` | width | 2 hidden layers of 64 or 1024 units |
+
+**Protocol**
+- Every configuration is run with the three seeds 42, 43 and 44 on validation (33 runs). For this block this replaces the D4 rule "1 seed, 3 if the difference is within the CI": the runs are cheap and three seeds show how much a result moves from seed to seed.
+- Reported per configuration: mean and standard deviation over the seeds of the validation macro AUROC; the patient-bootstrap interval of seed 42; and, for each seed, the paired bootstrap interval of the difference with the baseline trained with the same seed (D14). A factor is said to change the result only when that interval excludes 0; the table shows in how many of the three seeds it is better and in how many worse.
+- Final Dense model: the configuration with the highest mean validation macro AUROC over the three seeds, chosen before the test fold is touched (D3). It is trained again with `--final` for seeds 42, 43 and 44, so the test fold is evaluated once per seed. Reported on test: mean ± SD over the seeds (macro and per class), the intervals of the first seed, and the paired difference with the trivial model (D14) for each seed.
+- Interpretation: the first-layer weights of the final model (seed 42) drawn as 12 × 1000 patterns, for the units with the largest weight norm (FeedForward slides 29-30).
+
+**Outputs**
+- `python -m src.dense_experiments run | final | report` (`all` runs the three steps; `run` and `final` skip what has already been run, so they can be resumed).
+- `results/logs/dense_summary.json`: every number of the block in `scalars`; the script adds the alias `dense` to `report/runs.json`, so the macros are `\dense...`.
+- `report/tables/dense_ablations.tex` and `report/tables/dense_final.tex`: made of macros only, so no number is typed by hand (new folder `report/tables/`).
+- `report/figures/dense_curves`, `dense_ablations`, `dense_first_layer` (PDF and PNG).
+- With `--fast` the same outputs end in `_fast` and git ignores them.
+
 ## Open items
 
 | # | Item | Blocks |
@@ -221,3 +258,4 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-20: O3 closed (D12), after running the EDA part 1 on Oriana's laptop. Decided by OF and MM in chat DL 02.
 - 2026-11-20: professor's message of 20/11 added to D0; D6 (RNN + attention model, self-attention study), D7 (pretext task, zero-shot), D9 (3-page summary, three areas, draft by 1 December) amended; D13 (ECG-GPT) added; O1 closed; O5 and O6 opened. Decided in chat DL 00.
 - 2026-11-20: confidence intervals of the ablations on validation (D4); evaluation module, task-agnostic training loop, run logs and `make_numbers.py` (D14). Decided by OF and MM in chat DL 03.
+- 2026-11-20: Dense block: architecture, ablation grid, three seeds for every ablation, selection of the final model, outputs (D15). Accepted by OF and MM in chat DL 04.
