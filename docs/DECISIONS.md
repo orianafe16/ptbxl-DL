@@ -361,6 +361,89 @@ Why the three "attention ×" configurations: attention was introduced because a 
 - Figures `rnn_curves`, `rnn_ablations`, `rnn_time_gradient`, `rnn_attention` (PDF and PNG). With `--fast` the outputs end in `_fast` and git ignores them.
 - Generic helpers (paired bootstrap, run search, comparison of final models, example records, figure style) are imported from `src/dense_experiments.py` and `src/cnn_experiments.py`, not copied.
 
+## D18. Self-attention and Transformer block (T12) — DECIDED (2026-11-21)
+
+Proposed by the assistant in chat DL 07 and accepted by OF and MM, who asked for the most suitable option and for the complete (final-version) set of experiments at once. T12 is done by MM and reviewed by OF. Same protocol as D15-D17, so the four blocks can be compared. Any value below changes only with a dated entry. Code: `src/models/attention.py` (shared with chat DL 13), `src/models/transformer.py`, `src/transformer_experiments.py`, `tests/test_transformer.py`.
+
+**Input: the signal as a sequence of patches**
+- The record is cut into non-overlapping **patches of 10 samples** (100 ms); each patch (12 leads × 10 samples, flattened lead by lead, exactly as the RNN frames of D17) becomes one token. A Linear layer (120 → d_model) is the patch embedding: the "input embedding" of the architecture slides, with a real-valued patch instead of a word index. It is the same as a `Conv1d` with kernel = stride = 10 (checked by a test). 1000 samples → T = 100 tokens, the same steps as the RNN baseline, so the comparison "attention instead of recurrence" is direct.
+- Patch length is an ablation (5, 25, 50 samples → 200, 40, 20 tokens). One sample per token (1000 tokens) is left out: the attention matrix grows with T² (Part I slides 102-103), and with batch 64, 4 heads and 1000 tokens each attention matrix alone takes about 1 GB per layer, more than the laptop's 4 GB GPU can hold with the copies kept for backpropagation. `estimate` prints the peak GPU memory of every configuration.
+- Per-lead z-score on (D3), not ablated.
+
+**Encoder (the classes of the notebooks `Transformer_Architecture_Intro` 01-05, rewritten for this task)**
+- Scaled dot-product attention written by hand, as in notebooks 01-02: Q = XW_Q, K = XW_K, V = XW_V (Linear layers without bias, as in the notebooks), weights softmax(QKᵀ/√d_k) over the keys, output = weights · V. Multi-head: d_model is split into h heads of d_model/h dimensions, each head attends on its own, the heads are concatenated and mixed by W_O (notebook 02; Part I slides 51-58). Not `nn.MultiheadAttention`, so that every line can be explained; a test checks that our module gives the same output as `nn.MultiheadAttention` with the same weights (the "optional, advanced" cell of notebook 02).
+- Optional causal mask (scores of future keys set to −∞ before the softmax, Part II slides 11-14), unused here and tested, so that chat DL 13 can stack the same blocks as a decoder-only model.
+- Feed-forward network: Linear(d_model, 4·d_model) → GELU → Linear(4·d_model, d_model), applied to every token separately (notebooks 03 and 05; Part I slides 25-27 and 70: attention mixes information between tokens, the MLP within each token, and expands the dimension by 4).
+- Block: **Pre-LN**, x = x + Dropout(MHSA(LN(x))), then x = x + Dropout(FFN(LN(x))), and a final LayerNorm after the last block (notebook 05; Part II slides 35-36: Pre-LN "makes the optimization much easier"; Xiong et al. 2020, arXiv 2002.04745, cited there: **[verify]**). LayerNorm rather than batch norm: it normalises each token over its features, independently of the batch (Part II slides 27-34).
+- **Positional encoding**: sinusoidal, PE(pos, 2i) = sin(pos / 10000^(2i/d)), PE(pos, 2i+1) = cos(·), added to the patch embeddings (Part II slides 18-23). Without it, self-attention does not know the order of the tokens (Part II slide 11): with mean pooling the whole network would give the same output for any shuffling of the patches (checked by a test). Not learned in the baseline because the slides report that learned and sinusoidal encodings give "nearly identical results"; both alternatives are ablations.
+- **Readout**: mean of the token outputs over the sequence (as the class notebook `MLLB_Text_Classification_Transformer.ipynb`, `GlobalAveragePooling1D`; mean pooling was also as good as attention in the RNN, D17). CLS token is an ablation.
+- Head as in D16 and D17: dropout 0.5, then a Linear layer with 5 logits, no sigmoid (D2).
+- **Baseline**: d_model 128, 4 heads (32 dimensions each), 2 blocks, FFN 512, dropout 0.1 on the output of each attention and FFN sub-layer before it is added to the residual stream (rate of the class notebook's Transformer block; that 0.1 is the rate of Vaswani et al. 2017 is **[verify]**), no dropout on the attention weights. About 0.41 M parameters (the log is the reference), between the RNN (0.26 M) and the CNN (0.47 M) baselines. PyTorch's default initialisation; learned position embeddings use `nn.Embedding` as in the class notebook; the CLS token starts at zero.
+
+**Self-attention step by step (area 1 of the professor's message; D6 entry of 20/11)**
+
+The study rebuilds the block one component at a time, in the order of the class notebooks, each step trained like every other configuration:
+1. `sa_single`: a single self-attention layer with **one head**, no W_O, no residual connection, no LayerNorm, no FFN (notebook 01's `SelfAttention`), then mean pooling and the head. With mean pooling this model is exactly an attention pooling: its output is Σ_j ā_j v_j, where ā_j is the attention that patch j receives, averaged over the queries. So ā is the pooling weight of patch j, like α_t in the RNN + attention model (D17), but computed by comparing patches with each other instead of with a learned query (checked by a test).
+2. `mhsa`: 4 heads and W_O (notebook 02).
+3. `no_ffn`: plus "Add & Norm" (residual connection and Pre-LN).
+4. `layers1`: plus the FFN = one complete Transformer block (notebooks 03, 05).
+5. `base`: two blocks.
+
+Part I slides 73 and 85 state that attention alone is a "linear(ish) mixing" of the inputs and that the FFN supplies the non-linear computation; steps 1-4 test this on the ECG.
+
+**Training**
+- D14 defaults, as D15-D17 (Adam, learning rate 1e-3, batch 64, at most 50 epochs, patience 5 on validation macro AUROC, no weight decay, no class weights), plus gradient clipping at total norm 1.0 as in D17, the same in every configuration and not ablated. No learning-rate warm-up: Pre-LN is the variant meant to train without it (Part II slide 36), and the `post_ln` ablation shows what happens to the original placement under the same schedule. If the full baseline does not train (validation AUROC stuck near 0.5), this is revised with a dated entry before any other run.
+- `CUBLAS_WORKSPACE_CONFIG=:4096:2` as in D17 (attention is made of matrix products, which run on cuBLAS), written to each log.
+
+**Ablations.** One factor at a time; "reference" is the configuration each one is compared with (paired bootstrap, D14).
+
+| Tag | Factor | Change | Reference |
+|---|---|---|---|
+| `base` | — | Pre-LN, 2 blocks, d_model 128, 4 heads, patches of 10 (100 tokens), sinusoidal encoding, mean | — |
+| `sa_single` | step by step: heads and W_O | 1 layer, 1 head, no W_O, no Add & Norm, no FFN | `mhsa` |
+| `mhsa` | step by step: Add & Norm | 1 layer, 4 heads + W_O, no Add & Norm, no FFN | `no_ffn` |
+| `no_ffn` | step by step: FFN | 1 layer with Add & Norm, no FFN | `layers1` |
+| `layers1` | depth | 1 complete block | `base` |
+| `layers4` | depth | 4 blocks | `base` |
+| `heads1`, `heads8` | heads | 1 head (128 dimensions) or 8 heads (16 dimensions); same number of parameters | `base` |
+| `no_pos` | positional encoding | none: the network sees a bag of patches | `base` |
+| `learned_pos` | positional encoding | learned position embeddings (class notebook) | `base` |
+| `patch5`, `patch25`, `patch50` | patch length | 200, 40 or 20 tokens | `base` |
+| `cls` | readout | CLS token (a learned token prepended to the patches; its output feeds the head) | `base` |
+| `post_ln` | LayerNorm placement | Post-LN, x = LN(x + sub-layer(x)), the original Transformer and the class text notebook; no final LayerNorm | `base` |
+
+In the step-by-step rows the Δ is the effect of *removing* the component (the configuration minus the next step). "Add & Norm" (residual + LayerNorm) counts as one factor, as one box of the architecture diagram (Part I slide 10). One extra paired comparison is reported: `sa_single` vs `layers1` (one self-attention layer vs one complete block), the comparison D6 names.
+
+**Protocol** (as D15-D17)
+- Every configuration with seeds 42, 43, 44 on validation (45 runs). Reported per configuration: mean ± SD of the validation macro AUROC, the patient-bootstrap interval of seed 42, and for each seed the paired interval of the difference with its reference trained with the same seed; a factor changes the result only when that interval excludes 0 (table: seeds better / worse). Training loss at epoch 5 and its difference with the reference, as D16 and D17.
+- **One final model**: the configuration with the highest mean validation macro AUROC among the fifteen, fixed now, before the test fold is touched (D3), trained again with `--final` for seeds 42, 43, 44. The step-by-step study is a validation study: its models do not go to the test fold unless one of them is selected.
+- Reported on test: mean ± SD over the seeds (macro and per class), the intervals of the first seed, and for each seed the paired difference with the final CNN (D16), the final RNN and the final RNN + attention (D17), the final Dense (D15) and the trivial model (all on the whole test fold; skipped with `--fast`).
+- Before the long run, `python -m src.transformer_experiments estimate` measures time per batch and peak GPU memory of every configuration.
+
+**Interpretation** (seed-42 model of each configuration unless stated)
+- *Patch order* (new): validation macro AUROC with the patches of every record shuffled (the same random permutation of the T patches for all leads of a record, drawn with seed 42), minus the normal validation AUROC. It shows how much a model uses the order of the patches. It is 0 by construction for `no_pos` (bag of patches), which the summary also checks.
+- *Input sensitivity over time*: the same analysis as D17 (|∂ logit / ∂ input| over the 10 s, 512 validation records drawn with seed 42), so it can be set beside the RNN's: a recurrent network that reads its last state depends mostly on the end of the record; self-attention has no such built-in recency.
+- *Attention statistics* (`transformer_attention.tex`), over the whole validation fold, for the first and the last layer, heads averaged, patch tokens only (with `cls` the CLS row and column are left out and the rows renormalised):
+  - mean attention distance: Σ_j α_ij |i − j| in seconds, averaged over queries, heads and records, beside its value for uniform weights; small = local attention, like a convolution;
+  - normalised entropy of each query's weights, H(α_i·) / log T (1 = uniform);
+  - share of each query's weight on its own patch (the diagonal);
+  - normalised entropy of the attention received, ā_j (the pooling weight of `sa_single`, see above).
+- *Attention over the ECG* (`transformer_attention`): lead II of the same five validation records as D16 and D17 (one per superclass), with ā_j of each patch drawn as bars, for `sa_single` (row 1) and the final model's last layer (row 2). Probabilities and thresholds in the column titles, as D16 and D17.
+- *Attention maps* (`transformer_attention_maps`): the full T × T maps (query time × key time, in seconds) of one of those records: `sa_single`; the final model's first and last layer (heads averaged); and each head of its last layer (at most four).
+- Learning curves (`transformer_curves`: baseline losses; validation AUROC of the step-by-step configurations; training loss with Pre-LN vs Post-LN) and the ablation figure (`transformer_ablations`) as in D16 and D17.
+
+**Outputs**
+- `python -m src.transformer_experiments estimate | run | final | report | all` (`all` = run + final + report; `run` and `final` skip what has already been run).
+- `results/logs/transformer_summary.json` (alias `transformer` in `report/runs.json`, macros `\transformer...`).
+- Tables (macros only): `report/tables/transformer_ablations.tex`, `transformer_attention.tex`, `transformer_final.tex`. The final table also uses `\cnn...`, `\rnn...`, `\dense...` and `\trivial...` macros.
+- Figures `transformer_curves`, `transformer_ablations`, `transformer_time_gradient`, `transformer_attention`, `transformer_attention_maps` (PDF and PNG). With `--fast` the outputs end in `_fast` and git ignores them.
+- Generic helpers are imported from `src/dense_experiments.py`, `src/cnn_experiments.py` and `src/rnn_experiments.py`, not copied.
+
+**Not chosen**
+- A convolutional stem before the encoder: the best RNN was such a hybrid (D17), and the final Transformer would then compare "CNN + attention" with the CNN. The block studies attention itself.
+- `nn.TransformerEncoderLayer`: it hides the attention weights and the order of the operations that the defence asks about.
+- Learning-rate warm-up, weight decay, AdamW: they would make this block's training differ from the other three.
+
 ## Open items
 
 | # | Item | Blocks |
@@ -386,3 +469,4 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-20: `git_dirty` restricted to the code under `src/`; log schema 2 (D14). Decided by OF and MM in chat DL 03, after AI Error Bounty B5.
 - 2026-11-20: CNN block: architecture, ablation grid with references, three seeds, selection of the final model, comparison with the final Dense model, interpretation figures, outputs (D16). Accepted by OF and MM in chat DL 05.
 - 2026-11-21: RNN block: input as 100 frames, LSTM/GRU, readouts (last state, mean, attention), RNN + attention as a second final model, gradient clipping, ablation grid with references, interpretation (input sensitivity over time, attention weights), outputs (D17). Accepted by OF and MM in chat DL 06.
+- 2026-11-21: Self-attention and Transformer block: patch tokens, hand-written multi-head attention shared with chat DL 13 (optional causal mask), Pre-LN encoder, self-attention study step by step, ablation grid with references, one final model, comparison with the final CNN, RNN, RNN + attention and Dense, interpretation (patch order, input sensitivity, attention statistics and maps), outputs (D18). Accepted by OF and MM in chat DL 07.

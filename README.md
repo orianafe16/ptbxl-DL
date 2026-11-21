@@ -105,6 +105,24 @@ python -m src.rnn_experiments final            # selected models, test fold
 python -m src.rnn_experiments report           # summary, tables, figures
 ```
 
+Self-attention and Transformer (decision D18): a Pre-LN Transformer encoder
+over 100 patches of 100 ms, with multi-head self-attention written by hand
+(`src/models/attention.py`, also usable with a causal mask), a step-by-step
+study of self-attention (one head alone, several heads, Add & Norm, FFN, a
+second block), 15 configurations (depth, heads, positional encoding, patch
+length, CLS token, LayerNorm placement) with 3 seeds on validation, the
+final model on the test fold compared with the final CNN, RNN, RNN +
+attention, Dense and trivial models, and interpretation (patch order, input
+sensitivity over time, attention statistics and maps).
+
+```
+python -m src.transformer_experiments estimate   # run time and GPU memory
+python -m src.transformer_experiments all --fast # smoke test (not reported)
+python -m src.transformer_experiments run        # ablations, validation only
+python -m src.transformer_experiments final      # selected model, test fold
+python -m src.transformer_experiments report     # summary, tables, figures
+```
+
 ## Setup (Windows, NVIDIA GPU)
 
 ```
