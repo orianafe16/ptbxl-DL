@@ -309,6 +309,10 @@ def test_persistence_and_quantisation_errors():
     assert gx.persistence_rmse_uv(x) == pytest.approx(3.0)
     tok = gx.make_tokenizer(-1280, 2560)
     assert gx.quantisation_rmse_uv(x, tok) == pytest.approx(0.0, abs=1e-3)
+    coarse = gx.make_tokenizer(-1280, 256)                   # 10 uV levels
+    y = np.array([[0.0, 0.004, 5.0]])                        # 5 mV: clipped
+    assert gx.quantisation_rmse_uv(y, coarse) > 1000
+    assert gx.quantisation_rmse_uv(y, coarse, in_range_only=True) <= 4.5
 
 
 # ------------------------------------------------------- sampling, generation
@@ -519,6 +523,18 @@ def test_tables_use_only_defined_macros(pipeline):
         text = (paths.tables / name).read_text(encoding="utf-8")
         used = set(re.findall(r"\\(generative\w+)\{\}", text))
         assert used and used <= defined, (name, used - defined)
+
+
+def test_examples_come_from_the_validation_records_in_use():
+    cache = synthetic_ecg_cache()
+    data = gx.GenData(cache, fast=True)
+    ex = ge._example_rows(data, cache)
+    assert ex and all(0 <= i < len(data.idx["val"]) for i in ex.values())
+    full = gx.GenData(cache)
+    same = ge.cx.example_records(cache)       # D16-D18 records, whole fold
+    got = {c: int(full.idx["val"][i])
+           for c, i in ge._example_rows(full, cache).items()}
+    assert got == same
 
 
 def test_figures_written(pipeline):

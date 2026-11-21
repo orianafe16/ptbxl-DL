@@ -257,7 +257,7 @@ def estimate(cache: dict | None = None, n_steps: int = 10,
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"device {device}; {len(data.idx['train'])} training records, "
           f"{len(data.idx['val'])} validation records")
-    print(f"\n{'configuration':<14}{'L':>5}{'V':>6}{'params':>9}"
+    print(f"\n{'configuration':<14}{'L':>5}{'V':>6}{'params':>11}"
           f"{'train ms':>10}{'eval ms':>9}{'GPU MB':>8}{'s/epoch':>9}"
           f"  minutes per run at {', '.join(map(str, epochs))} epochs")
     out = {}
@@ -279,7 +279,7 @@ def estimate(cache: dict | None = None, n_steps: int = 10,
         out[ab.tag] = per_epoch
         n_par = sum(p.numel() for p in model.parameters())
         mins = "  ".join(f"{per_epoch * e / 60:6.1f}" for e in epochs)
-        print(f"{ab.tag:<14}{ab.context:>5}{ab.vocab:>6}{n_par:>9,}"
+        print(f"{ab.tag:<14}{ab.context:>5}{ab.vocab:>6}{n_par:>11,}"
               f"{1000 * t_tr:>10.1f}{1000 * t_ev:>9.1f}{mem:>8.0f}"
               f"{per_epoch:>9.1f}  {mins}")
         del model
@@ -383,6 +383,8 @@ def baseline_numbers(data: gx.GenData) -> dict:
         nb = gx.ngram_bits(data.tokens(v, "train"), data.tokens(v, "val"), tok)
         s[f"delta_uv_v{v}"] = int(tok.delta_uv)
         s[f"quant_rmse_uv_v{v}"] = gx.quantisation_rmse_uv(data.mv["val"], tok)
+        s[f"quant_rmse_inrange_uv_v{v}"] = gx.quantisation_rmse_uv(
+            data.mv["val"], tok, in_range_only=True)
         for k in ("unigram_bits", "bigram_bits", "unigram_ce", "bigram_ce"):
             s[f"{k}_v{v}"] = nb[k]
     s["uniform_bits"] = math.log2(gx.SPAN_UV)
@@ -796,13 +798,25 @@ def figure_context(runs: dict, summary: dict, paths: Paths, suffix: str,
     return True
 
 
-def _example_rows(data: gx.GenData, cache: dict | None) -> dict:
-    """class -> position in data.mv["val"] of the example record of D16-D18
-    (one validation record per superclass, seed 42)."""
+def _example_rows(data: gx.GenData, cache: dict | None,
+                  seed: int = config.SEED) -> dict:
+    """class -> position in data.mv["val"] of one validation record with
+    that superclass only, drawn with the seed. Same rule and draws as
+    cnn_experiments.example_records, so with the whole validation fold
+    these are the example records of D16-D18; with --fast they are drawn
+    from the subset."""
     if cache is None:
         return {}
-    pos = {int(r): i for i, r in enumerate(data.idx["val"])}
-    return {c: pos[r] for c, r in cx.example_records(cache).items() if r in pos}
+    val = data.idx["val"]
+    y = cache["y"][val]
+    single = y.sum(axis=1) == 1
+    rng = np.random.default_rng(seed)
+    out = {}
+    for j, c in enumerate(config.CLASSES):
+        rows = np.flatnonzero(single & (y[:, j] == 1))
+        if len(rows):
+            out[c] = int(rng.choice(rows))
+    return out
 
 
 def figure_samples(runs: dict, summary: dict, data: gx.GenData,

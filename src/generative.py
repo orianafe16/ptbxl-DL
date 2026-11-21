@@ -437,11 +437,19 @@ def persistence_rmse_uv(val_mv: np.ndarray) -> float:
     return float(np.sqrt(np.mean((u[:, 1:] - u[:, :-1]) ** 2)))
 
 
-def quantisation_rmse_uv(val_mv: np.ndarray, tokenizer: Tokenizer) -> float:
-    """RMSE (uV) between the signal and decode(encode(signal)), clipping
-    included."""
-    rec = tokenizer.decode(tokenizer.encode(val_mv)).astype(np.float64)
-    return float(np.sqrt(np.mean((rec - val_mv) ** 2)) * 1000.0)
+def quantisation_rmse_uv(val_mv: np.ndarray, tokenizer: Tokenizer,
+                         in_range_only: bool = False) -> float:
+    """RMSE (uV) between the signal and decode(encode(signal)). By default
+    clipped samples are included (their error can be large); with
+    in_range_only only the samples inside the range count, whose error is
+    at most (Delta - 1) / 2 uV."""
+    x = np.asarray(val_mv, dtype=np.float64)
+    err = tokenizer.decode(tokenizer.encode(x)).astype(np.float64) - x
+    if in_range_only:
+        u = np.rint(x * 1000.0)
+        err = err[(u >= tokenizer.lo_uv)
+                  & (u <= tokenizer.lo_uv + tokenizer.span_uv - 1)]
+    return float(np.sqrt(np.mean(err ** 2)) * 1000.0)
 
 
 # ---------------------------------------------------------------------------
