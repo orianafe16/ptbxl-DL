@@ -89,6 +89,22 @@ python -m src.cnn_experiments final            # selected model, test fold
 python -m src.cnn_experiments report           # summary, tables, figures
 ```
 
+Recurrent networks (decision D17): LSTM and GRU reading the record as 100
+frames of 100 ms, an RNN + attention model, 12 ablation configurations
+(cell, depth, direction, last state / mean / attention, attention score,
+convolutional front end, 1000 raw steps) with 3 seeds on validation, two
+final models on the test fold compared with the final CNN, Dense and
+trivial models, and interpretation figures (input sensitivity over time,
+attention weights).
+
+```
+python -m src.rnn_experiments estimate         # expected run time on this GPU
+python -m src.rnn_experiments all --fast       # smoke test (not reported)
+python -m src.rnn_experiments run              # ablations, validation only
+python -m src.rnn_experiments final            # selected models, test fold
+python -m src.rnn_experiments report           # summary, tables, figures
+```
+
 ## Setup (Windows, NVIDIA GPU)
 
 ```

@@ -4,7 +4,7 @@ Team: Oriana Ferraz De Jesus, María Martínez García-Taheño.
 Rule: decisions are written here **before** any code. A decision changes only by adding a dated entry, never by silently editing an old one.
 Tags: **[verify]** = not yet checked against the primary source. **[open]** = not decided.
 
-Last update: 2026-11-20.
+Last update: 2026-11-21.
 
 ## D0. Course requirements this plan must satisfy
 
@@ -282,6 +282,85 @@ Proposed by the assistant in chat DL 05 and accepted by OF and MM, who asked for
 - First-layer filters of the final model (seed 42): median peak frequency and number of filters peaking below 5 Hz and above 20 Hz (`first_layer_*`).
 - Example records of `cnn_feature_maps`: the probability the final model (seed 42) gives to each record's class and the class threshold (`example_prob_<class>`, `example_threshold_<class>`, `example_ecg_id_<class>`), also printed in the figure's column titles. Reason: some examples are misclassified, and their class activation map must be read with that in mind.
 
+## D17. RNN block (T11) — DECIDED (2026-11-21)
+
+Proposed by the assistant in chat DL 06 and accepted by OF and MM, who asked for the most suitable option and for the complete (final-version) set of experiments at once. T11 is done by MM and reviewed by OF. Same protocol as D15 and D16, so the three blocks can be compared. Any value below changes only with a dated entry. Code: `src/models/rnn.py`, `src/rnn_experiments.py`, `tests/test_rnn.py`.
+
+**Input: the signal as a sequence**
+- An RNN reads one vector per time step: `nn.LSTM(batch_first=True)` expects (batch, time, features), the opposite axis order of `Conv1d` (batch, channels, time), so the record is permuted (weekly summary 13/11).
+- Baseline: non-overlapping **frames of 10 samples** (100 ms). At each step the RNN receives the 12 leads × 10 samples of one frame as a vector of 120 numbers, and the 10 s record becomes 100 steps. D6 wrote "(downsampled) sequence"; frames shorten the sequence in the same way without discarding any sample. Downsampling by 4 (25 Hz) would remove everything above 12.5 Hz, where the first CNN layer still kept filters (D16). Backpropagation through time then runs over 100 steps instead of 1000 (RNN slides 40-48: the unfolded network is a very deep feed-forward network with shared weights, and gradients vanish as they go back in time).
+- Ablation `raw`: one sample per step (12 numbers, 1000 steps).
+- Ablation `conv`: a **convolutional front end**, the first three blocks of the CNN baseline (`ConvBlock`, D16: 32, 64, 128 channels, kernel 7, batch norm, residual), turns the record into 125 steps of 128 features (one step every 8 samples, each seeing 92 input samples). The RNN reads that sequence: a CNN feature extractor followed by an LSTM (RNN slide 80).
+- Per-lead z-score on (D3), not ablated.
+- No padding: every record has 1000 samples, so all sequences have the same length and `pack_padded_sequence` is not needed (weekly summary 13/11 warns that zero padding is processed as real input).
+
+**Recurrent network**
+- Baseline: `nn.LSTM`, 2 stacked layers of 128 units, unidirectional, `batch_first=True`. The `dropout` argument of `nn.LSTM` only acts between stacked layers (PyTorch documentation; class notebook `MLLB_Pytorch_Embeddings_RNN_SentimentAnalysis.ipynb`) and is left at 0. PyTorch's default initialisation.
+- Readout: how the sequence of hidden states becomes one vector for the classifier.
+  - `last` (baseline, D6): final hidden state of the top layer, `h_n[-1]`, equal to `out[:, -1, :]` for a unidirectional network: the non-autoregressive output of weekly summary 6/11. Bidirectional: concatenation of the top layer's forward final state (`h_n[-2]`, which has read the record left to right) and backward final state (`h_n[-1]`, which has read it right to left; it sits at `out[:, 0, hidden:]`, not at `out[:, -1, :]`). Per the PyTorch documentation, forward and backward are directions 0 and 1. Checked in `tests/test_rnn.py`.
+  - `mean`: mean of `out` over time (the pooling suggested at the end of the PyTorch RNN notebook).
+  - `attention`: attention pooling over `out` (below).
+- Head as in the CNN (D16): dropout 0.5, then a Linear layer with 5 logits and no sigmoid (D2).
+- Baseline: 260,741 parameters (formula checked by a test; the log is the reference), about half of the CNN baseline.
+
+**RNN + attention (the model of its own required by D6, entry of 20/11)**
+- As in the class notebook `TODO_MLLB_Embeddings_GRU_Attention_SentimentAnalysis.ipynb`: one score per time step, a softmax over time gives weights α_t ≥ 0 that sum to 1, and the context vector Σ α_t h_t replaces the last state as the input of the classifier. In translation (Attention slides 12-15) the score compares the decoder state (query) with each encoder state (key). A classifier has no decoder, so the query is a learned vector, the same for every record, as in the notebook.
+- Score of the attention configurations: additive (Bahdanau) attention, e_t = vᵀ tanh(W h_t + b), with a hidden layer of 64 units (Attention slide 22: "a feed-forward network with a single hidden layer").
+- Ablation `attn_tanh`: the notebook's score, e_t = tanh(wᵀ h_t + b) (`Dense(1, activation='tanh')`). Its scores lie in [-1, 1], so no weight can be more than e² ≈ 7.4 times another. With 100 steps the largest possible weight is 1 / (1 + 99 e⁻²) ≈ 0.069, against a uniform 0.01. This configuration tests whether that bound pushes the attention towards mean pooling.
+
+**Training**
+- D14 defaults, as D15 and D16: Adam with learning rate 1e-3, batch 64, at most 50 epochs, patience 5 on validation macro AUROC, no weight decay, no class weights.
+- Added for every configuration: **gradient clipping** at a total norm of 1.0 (RNN slide 49: exploding gradients, "clip or normalize values of the gradients"). The value 1.0 is our choice and is not tuned. Clipping is the same in every configuration, so it does not change the comparisons, and it is not ablated.
+- GPU determinism: the PyTorch documentation of `nn.LSTM` warns of non-determinism of RNN functions on some cuDNN/CUDA versions and suggests `CUBLAS_WORKSPACE_CONFIG=:4096:2`. `src/rnn_experiments.py` sets it before CUDA starts (unless it is already set) and writes it to each run's log. The D14 tolerance still applies.
+
+**Ablations.** One factor at a time; "reference" is the configuration each one is compared with (paired bootstrap, D14). The 1000-step configurations run last because they are the slowest.
+
+| Tag | Factor | Change | Reference |
+|---|---|---|---|
+| `base` | — | LSTM 2 × 128, unidirectional, 100 frames of 100 ms, last state | — |
+| `gru` | cell | GRU instead of LSTM | `base` |
+| `layers1` | depth | 1 recurrent layer | `base` |
+| `bi` | direction | bidirectional (128 units per direction) | `base` |
+| `mean` | readout | mean of the states over time | `base` |
+| `attn` | readout | additive attention | `base` |
+| `attn_tanh` | attention score | the notebook's tanh score | `attn` |
+| `gru_attn` | attention × cell | GRU + additive attention (the architecture of the class notebook) | `gru` |
+| `bi_attn` | attention × direction | bidirectional + additive attention | `bi` |
+| `conv` | input | convolutional front end (125 steps of 128 features) | `base` |
+| `raw` | sequence length | one sample per step (1000 steps) | `base` |
+| `raw_attn` | attention × sequence length | 1000 steps + additive attention | `raw` |
+
+Why the three "attention ×" configurations: attention was introduced because a single final vector is a bottleneck for long sequences (Attention slide 12). If that is what happens here, attention should help more where the last state struggles: with 1000 steps more than with 100, and less in a bidirectional network, whose summary already contains a state that has read the beginning of the record.
+
+**Protocol** (as D15 and D16)
+- Every configuration with seeds 42, 43, 44 on validation (36 runs). Reported per configuration: mean ± SD of the validation macro AUROC, the patient-bootstrap interval of seed 42, and for each seed the paired interval of the difference with its reference trained with the same seed. A factor changes the result only when that interval excludes 0; the table shows in how many seeds it is better and in how many worse. The training loss at epoch 5 and its difference with the reference are logged too, as in D16.
+- **Two final models**, both chosen by rules fixed now, before the test fold is touched (D3):
+  1. the final RNN: the configuration with the highest mean validation macro AUROC among all twelve (same rule as D15 and D16);
+  2. the final RNN + attention: the highest mean among the five attention configurations (`attn`, `attn_tanh`, `gru_attn`, `bi_attn`, `raw_attn`).
+
+  When the two coincide there is only one final model. Each is trained again with `--final` for seeds 42, 43, 44.
+- Reported on test: mean ± SD over the seeds (macro and per class), the intervals of the first seed, and for each seed the paired difference of the final RNN with the final CNN (D16), the final Dense (D15) and the trivial model. If the attention model is different, also its paired differences with the final RNN and with the final CNN.
+- Before the long run, `python -m src.rnn_experiments estimate` measures the time per batch of every configuration on the laptop's GPU and prints the expected duration.
+
+**Interpretation**
+- *Input sensitivity over time* (`rnn_time_gradient`): for the seed-42 model of every configuration we take |∂ logit_c / ∂ x(lead, t)|, sum it over the leads, average it over the 5 classes and over 512 validation records drawn with seed 42, and normalise it to sum 1 over the 10 s. It shows which part of the record the output depends on. With the last state of a unidirectional RNN, vanishing gradients (slide 48) should concentrate it at the end of the record; bidirectional, mean and attention readouts should spread it. Summary numbers: share in the first and in the last 2 s (0.2 each if uniform), and the shortest final window that holds half of it (5 s if uniform). It is computed on the CPU in eval mode (dropout off), because cuDNN only runs the backward pass of an RNN in training mode.
+- *Attention weights* (`rnn_attention`), seed-42 run of the final RNN + attention: lead II of the same five validation records as the CNN feature maps (one per superclass, D16), with α_t of each step drawn as bars. A second row shows the same records with the other score function (`attn_tanh` or `attn`, seed-42 ablation run).
+- Attention statistics (`rnn_attention.tex`), for every attention configuration, seed 42, over the whole validation fold:
+  - normalised entropy H(α) / log T (1 = uniform, i.e. the same as mean pooling);
+  - effective number of attended steps, exp(H);
+  - mean of the largest weight;
+  - Spearman correlation between α_t and the signal's activity in that step (mean absolute sample-to-sample change over the 12 z-scored leads), averaged over the records.
+
+  The correlation is our proxy for "attention goes where the signal changes fast", such as the QRS complexes; it is not a QRS detector.
+- Learning curves (`rnn_curves`) and the ablation figure (`rnn_ablations`) as in D16.
+
+**Outputs**
+- `python -m src.rnn_experiments estimate | run | final | report | all` (`all` = run + final + report; `run` and `final` skip what has already been run, so they can be resumed).
+- `results/logs/rnn_summary.json` (alias `rnn` in `report/runs.json`, macros `\rnn...`).
+- Tables (macros only): `report/tables/rnn_ablations.tex`, `rnn_attention.tex`, `rnn_final.tex`. The final table also uses `\cnn...`, `\dense...` and `\trivial...` macros.
+- Figures `rnn_curves`, `rnn_ablations`, `rnn_time_gradient`, `rnn_attention` (PDF and PNG). With `--fast` the outputs end in `_fast` and git ignores them.
+- Generic helpers (paired bootstrap, run search, comparison of final models, example records, figure style) are imported from `src/dense_experiments.py` and `src/cnn_experiments.py`, not copied.
+
 ## Open items
 
 | # | Item | Blocks |
@@ -306,3 +385,4 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-20: Dense block: architecture, ablation grid, three seeds for every ablation, selection of the final model, outputs (D15). Accepted by OF and MM in chat DL 04.
 - 2026-11-20: `git_dirty` restricted to the code under `src/`; log schema 2 (D14). Decided by OF and MM in chat DL 03, after AI Error Bounty B5.
 - 2026-11-20: CNN block: architecture, ablation grid with references, three seeds, selection of the final model, comparison with the final Dense model, interpretation figures, outputs (D16). Accepted by OF and MM in chat DL 05.
+- 2026-11-21: RNN block: input as 100 frames, LSTM/GRU, readouts (last state, mean, attention), RNN + attention as a second final model, gradient clipping, ablation grid with references, interpretation (input sensitivity over time, attention weights), outputs (D17). Accepted by OF and MM in chat DL 06.

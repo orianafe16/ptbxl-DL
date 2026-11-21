@@ -4,7 +4,7 @@ Team: Oriana Ferraz De Jesus (OF), María Martínez García-Taheño (MM).
 Dataset: PTB-XL 1.0.3, 5 diagnostic superclasses (see `DECISIONS.md`).
 Working mode: both work together on Oriana's laptop. The assistant writes code, figures and report drafts and explains each technique; OF/MM execute, check and decide. No result counts until one of us has run it.
 
-Last update: 2026-11-20.
+Last update: 2026-11-21.
 
 ## Roles
 
@@ -34,7 +34,7 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | T8 | Shared training loop (zero_grad, forward, loss, backward, step; train/eval modes) | OF + MM | — | done | OF + MM (drafted with the assistant) | — | 2026-11-20 |
 | T9 | Dense baseline + ablations | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
 | T10 | CNN 1D + ablations | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
-| T11 | LSTM/GRU (+bidirectional) and RNN + attention model + ablations | MM | OF | todo | | | |
+| T11 | LSTM/GRU (+bidirectional) and RNN + attention model + ablations | MM | OF | doing | | | |
 | T12 | Self-attention step by step (single layer, attention maps) and Transformer + ablations | MM | OF | todo | | | |
 | T13 | Transfer learning: ECG-GPT (T23) reused on the 5 superclasses, scratch vs frozen vs fine-tuning, 10% and 100% labels | OF + MM | — | todo | | | |
 | T14 | Cross-cutting ablation: 12 leads vs single lead | OF + MM | — | todo | | | |
@@ -98,3 +98,4 @@ No fixed calendar; the team moves on as blocks close. Dependencies:
 - 2026-11-20: T9 done (Dense model, 11 configurations x 3 seeds on validation, final model on test with 3 seeds, summary, tables and figures; DECISIONS D15). Executed by OF on Oriana's laptop; reviewed by MM.
 - 2026-11-20: T7/T8 fix after AI Error Bounty B5 (found in chat DL 04): `git_dirty` now looks only at the code under `src/`, log schema 2 (DECISIONS D14). 77 tests pass on Oriana's laptop; a `--fast` run gives `git_dirty: true` before the commit and `false` after it (commit e3e49ff).
 - 2026-11-20: T10 done (1D CNN, 10 configurations x 3 seeds on validation, final model on test with 3 seeds compared with the final Dense and trivial models, summary, tables and interpretation figures; DECISIONS D16). Executed by OF on Oriana's laptop (runs at commit 3f9439f, report at 7eaf6ec); reviewed by MM.
+- 2026-11-21: T11 started in chat DL 06 (DECISIONS D17: LSTM/GRU over 100 frames, RNN + attention as a second final model, 12 configurations x 3 seeds). Done by MM, reviewed by OF; runs on Oriana's laptop.
