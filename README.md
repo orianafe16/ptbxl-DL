@@ -123,6 +123,25 @@ python -m src.transformer_experiments final      # selected model, test fold
 python -m src.transformer_experiments report     # summary, tables, figures
 ```
 
+Generative models (decision D19): lead II quantised on the microvolt grid
+into 256 tokens, an ECG-GPT (decoder-only Transformer with the causal mask
+of `src/models/attention.py`) and an LSTM generator of the same size,
+trained to predict the next sample; 8 configurations (architecture, context
+length, vocabulary, positional encoding, causal mask) with 3 seeds on
+validation, compared in bits per sample with counting baselines; generation
+from a 2 s prompt with greedy, temperature and top-k sampling, compared
+with the real signal (amplitude, heart rate). The test fold is not used.
+The selected model is the self-supervised pre-trained model of the
+transfer-learning block (D7).
+
+```
+python -m src.generative_experiments estimate   # run time and GPU memory
+python -m src.generative_experiments all --fast # smoke test (not reported)
+python -m src.generative_experiments run        # 8 configurations x 3 seeds
+python -m src.generative_experiments report     # generation, summary,
+                                                # tables, figures
+```
+
 ## Setup (Windows, NVIDIA GPU)
 
 ```

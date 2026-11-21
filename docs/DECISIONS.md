@@ -444,14 +444,77 @@ In the step-by-step rows the Δ is the effect of *removing* the component (the c
 - `nn.TransformerEncoderLayer`: it hides the attention weights and the order of the operations that the defence asks about.
 - Learning-rate warm-up, weight decay, AdamW: they would make this block's training differ from the other three.
 
+## D19. Generative block: ECG-GPT and LSTM generators (T23) — DECIDED (2026-11-21)
+
+Proposed by the assistant in chat DL 13 and accepted by OF and MM, who asked for the most suitable option and for the complete (final-version) set of experiments at once. O6 closed: T23 is done by OF and reviewed by MM. It completes the open points of D13 ([open] quantisation, clipping range, heart rate). Same protocol as D15-D18 where it applies. Any value below changes only with a dated entry. Code: `src/generative.py` (data, task, baselines, generation, statistics), `src/models/generative.py` (models), `src/generative_experiments.py` (runs, summary, tables, figures), `tests/test_generative.py`.
+
+**Data (D13, D12 rule c)**
+- Lead II at 100 Hz, in mV as stored in the cache, without filtering or per-record normalisation (as every other block, D3; amplitude is diagnostic).
+- Training: every record of folds 1-8, also those without a diagnostic superclass (labels are not used). Validation: fold 9, records with a superclass, i.e. the same validation records as every classifier and as chat DL 08. **The test fold is never read** by this block (no `final` step); chat DL 08 uses it for the 5-superclass task only.
+
+**Tokens: uniform quantisation on the microvolt grid**
+- PTB-XL stores every sample as an integer number of microvolts (gain 1000 per mV, `docs/blocks/02_eda.md`); the code checks it on the training data (`frac_off_uv_grid_train`). A value x becomes u = round(1000 x) µV.
+- Range: 2.56 mV (2560 µV), the same for every vocabulary, centred on the midpoint of the 0.1 % and 99.9 % quantiles of the training values of lead II. Values outside it go to the first or last token (clipping); the clipped fractions of training and validation are logged. Why 2.56 mV: the 0.5-99.5 % range of lead II is about 1.3 mV (`eda.json`, `lead_stats_train`), but R peaks are only a few samples per beat and the 95th percentile of the peak-to-peak amplitude is about 2 mV, so a range set by the 0.5-99.5 % quantiles would clip tall R waves (e.g. HYP records).
+- V levels of Δ = 2560 / V µV: token k holds the Δ integers lo + kΔ ... lo + (k+1)Δ − 1 and is decoded to their centre. Baseline V = 256, Δ = 10 µV (largest error 4.5 µV, against a lead II standard deviation of about 160 µV). Ablations: V = 64 (Δ = 40 µV) and V = 2560 (Δ = 1 µV: every microvolt value of the range is its own token, so nothing is lost inside the range).
+- Not chosen: mu-law companding (finer levels near the baseline). With 10 µV levels the uniform error is already negligible, and uniform integer levels keep the vocabulary-independent metric below exact.
+
+**Metric comparable across vocabularies: bits per sample**
+- Cross-entropy per token (and perplexity, D14) depends on V: coarser tokens are easier to guess. The block also reports **bits per sample** = (CE + ln Δ) / ln 2: the cost in bits of coding the microvolt value of the next sample, if every value inside a token is equally likely. Uniform guessing gives log2(2560) = 11.3 bits whatever V is; with Δ = 1 it is the cross-entropy in bits. Configurations are compared with it; the patient bootstrap of D4/D14 is applied to it (each run stores the summed cross-entropy of every validation record).
+- Also logged per run (validation): perplexity; the cross-entropy at every position of the window (position t predicts with t + 1 samples of context); the cross-entropy at the last position (the only position whose target is outside the window, so an honest prediction even without the causal mask); RMSE in µV of the expected value Σ p_k c_k against the centre of the target token.
+- Baselines without training, on the same validation records: uniform; unigram and bigram language models made by counting the training tokens (add-one smoothing; RNN slides 93-94: 2-gram model), for each V; the persistence error "next sample = this sample" (µV).
+
+**Windows and context length**
+- Each training item is a window of L + 1 samples of one record starting at a random sample (drawn with the run's seed): input = the first L tokens, target = the same tokens shifted by one (teacher forcing). An epoch shows every training record once, through one random window. Baseline L = 250 (2.5 s, two or three beats); ablations L = 100 (1 s, about one beat) and L = 500 (5 s). The whole record (1000 tokens) is not used as context: the attention matrices of 1000 tokens do not fit the laptop's 4 GB GPU (D18).
+- Validation: fixed windows of L that together cover every target 1..999 of every record (ceil(999 / L) evenly spaced windows; for L = 250 they start at 0, 250, 499, 749), the same at every epoch.
+
+**Models** (same data, tokens, windows and training; about the same number of parameters; D13)
+- **ECG-GPT** (baseline): token embedding (V × 128, one learned vector per level, as one vector per character in the class notebooks) + sinusoidal positional encoding of the position in the window (Part II slides 18-23; for generation order matters, unlike the classifier of D18) + 2 Pre-LN blocks of chat DL 07 (`TransformerBlock(causal=True)`: d_model 128, 4 heads, FFN 512, dropout 0.1) + final LayerNorm + Linear(128, V). 461,568 parameters with V = 256. The causal mask sets the scores of future positions to −∞, so position t only sees tokens 0..t and the whole window is trained in one parallel pass (Part II slides 11-14).
+- **LSTM**: the same token embedding (128) + 2-layer LSTM with 160 units + dropout 0.1 + Linear(160, V). 465,664 parameters: the hidden size is chosen for parameter parity with the ECG-GPT (+0.9 %). Causal by construction.
+- No softmax in the models (CrossEntropyLoss contains it, `NextTokenTask`). Not chosen: weight tying between embedding and head, learned positions, `nn.TransformerDecoder` (it hides the attention weights).
+
+**Training**: D14 defaults as D15-D18 (Adam, learning rate 1e-3, batch 64, at most 50 epochs, early stopping with patience 5 on the validation cross-entropy), gradient clipping at total norm 1.0 as D17-D18, the same in every configuration; `CUBLAS_WORKSPACE_CONFIG=:4096:2` as D17-D18.
+
+**Ablations.** One factor at a time, compared with the ECG-GPT baseline trained with the same seed.
+
+| Tag | Factor | Change |
+|---|---|---|
+| `base` | — | ECG-GPT, L = 250, V = 256 |
+| `lstm` | architecture | LSTM generator of the same size |
+| `ctx100`, `ctx500` | context length | L = 100 or 500 |
+| `vocab64`, `vocab2560` | vocabulary | V = 64 (40 µV) or 2560 (1 µV) |
+| `no_pos` | positional encoding | none (a causal model can still infer positions from the mask, [verify] in the literature) |
+| `no_mask` | causal mask | removed: the network sees the token it must predict |
+
+`no_mask` is a demonstration of why the mask is needed: its teacher-forced loss is low because it copies the answer, so it is not compared by paired bootstrap and cannot be selected; the table reports its cross-entropy at the last position and its generated signals. Temperature and top-k are generation settings, not trained ablations (below).
+
+**Protocol**
+- Every configuration with seeds 42, 43, 44 (24 runs). Reported per configuration: mean ± SD of validation cross-entropy, perplexity and bits per sample; the patient-bootstrap interval of seed 42; for each seed the paired interval of the difference in bits with the baseline (better = whole interval below 0); the cross-entropy at the last position; the cross-entropy with 50-99 samples of context (available to every context length).
+- **Pre-trained model for chat DL 08**, fixed now: the configuration with the lowest mean validation bits per sample among all except `no_mask`. Its three checkpoints (seeds 42-44), its tokenizer and `record_features()` (mean of the outputs before the head over the windows that cover the record) are handed over in the summary log (`pretrained_for_chat_08`).
+- `python -m src.generative_experiments estimate` measures time per batch and peak GPU memory of every configuration before the long run.
+
+**Generation** (seed-42 models)
+- Prompt: the first 2 s (200 samples) of a validation record; 800 tokens (8 s) are generated and decoded to mV. 256 validation records drawn once with seed 42; another 256 drawn with it are a real-vs-real reference.
+- Both models generate with the same sliding window: the next token is predicted from the last L tokens, appended, and the window moves by one, as the class notebook `TO_DO_MLLB_Keras_RNN_TextGeneration.ipynb` does. Not chosen: carrying the LSTM state (RNN slide 90), which would let the LSTM see more than the L samples it was trained on.
+- Settings (`Sampling_in_Text_Generation.ipynb`): greedy search; temperature 0.5, 0.8, 1.0, 1.5; top-k with k = 10 at temperature 1. All six for the selected model and for the comparison model (the LSTM if a Transformer is selected, the baseline otherwise); temperature 1 for every configuration. A torch generator seeded with 42 makes sampling reproducible.
+- Statistics of the generated 8 s against the real 8 s of the same records: median ratio of standard deviations; share of "flat" records (last 4 s with less than 10 % of the real standard deviation: the greedy loops of the notebook); Wasserstein-1 distance between amplitude distributions (mV), beside the same distance between two sets of real records; **heart rate from R peaks** (D13 [open], closed here): local maxima above median + ½ (maximum − median) of the real prompt, at least 0.3 s apart, heart rate = 60 / median RR. Reported: share of records with a heart rate, mean absolute difference from the real continuation. This is a simple threshold rule, not a validated QRS detector (records with negative QRS in lead II are not handled specially).
+
+**Interpretation figures**: learning curves (including the training/validation/last-position loss without the mask), bits per configuration with the bigram baseline, bits per sample against the context available, real vs generated lead II for one validation record per superclass (the records of D16-D18), amplitude histograms and statistics per sampling setting, causal attention maps of one validation window.
+
+**Outputs**
+- `python -m src.generative_experiments estimate | run | report | all` (`all` = run + report; `run` skips what has already been run).
+- `results/logs/generative_summary.json` (alias `generative` in `report/runs.json`, macros `\generative...`).
+- Tables (macros only): `report/tables/generative_ablations.tex`, `generative_sampling.tex`. Figures `generative_curves`, `generative_ablations`, `generative_context`, `generative_samples`, `generative_sampling`, `generative_attention` (PDF and PNG). With `--fast` the outputs end in `_fast` and git ignores them.
+- If the baseline does not beat the bigram baseline in bits per sample, the block is revised with a dated entry before anything else (and, if needed, the text fallback of D13).
+
+**Not chosen**: the full record as context; mu-law; per-record normalisation or filtering; nucleus (top-p) sampling and beam search (named in the notebook, not needed for the comparison asked in D13); a KV cache for generation (speed only).
+
 ## Open items
 
 | # | Item | Blocks |
 |---|---|---|
-| O5 | Weekly summary of 20/11 and the "simple autoregressive LLM-style model" notebook it mentions are not yet in `contexto_DL/` | Chat DL 13 (reference implementation) |
-| O6 | Owner of D13 (generative block): Oriana proposed, to be confirmed | PLAN_DL T23 |
+| O5 | Weekly summary of 20/11 and the "simple autoregressive LLM-style model" notebook it mentions are not yet in `contexto_DL/`. D19 was built on the class notebooks that are there (`Sampling_in_Text_Generation.ipynb`, `TO_DO_MLLB_Keras_RNN_TextGeneration.ipynb`); add the summary when available and compare | Chat DL 13 (reference implementation) |
 
-Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository under Oriana's account, 2026-11-20). O3 (records without superclass left out; D12, 2026-11-20). O1 (pretext task: autoregressive next-sample prediction, D7 and D13, 2026-11-20).
+Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository under Oriana's account, 2026-11-20). O3 (records without superclass left out; D12, 2026-11-20). O1 (pretext task: autoregressive next-sample prediction, D7 and D13, 2026-11-20). O6 (T23 done by OF, reviewed by MM; D19, 2026-11-21).
 
 ## Change log
 
@@ -470,3 +533,4 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-20: CNN block: architecture, ablation grid with references, three seeds, selection of the final model, comparison with the final Dense model, interpretation figures, outputs (D16). Accepted by OF and MM in chat DL 05.
 - 2026-11-21: RNN block: input as 100 frames, LSTM/GRU, readouts (last state, mean, attention), RNN + attention as a second final model, gradient clipping, ablation grid with references, interpretation (input sensitivity over time, attention weights), outputs (D17). Accepted by OF and MM in chat DL 06.
 - 2026-11-21: Self-attention and Transformer block: patch tokens, hand-written multi-head attention shared with chat DL 13 (optional causal mask), Pre-LN encoder, self-attention study step by step, ablation grid with references, one final model, comparison with the final CNN, RNN, RNN + attention and Dense, interpretation (patch order, input sensitivity, attention statistics and maps), outputs (D18). Accepted by OF and MM in chat DL 07.
+- 2026-11-21: Generative block: lead II tokens on the microvolt grid (range 2.56 mV, V = 256 / 64 / 2560), bits per sample as the vocabulary-independent metric, random training windows of L = 250 (100, 500), ECG-GPT (causal Transformer) and LSTM of equal size, ablation grid, counting baselines, selection rule of the pre-trained model for chat DL 08, generation settings and statistics (heart rate from R peaks), outputs (D19). O6 closed. Accepted by OF and MM in chat DL 13.
