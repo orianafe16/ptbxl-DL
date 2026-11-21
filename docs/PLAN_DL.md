@@ -35,7 +35,7 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | T9 | Dense baseline + ablations | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
 | T10 | CNN 1D + ablations | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
 | T11 | LSTM/GRU (+bidirectional) and RNN + attention model + ablations | MM | OF | done | MM (drafted with the assistant) | OF | 2026-11-21 |
-| T12 | Self-attention step by step (single layer, attention maps) and Transformer + ablations | MM | OF | todo | | | |
+| T12 | Self-attention step by step (single layer, attention maps) and Transformer + ablations | MM | OF | done | MM (drafted with the assistant) | OF | 2026-11-21 |
 | T13 | Transfer learning: ECG-GPT (T23) reused on the 5 superclasses, scratch vs frozen vs fine-tuning, 10% and 100% labels | OF + MM | — | todo | | | |
 | T14 | Cross-cutting ablation: 12 leads vs single lead | OF + MM | — | todo | | | |
 | T15 | Final comparison table and figures; comparison with published results | OF + MM | — | todo | | | |

@@ -65,8 +65,9 @@ class TransformerClassifier(nn.Module):
         self.cls_token = (nn.Parameter(torch.zeros(1, 1, d_model))
                           if readout == "cls" else None)
         if pos_encoding == "sinusoidal":
-            # A buffer: saved with the model and moved to the GPU with it,
-            # but not a parameter, so the optimiser does not change it.
+            # A buffer: moved to the GPU with the model, but not a parameter,
+            # so the optimiser does not change it. persistent=False keeps it
+            # out of the state_dict (checkpoint); it is rebuilt here.
             self.register_buffer("pe", sinusoidal_encoding(n_tokens, d_model),
                                  persistent=False)
             self.pos_embedding = None
