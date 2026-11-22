@@ -7,3 +7,5 @@ matplotlib
 wfdb
 pytest
 ipykernel
+# For src/zero_shot.py only (see README.md): torchvision from the PyTorch
+# CUDA index, then open_clip_torch.

@@ -7,8 +7,9 @@ Multi-label classification of the five diagnostic superclasses of PTB-XL
 (12-lead ECG, 100 Hz) with dense, convolutional, recurrent and Transformer
 models, compared under the same data split and evaluation protocol.
 
-Status: data pipeline, exploratory analysis, evaluation module and shared
-training loop in place; model blocks in progress.
+Status: data pipeline, exploratory analysis, evaluation module, shared
+training loop, model blocks and generative block in place; learning
+strategies and final comparison in progress.
 
 ## Structure
 
@@ -140,6 +141,32 @@ python -m src.generative_experiments all --fast # smoke test (not reported)
 python -m src.generative_experiments run        # 8 configurations x 3 seeds
 python -m src.generative_experiments report     # generation, summary,
                                                 # tables, figures
+```
+
+Learning strategies and final comparison (decision D20). The ECG-GPT is
+reused for the five superclasses from lead II in three ways (from scratch,
+frozen with a linear probe, fine-tuned) with 100 % and 10 % of the training
+labels; the final model of every family is trained again on lead II only;
+CLIP is tried zero-shot on CIFAR-100 and on ECG images; and every final
+model is compared on the test fold.
+
+```
+python -m src.transfer_experiments estimate     # run time and GPU memory
+python -m src.transfer_experiments all --fast   # smoke test (not reported)
+python -m src.transfer_experiments run          # main grid, then ablations
+python -m src.transfer_experiments report       # summary, tables, figures
+python -m src.leads_experiments all --fast      # smoke test (not reported)
+python -m src.leads_experiments all             # 12 leads vs lead II
+python -m src.zero_shot run                     # CLIP zero-shot (T24)
+python -m src.comparison report                 # final comparison table
+```
+
+`src.zero_shot` and `notebooks/08_zero_shot_clip.ipynb` need two extra
+packages, installed after PyTorch (torchvision from the same CUDA index):
+
+```
+pip install torchvision --index-url https://download.pytorch.org/whl/cu126
+pip install open_clip_torch
 ```
 
 ## Setup (Windows, NVIDIA GPU)
