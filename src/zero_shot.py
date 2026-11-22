@@ -25,8 +25,8 @@ this experiment asks how far a general image-text model gets on ECGs.
             the image is an electrocardiogram?).
 
 Model: CLIP ViT-B/32 with OpenAI's weights (the notebook's model), loaded
-with open_clip (pretrained="openai") or, if installed, the class package
-`clip`. Nothing is trained.
+with open_clip ("ViT-B-32-quickgelu", pretrained="openai") or, if
+open_clip is missing, the class package `clip`. Nothing is trained.
 
 Outputs: results/logs/zeroshot.json (alias "zeroshot" in runs.json),
 results/predictions/zeroshot.npz, report/tables/zeroshot.tex,
@@ -85,10 +85,11 @@ class Clip:
 
     @torch.no_grad()
     def text_features(self, texts: list[str]) -> torch.Tensor:
-        """Unit-norm text embeddings, (n_texts, d)."""
+        """Unit-norm text embeddings, (n_texts, d), on the CPU like the
+        image embeddings (AI Error Bounty B10: they were left on the GPU)."""
         t = self.tokenize(texts).to(self.device)
         f = self.model.encode_text(t).float()
-        return f / f.norm(dim=-1, keepdim=True)
+        return (f / f.norm(dim=-1, keepdim=True)).cpu()
 
     @torch.no_grad()
     def image_features(self, images, batch: int = 64) -> torch.Tensor:
@@ -110,9 +111,12 @@ def load_clip(device: torch.device | None = None) -> Clip:
                                     else "cpu")
     try:
         import open_clip
+        # OpenAI trained ViT-B/32 with the QuickGELU activation; open_clip's
+        # plain "ViT-B-32" config uses GELU and warns of the mismatch, so the
+        # "-quickgelu" config is the model of the class notebook.
         model, _, preprocess = open_clip.create_model_and_transforms(
-            "ViT-B-32", pretrained="openai")
-        tokenize = open_clip.get_tokenizer("ViT-B-32")
+            "ViT-B-32-quickgelu", pretrained="openai")
+        tokenize = open_clip.get_tokenizer("ViT-B-32-quickgelu")
         backend = f"open_clip {open_clip.__version__}"
     except ImportError:
         import clip
@@ -127,6 +131,7 @@ def zero_shot_probs(image_feats: torch.Tensor,
                     text_feats: torch.Tensor) -> np.ndarray:
     """Softmax over the sentences of 100 x cosine similarity (the notebook's
     zero-shot rule), (n_images, n_texts)."""
+    image_feats, text_feats = image_feats.cpu(), text_feats.cpu()
     return (100.0 * image_feats @ text_feats.T).softmax(dim=-1).numpy()
 
 

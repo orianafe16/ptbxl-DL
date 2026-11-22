@@ -275,6 +275,17 @@ def test_zero_shot_probabilities():
     assert list(zs.CLASS_PROMPTS) == config.CLASSES
 
 
+def test_features_are_returned_on_the_cpu():
+    # B10: text features stayed on the GPU while image features were moved
+    # to the CPU, so the similarity failed on the laptop.
+    clip = fake_clip()
+    txt = clip.text_features(["a", "b"])
+    from PIL import Image
+    img = clip.image_features([Image.new("RGB", (32, 32))])
+    assert txt.device.type == "cpu" and img.device.type == "cpu"
+    assert zs.zero_shot_probs(img, txt).shape == (1, 2)
+
+
 def test_accuracy_interval():
     ok = np.array([1.0] * 70 + [0.0] * 30)
     lo, hi = zs.accuracy_ci(ok, 200)
