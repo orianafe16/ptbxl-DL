@@ -345,6 +345,14 @@ def _generate(model, data: gx.GenData, rows: np.ndarray, setting: str,
     return tok.decode(seq[:, gx.PROMPT_SAMPLES:])
 
 
+def _free_gpu() -> None:
+    """Give the GPU memory of the previous model back before the next."""
+    import gc
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
 def generation_numbers(model, tag: str, settings, data: gx.GenData,
                        rows: np.ndarray, device,
                        run_id: str | None = None) -> dict:
@@ -435,10 +443,11 @@ def build_summary(paths: Paths = Paths(), fast: bool = False, seeds=SEEDS,
             s[f"{name}_mean_{t}"] = float(np.mean(vals))
             s[f"{name}_sd_{t}"] = dx._sd(vals)
         s[f"best_epoch_mean_{t}"] = float(np.mean([x["best_epoch"] for x in sc]))
-        s[f"epoch_time_mean_{t}"] = float(np.mean(
-            [np.mean(r["history"]["time_s"]) for r in recs]))
-        s[f"train_time_min_mean_{t}"] = float(np.mean(
-            [x["train_time_s"] for x in sc])) / 60
+        s[f"epochs_run_mean_{t}"] = float(np.mean([x["epochs_run"] for x in sc]))
+        # Median, not mean: an epoch during which the laptop slept would
+        # dominate a mean (ctx500 seed 44, D19 entry of 2026-11-22).
+        s[f"epoch_time_median_{t}"] = float(np.median(
+            [np.median(r["history"]["time_s"]) for r in recs]))
         first = runs.get((t, seeds[0]))
         if first is not None:
             f = first["scalars"]
@@ -500,6 +509,8 @@ def build_summary(paths: Paths = Paths(), fast: bool = False, seeds=SEEDS,
             settings = all_settings if ab.tag in (selected, other) else ["t10"]
             s.update(generation_numbers(model, ab.tag, settings, data, rows,
                                         device, run_id=rec["run_id"]))
+            del model
+            _free_gpu()
 
     handover = None
     if selected is not None:
@@ -845,6 +856,7 @@ def figure_samples(runs: dict, summary: dict, data: gx.GenData,
         rec = runs[(tag, SEEDS[0])]
         gen = generate_for(load_model(rec), data, rows, setting, device,
                            run_id=rec["run_id"])
+        _free_gpu()
         for i, c in enumerate(classes):
             ax = axes[i, j]
             x = data.mv["val"][rows[i]]

@@ -497,6 +497,9 @@ def generate(model, prompt: np.ndarray, n_new: int, temperature: float,
     tokens; returns (n, P + n_new) int64."""
     device = device or torch.device("cpu")
     model = model.to(device).eval()
+    # The attention matrices grow with the square of the window: longer
+    # contexts generate fewer records at a time (same memory as L = 250).
+    batch = max(1, int(batch * min(1.0, (250 / model.context) ** 2)))
     gen = torch.Generator(device=device).manual_seed(seed)
     out = []
     for i in range(0, len(prompt), batch):

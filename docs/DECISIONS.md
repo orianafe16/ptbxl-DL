@@ -508,6 +508,11 @@ Proposed by the assistant in chat DL 13 and accepted by OF and MM, who asked for
 
 **Not chosen**: the full record as context; mu-law; per-record normalisation or filtering; nucleus (top-p) sampling and beam search (named in the notebook, not needed for the comparison asked in D13); a KV cache for generation (speed only).
 
+**2026-11-22 (OF + MM, chat DL 13), after `run` (24 runs at commit f010618, all with `git_dirty` false):**
+- Almost every run stopped at the 50-epoch limit of D14 with its best epoch at or near 50 (`no_mask` stopped early): the generators were still improving slowly. Over the last 10 epochs validation bits per sample fell by about 0.005-0.02, much less than the differences between configurations, so the grid is kept as run (same budget for all, as D15-D18) and the report states that training was limited by the epoch budget, not by early stopping. Because an epoch is one window per record, longer contexts see more samples per epoch (L = 500: twice as many as L = 250); the context comparison is at equal epochs, not at equal samples.
+- `ctx500` seed 44 has three epochs of several hours (the laptop slept); its results are unaffected. The summary reports the **median** time per epoch instead of the mean.
+- `report` ran out of GPU memory generating with L = 500 (batches of 64 windows of 500 tokens). Generation now uses batches of 64 × (250 / L)² windows for L > 250 (16 for L = 500) and frees the GPU between models. Sampling stays seeded; the batch size of each context is fixed, so generation remains reproducible.
+
 ## Open items
 
 | # | Item | Blocks |
@@ -534,3 +539,4 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-21: RNN block: input as 100 frames, LSTM/GRU, readouts (last state, mean, attention), RNN + attention as a second final model, gradient clipping, ablation grid with references, interpretation (input sensitivity over time, attention weights), outputs (D17). Accepted by OF and MM in chat DL 06.
 - 2026-11-21: Self-attention and Transformer block: patch tokens, hand-written multi-head attention shared with chat DL 13 (optional causal mask), Pre-LN encoder, self-attention study step by step, ablation grid with references, one final model, comparison with the final CNN, RNN, RNN + attention and Dense, interpretation (patch order, input sensitivity, attention statistics and maps), outputs (D18). Accepted by OF and MM in chat DL 07.
 - 2026-11-21: Generative block: lead II tokens on the microvolt grid (range 2.56 mV, V = 256 / 64 / 2560), bits per sample as the vocabulary-independent metric, random training windows of L = 250 (100, 500), ECG-GPT (causal Transformer) and LSTM of equal size, ablation grid, counting baselines, selection rule of the pre-trained model for chat DL 08, generation settings and statistics (heart rate from R peaks), outputs (D19). O6 closed. Accepted by OF and MM in chat DL 13.
+- 2026-11-22: D19 note after the runs: 50-epoch budget reached, median epoch time, smaller generation batches for long contexts. Decided by OF and MM in chat DL 13.

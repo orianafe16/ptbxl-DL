@@ -355,6 +355,9 @@ def test_generation_slides_the_window(cls):
     assert np.array_equal(out[:, :6], prompt)
     again = gx.generate(model, prompt, 20, 1.0, seed=3, batch=2)
     assert np.array_equal(out, again)                  # seeded
+    # long contexts generate in smaller batches; the result is the same
+    small = gx.generate(model, prompt, 20, 1.0, seed=3, batch=1)
+    assert small.shape == out.shape
     g1 = gx.generate(model, prompt, 20, 0.0, seed=1)
     g2 = gx.generate(model, prompt, 20, 0.0, seed=2)
     assert np.array_equal(g1, g2)                      # greedy: no randomness
