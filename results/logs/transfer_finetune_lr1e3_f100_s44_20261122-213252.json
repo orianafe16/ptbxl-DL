@@ -1,0 +1,332 @@
+{
+  "run_id": "transfer_finetune_lr1e3_f100_s44_20261122-213252",
+  "schema": 2,
+  "task": "multilabel",
+  "fast": false,
+  "final": false,
+  "scalars": {
+    "best_epoch": 3,
+    "epochs_run": 8,
+    "n_params": 724101,
+    "n_trainable": 724101,
+    "train_time_s": 373.7002297999861,
+    "threshold_NORM": 0.32,
+    "threshold_MI": 0.37,
+    "threshold_STTC": 0.28,
+    "threshold_CD": 0.35,
+    "threshold_HYP": 0.28,
+    "val_loss": 0.3923734083702269,
+    "val_macro_auroc": 0.8306843935699838,
+    "val_macro_auroc_lo": 0.8185882480767367,
+    "val_macro_auroc_hi": 0.8421963876344688,
+    "val_macro_f1": 0.6130034497554473,
+    "val_macro_f1_lo": 0.5963590763999271,
+    "val_macro_f1_hi": 0.6300195913135336,
+    "val_auroc_NORM": 0.8921298921668184,
+    "val_auroc_NORM_lo": 0.876979757344688,
+    "val_auroc_NORM_hi": 0.9048263608227078,
+    "val_f1_NORM": 0.8085312651478429,
+    "val_auroc_MI": 0.8277789308611226,
+    "val_auroc_MI_lo": 0.8073526176663159,
+    "val_auroc_MI_hi": 0.848832394401189,
+    "val_f1_MI": 0.6068515497553018,
+    "val_auroc_STTC": 0.8667289395812263,
+    "val_auroc_STTC_lo": 0.8500045243315774,
+    "val_auroc_STTC_hi": 0.8831496944829735,
+    "val_f1_STTC": 0.649016641452345,
+    "val_auroc_CD": 0.831099609052365,
+    "val_auroc_CD_lo": 0.8076507723223972,
+    "val_auroc_CD_hi": 0.854192747182929,
+    "val_f1_CD": 0.625,
+    "val_auroc_HYP": 0.7356845961883871,
+    "val_auroc_HYP_lo": 0.6970755615735628,
+    "val_auroc_HYP_hi": 0.7700593186572592,
+    "val_f1_HYP": 0.3756177924217463
+  },
+  "config": {
+    "model": "transfer",
+    "model_args": {
+      "strategy": "finetune",
+      "label_fraction": 1.0,
+      "generator": "vocab2560",
+      "generator_args": {
+        "arch": "gpt",
+        "vocab": 2560,
+        "context": 250,
+        "d_model": 128,
+        "num_heads": 4,
+        "num_layers": 2,
+        "d_ff": 512,
+        "dropout": 0.1,
+        "pos_encoding": "sinusoidal",
+        "causal": true
+      },
+      "generator_run": "generator_vocab2560_s44_20261121-233222",
+      "head_dropout": 0.5
+    },
+    "tag": "finetune_lr1e3_f100",
+    "seed": 44,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "batch_size": 32,
+    "max_epochs": 50,
+    "patience": 5,
+    "grad_clip": 1.0,
+    "deterministic": true,
+    "normalize": false,
+    "pos_weight": false,
+    "n_boot": 1000,
+    "fast": false,
+    "final": false,
+    "notes": "Fine-tuning at lr 1e-3, 100% labels"
+  },
+  "model": {
+    "name": "transfer",
+    "args": {
+      "strategy": "finetune",
+      "label_fraction": 1.0,
+      "generator": "vocab2560",
+      "generator_args": {
+        "arch": "gpt",
+        "vocab": 2560,
+        "context": 250,
+        "d_model": 128,
+        "num_heads": 4,
+        "num_layers": 2,
+        "d_ff": 512,
+        "dropout": 0.1,
+        "pos_encoding": "sinusoidal",
+        "causal": true
+      },
+      "generator_run": "generator_vocab2560_s44_20261121-233222",
+      "head_dropout": 0.5
+    },
+    "n_params": 724101,
+    "n_trainable": 724101
+  },
+  "data": {
+    "lead": "II",
+    "n_records": {
+      "train": 17084,
+      "val": 2146,
+      "test": 2158
+    },
+    "n_records_train_all": 17084,
+    "label_fraction": 1.0,
+    "n_patients_train": 14823,
+    "train_class_counts": {
+      "NORM": 7596,
+      "MI": 4379,
+      "STTC": 4186,
+      "CD": 3907,
+      "HYP": 2119
+    },
+    "include_no_superclass": false,
+    "fast_subset": null,
+    "tokenizer": {
+      "lo_uv": -1138,
+      "delta_uv": 1,
+      "vocab": 2560,
+      "span_uv": 2560
+    },
+    "batch_records": 32,
+    "cublas_workspace_config": ":4096:2",
+    "features": {
+      "frozen": false,
+      "precomputed": false
+    }
+  },
+  "selection": {
+    "metric": "macro_auroc",
+    "mode": "max",
+    "best_value": 0.8306843935699838,
+    "best_epoch": 3,
+    "stopped_early": true
+  },
+  "history": {
+    "epoch": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "train_loss": [
+      0.4275540064255378,
+      0.39215372632940376,
+      0.37567262677726576,
+      0.36197078706676133,
+      0.349774718033405,
+      0.33529936850029085,
+      0.32182681658206014,
+      0.30544403543575005
+    ],
+    "lr": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+    ],
+    "time_s": [
+      46.08120750001399,
+      46.29406260000542,
+      46.549177399982,
+      46.79026869998779,
+      46.70659450002131,
+      46.79610770000727,
+      46.96345939999446,
+      47.510175800009165
+    ],
+    "val_loss": [
+      0.3942068279178367,
+      0.42592819492503625,
+      0.3923734083702269,
+      0.41309884307768896,
+      0.4089968351648994,
+      0.4183147765939078,
+      0.4222214497146713,
+      0.45266749253366334
+    ],
+    "val_macro_auroc": [
+      0.8276175094904087,
+      0.8212452104114878,
+      0.8306843935699838,
+      0.8267275631595886,
+      0.8191090220219911,
+      0.8182944137975354,
+      0.8153205843114428,
+      0.807946337812022
+    ],
+    "val_auroc_NORM": [
+      0.8878455783120348,
+      0.8819690435684738,
+      0.8921298921668184,
+      0.8841248280076137,
+      0.8777744075329369,
+      0.8672847402640221,
+      0.8719567788079005,
+      0.851833779524444
+    ],
+    "val_auroc_MI": [
+      0.8244880309948803,
+      0.8193256768599235,
+      0.8277789308611226,
+      0.8186776440201098,
+      0.811739541534062,
+      0.8139177159725105,
+      0.8063857755638577,
+      0.8065431714404317
+    ],
+    "val_auroc_STTC": [
+      0.8659891560849533,
+      0.8543200078660522,
+      0.8667289395812263,
+      0.8652037213919166,
+      0.8599468105030529,
+      0.8504572142937409,
+      0.8587329568865416,
+      0.8455491253698918
+    ],
+    "val_auroc_CD": [
+      0.8201322736755807,
+      0.8161983248597422,
+      0.831099609052365,
+      0.8326432098085641,
+      0.8272623264749248,
+      0.823247618523209,
+      0.8180986117993991,
+      0.8083744776658162
+    ],
+    "val_auroc_HYP": [
+      0.7396325083845945,
+      0.7344129989032473,
+      0.7356845961883871,
+      0.7329884125697391,
+      0.7188220240649786,
+      0.7365647799341949,
+      0.7214287984995152,
+      0.7274311350595267
+    ]
+  },
+  "results": {
+    "thresholds": {
+      "NORM": 0.32,
+      "MI": 0.37,
+      "STTC": 0.28,
+      "CD": 0.35,
+      "HYP": 0.28
+    },
+    "val": {
+      "loss": 0.3923734083702269,
+      "n_records": 2146,
+      "macro_auroc": 0.8306843935699838,
+      "macro_auroc_ci": [
+        0.8185882480767367,
+        0.8421963876344688
+      ],
+      "macro_f1": 0.6130034497554473,
+      "macro_f1_ci": [
+        0.5963590763999271,
+        0.6300195913135336
+      ],
+      "bootstrap": {
+        "n_boot": 1000,
+        "n_skipped": 0,
+        "alpha": 0.05,
+        "seed": 42
+      },
+      "auroc_NORM": 0.8921298921668184,
+      "auroc_NORM_ci": [
+        0.876979757344688,
+        0.9048263608227078
+      ],
+      "f1_NORM": 0.8085312651478429,
+      "auroc_MI": 0.8277789308611226,
+      "auroc_MI_ci": [
+        0.8073526176663159,
+        0.848832394401189
+      ],
+      "f1_MI": 0.6068515497553018,
+      "auroc_STTC": 0.8667289395812263,
+      "auroc_STTC_ci": [
+        0.8500045243315774,
+        0.8831496944829735
+      ],
+      "f1_STTC": 0.649016641452345,
+      "auroc_CD": 0.831099609052365,
+      "auroc_CD_ci": [
+        0.8076507723223972,
+        0.854192747182929
+      ],
+      "f1_CD": 0.625,
+      "auroc_HYP": 0.7356845961883871,
+      "auroc_HYP_ci": [
+        0.6970755615735628,
+        0.7700593186572592
+      ],
+      "f1_HYP": 0.3756177924217463
+    }
+  },
+  "checkpoint": "results/checkpoints/transfer_finetune_lr1e3_f100_s44_20261122-213252.pt",
+  "predictions": "results/predictions/transfer_finetune_lr1e3_f100_s44_20261122-213252.npz",
+  "meta": {
+    "created": "2026-11-22T21:39:27",
+    "git_commit": "f69c72f",
+    "git_dirty": true,
+    "python": "3.12.10",
+    "torch": "2.14.1+cu126",
+    "cuda": "12.6",
+    "cudnn": 91002,
+    "numpy": "2.5.5",
+    "sklearn": "1.9.1",
+    "device": "NVIDIA GeForce RTX 3050 Ti Laptop GPU",
+    "platform": "Windows-10-10.0.19045-SP0"
+  }
+}

@@ -5,5 +5,9 @@
   "cnn": "cnn_summary",
   "rnn": "rnn_summary",
   "transformer": "transformer_summary",
-  "generative": "generative_summary"
+  "generative": "generative_summary",
+  "leads": "leads_summary",
+  "transfer": "transfer_summary",
+  "comparison": "comparison_summary",
+  "zeroshot": "zeroshot"
 }

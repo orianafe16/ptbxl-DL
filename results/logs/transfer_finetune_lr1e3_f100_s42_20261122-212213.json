@@ -1,0 +1,310 @@
+{
+  "run_id": "transfer_finetune_lr1e3_f100_s42_20261122-212213",
+  "schema": 2,
+  "task": "multilabel",
+  "fast": false,
+  "final": false,
+  "scalars": {
+    "best_epoch": 1,
+    "epochs_run": 6,
+    "n_params": 724101,
+    "n_trainable": 724101,
+    "train_time_s": 278.1166321999917,
+    "threshold_NORM": 0.43,
+    "threshold_MI": 0.18,
+    "threshold_STTC": 0.24,
+    "threshold_CD": 0.27,
+    "threshold_HYP": 0.17,
+    "val_loss": 0.39598291061353375,
+    "val_macro_auroc": 0.8298887121168258,
+    "val_macro_auroc_lo": 0.8180066468166893,
+    "val_macro_auroc_hi": 0.8417611087163592,
+    "val_macro_f1": 0.6120407122960579,
+    "val_macro_f1_lo": 0.5963123423490023,
+    "val_macro_f1_hi": 0.6271022510091979,
+    "val_auroc_NORM": 0.8881612090680101,
+    "val_auroc_NORM_lo": 0.8744043059917894,
+    "val_auroc_NORM_hi": 0.9013033839338451,
+    "val_f1_NORM": 0.8013339685564554,
+    "val_auroc_MI": 0.8190258751902587,
+    "val_auroc_MI_lo": 0.7991880476076864,
+    "val_auroc_MI_hi": 0.8405969064539995,
+    "val_f1_MI": 0.5939849624060151,
+    "val_auroc_STTC": 0.8659985204330075,
+    "val_auroc_STTC_lo": 0.8488967020820921,
+    "val_auroc_STTC_hi": 0.8832604348180745,
+    "val_f1_STTC": 0.660165041260315,
+    "val_auroc_CD": 0.8307582181597929,
+    "val_auroc_CD_lo": 0.807658821660069,
+    "val_auroc_CD_hi": 0.8529222168449758,
+    "val_f1_CD": 0.6208333333333333,
+    "val_auroc_HYP": 0.7454997377330599,
+    "val_auroc_HYP_lo": 0.7114211419839458,
+    "val_auroc_HYP_hi": 0.779798604108828,
+    "val_f1_HYP": 0.38388625592417064
+  },
+  "config": {
+    "model": "transfer",
+    "model_args": {
+      "strategy": "finetune",
+      "label_fraction": 1.0,
+      "generator": "vocab2560",
+      "generator_args": {
+        "arch": "gpt",
+        "vocab": 2560,
+        "context": 250,
+        "d_model": 128,
+        "num_heads": 4,
+        "num_layers": 2,
+        "d_ff": 512,
+        "dropout": 0.1,
+        "pos_encoding": "sinusoidal",
+        "causal": true
+      },
+      "generator_run": "generator_vocab2560_s42_20261121-230031",
+      "head_dropout": 0.5
+    },
+    "tag": "finetune_lr1e3_f100",
+    "seed": 42,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "batch_size": 32,
+    "max_epochs": 50,
+    "patience": 5,
+    "grad_clip": 1.0,
+    "deterministic": true,
+    "normalize": false,
+    "pos_weight": false,
+    "n_boot": 1000,
+    "fast": false,
+    "final": false,
+    "notes": "Fine-tuning at lr 1e-3, 100% labels"
+  },
+  "model": {
+    "name": "transfer",
+    "args": {
+      "strategy": "finetune",
+      "label_fraction": 1.0,
+      "generator": "vocab2560",
+      "generator_args": {
+        "arch": "gpt",
+        "vocab": 2560,
+        "context": 250,
+        "d_model": 128,
+        "num_heads": 4,
+        "num_layers": 2,
+        "d_ff": 512,
+        "dropout": 0.1,
+        "pos_encoding": "sinusoidal",
+        "causal": true
+      },
+      "generator_run": "generator_vocab2560_s42_20261121-230031",
+      "head_dropout": 0.5
+    },
+    "n_params": 724101,
+    "n_trainable": 724101
+  },
+  "data": {
+    "lead": "II",
+    "n_records": {
+      "train": 17084,
+      "val": 2146,
+      "test": 2158
+    },
+    "n_records_train_all": 17084,
+    "label_fraction": 1.0,
+    "n_patients_train": 14823,
+    "train_class_counts": {
+      "NORM": 7596,
+      "MI": 4379,
+      "STTC": 4186,
+      "CD": 3907,
+      "HYP": 2119
+    },
+    "include_no_superclass": false,
+    "fast_subset": null,
+    "tokenizer": {
+      "lo_uv": -1138,
+      "delta_uv": 1,
+      "vocab": 2560,
+      "span_uv": 2560
+    },
+    "batch_records": 32,
+    "cublas_workspace_config": ":4096:2",
+    "features": {
+      "frozen": false,
+      "precomputed": false
+    }
+  },
+  "selection": {
+    "metric": "macro_auroc",
+    "mode": "max",
+    "best_value": 0.8298887121168258,
+    "best_epoch": 1,
+    "stopped_early": true
+  },
+  "history": {
+    "epoch": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "train_loss": [
+      0.42886464767030685,
+      0.39201586311663433,
+      0.3770069738540792,
+      0.3625683000804501,
+      0.3502327254200339,
+      0.3369159241926751
+    ],
+    "lr": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+    ],
+    "time_s": [
+      45.97531780001009,
+      45.89949510002043,
+      46.194443499989575,
+      46.521933299984084,
+      46.71984470001189,
+      46.79971859999932
+    ],
+    "val_loss": [
+      0.39598291061353375,
+      0.41132913606253496,
+      0.3980789405379691,
+      0.413818350764823,
+      0.434964244030173,
+      0.4114428219679684
+    ],
+    "val_macro_auroc": [
+      0.8298887121168258,
+      0.8263720277040344,
+      0.8267999362700069,
+      0.8210926317806395,
+      0.8175314459167154,
+      0.8171308511838692
+    ],
+    "val_auroc_NORM": [
+      0.8881612090680101,
+      0.8883862828104325,
+      0.8861408205520461,
+      0.8802792321116928,
+      0.8803020911636575,
+      0.8783520381922008
+    ],
+    "val_auroc_MI": [
+      0.8190258751902587,
+      0.8199241271159079,
+      0.8219131958857986,
+      0.8205352612886859,
+      0.8156185139061851,
+      0.8125017296250173
+    ],
+    "val_auroc_STTC": [
+      0.8659985204330075,
+      0.8560231486683897,
+      0.8580879874143161,
+      0.8479124527100423,
+      0.8514334475783797,
+      0.8535778832827657
+    ],
+    "val_auroc_CD": [
+      0.8307582181597929,
+      0.8219493542328188,
+      0.8256263421617751,
+      0.8225795202173155,
+      0.8200625271491414,
+      0.822621123408525
+    ],
+    "val_auroc_HYP": [
+      0.7454997377330599,
+      0.7455772256926231,
+      0.7422313353360991,
+      0.7341566925754613,
+      0.7202406497862128,
+      0.7186014814108371
+    ]
+  },
+  "results": {
+    "thresholds": {
+      "NORM": 0.43,
+      "MI": 0.18,
+      "STTC": 0.24,
+      "CD": 0.27,
+      "HYP": 0.17
+    },
+    "val": {
+      "loss": 0.39598291061353375,
+      "n_records": 2146,
+      "macro_auroc": 0.8298887121168258,
+      "macro_auroc_ci": [
+        0.8180066468166893,
+        0.8417611087163592
+      ],
+      "macro_f1": 0.6120407122960579,
+      "macro_f1_ci": [
+        0.5963123423490023,
+        0.6271022510091979
+      ],
+      "bootstrap": {
+        "n_boot": 1000,
+        "n_skipped": 0,
+        "alpha": 0.05,
+        "seed": 42
+      },
+      "auroc_NORM": 0.8881612090680101,
+      "auroc_NORM_ci": [
+        0.8744043059917894,
+        0.9013033839338451
+      ],
+      "f1_NORM": 0.8013339685564554,
+      "auroc_MI": 0.8190258751902587,
+      "auroc_MI_ci": [
+        0.7991880476076864,
+        0.8405969064539995
+      ],
+      "f1_MI": 0.5939849624060151,
+      "auroc_STTC": 0.8659985204330075,
+      "auroc_STTC_ci": [
+        0.8488967020820921,
+        0.8832604348180745
+      ],
+      "f1_STTC": 0.660165041260315,
+      "auroc_CD": 0.8307582181597929,
+      "auroc_CD_ci": [
+        0.807658821660069,
+        0.8529222168449758
+      ],
+      "f1_CD": 0.6208333333333333,
+      "auroc_HYP": 0.7454997377330599,
+      "auroc_HYP_ci": [
+        0.7114211419839458,
+        0.779798604108828
+      ],
+      "f1_HYP": 0.38388625592417064
+    }
+  },
+  "checkpoint": "results/checkpoints/transfer_finetune_lr1e3_f100_s42_20261122-212213.pt",
+  "predictions": "results/predictions/transfer_finetune_lr1e3_f100_s42_20261122-212213.npz",
+  "meta": {
+    "created": "2026-11-22T21:27:08",
+    "git_commit": "f69c72f",
+    "git_dirty": true,
+    "python": "3.12.10",
+    "torch": "2.14.1+cu126",
+    "cuda": "12.6",
+    "cudnn": 91002,
+    "numpy": "2.5.5",
+    "sklearn": "1.9.1",
+    "device": "NVIDIA GeForce RTX 3050 Ti Laptop GPU",
+    "platform": "Windows-10-10.0.19045-SP0"
+  }
+}

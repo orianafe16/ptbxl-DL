@@ -1,0 +1,332 @@
+{
+  "run_id": "transfer_finetune_lr1e3_f10_s44_20261122-211642",
+  "schema": 2,
+  "task": "multilabel",
+  "fast": false,
+  "final": false,
+  "scalars": {
+    "best_epoch": 3,
+    "epochs_run": 8,
+    "n_params": 724101,
+    "n_trainable": 724101,
+    "train_time_s": 51.7931408000004,
+    "threshold_NORM": 0.42,
+    "threshold_MI": 0.29,
+    "threshold_STTC": 0.21,
+    "threshold_CD": 0.28,
+    "threshold_HYP": 0.13,
+    "val_loss": 0.42370939142272945,
+    "val_macro_auroc": 0.8054524902525702,
+    "val_macro_auroc_lo": 0.792318943798419,
+    "val_macro_auroc_hi": 0.8185601383819151,
+    "val_macro_f1": 0.5857637811248125,
+    "val_macro_f1_lo": 0.5696587771604235,
+    "val_macro_f1_hi": 0.6008971013255678,
+    "val_auroc_NORM": 0.8728992751042944,
+    "val_auroc_NORM_lo": 0.8576831025561111,
+    "val_auroc_NORM_hi": 0.887265018624796,
+    "val_f1_NORM": 0.788785046728972,
+    "val_auroc_MI": 0.7846132558461325,
+    "val_auroc_MI_lo": 0.7632959568503123,
+    "val_auroc_MI_hi": 0.8079274296194519,
+    "val_f1_MI": 0.5641838351822503,
+    "val_auroc_STTC": 0.8387061280293665,
+    "val_auroc_STTC_lo": 0.8208237800676796,
+    "val_auroc_STTC_hi": 0.8566563515447291,
+    "val_f1_STTC": 0.612725844461901,
+    "val_auroc_CD": 0.8038947928711708,
+    "val_auroc_CD_lo": 0.7787552699025214,
+    "val_auroc_CD_hi": 0.8273693384895157,
+    "val_f1_CD": 0.5959271168274384,
+    "val_auroc_HYP": 0.7271489994118863,
+    "val_auroc_HYP_lo": 0.6901658796974284,
+    "val_auroc_HYP_hi": 0.7613586978839926,
+    "val_f1_HYP": 0.3671970624235006
+  },
+  "config": {
+    "model": "transfer",
+    "model_args": {
+      "strategy": "finetune",
+      "label_fraction": 0.1,
+      "generator": "vocab2560",
+      "generator_args": {
+        "arch": "gpt",
+        "vocab": 2560,
+        "context": 250,
+        "d_model": 128,
+        "num_heads": 4,
+        "num_layers": 2,
+        "d_ff": 512,
+        "dropout": 0.1,
+        "pos_encoding": "sinusoidal",
+        "causal": true
+      },
+      "generator_run": "generator_vocab2560_s44_20261121-233222",
+      "head_dropout": 0.5
+    },
+    "tag": "finetune_lr1e3_f10",
+    "seed": 44,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "batch_size": 32,
+    "max_epochs": 50,
+    "patience": 5,
+    "grad_clip": 1.0,
+    "deterministic": true,
+    "normalize": false,
+    "pos_weight": false,
+    "n_boot": 1000,
+    "fast": false,
+    "final": false,
+    "notes": "Fine-tuning at lr 1e-3, 10% labels"
+  },
+  "model": {
+    "name": "transfer",
+    "args": {
+      "strategy": "finetune",
+      "label_fraction": 0.1,
+      "generator": "vocab2560",
+      "generator_args": {
+        "arch": "gpt",
+        "vocab": 2560,
+        "context": 250,
+        "d_model": 128,
+        "num_heads": 4,
+        "num_layers": 2,
+        "d_ff": 512,
+        "dropout": 0.1,
+        "pos_encoding": "sinusoidal",
+        "causal": true
+      },
+      "generator_run": "generator_vocab2560_s44_20261121-233222",
+      "head_dropout": 0.5
+    },
+    "n_params": 724101,
+    "n_trainable": 724101
+  },
+  "data": {
+    "lead": "II",
+    "n_records": {
+      "train": 1709,
+      "val": 2146,
+      "test": 2158
+    },
+    "n_records_train_all": 17084,
+    "label_fraction": 0.1,
+    "n_patients_train": 1502,
+    "train_class_counts": {
+      "NORM": 777,
+      "MI": 440,
+      "STTC": 412,
+      "CD": 399,
+      "HYP": 193
+    },
+    "include_no_superclass": false,
+    "fast_subset": null,
+    "tokenizer": {
+      "lo_uv": -1138,
+      "delta_uv": 1,
+      "vocab": 2560,
+      "span_uv": 2560
+    },
+    "batch_records": 32,
+    "cublas_workspace_config": ":4096:2",
+    "features": {
+      "frozen": false,
+      "precomputed": false
+    }
+  },
+  "selection": {
+    "metric": "macro_auroc",
+    "mode": "max",
+    "best_value": 0.8054524902525702,
+    "best_epoch": 3,
+    "stopped_early": true
+  },
+  "history": {
+    "epoch": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "train_loss": [
+      0.5042378316851929,
+      0.43174303324338353,
+      0.39079139777064115,
+      0.35635711837749584,
+      0.3309435882001261,
+      0.2878487130715318,
+      0.2643795737821223,
+      0.23343564276112108
+    ],
+    "lr": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+    ],
+    "time_s": [
+      6.762180299992906,
+      6.4016540000156965,
+      6.3856919999816455,
+      6.407714399974793,
+      6.4424408999911975,
+      6.416294099995866,
+      6.4491240000061225,
+      6.51349250000203
+    ],
+    "val_loss": [
+      0.45319272634145374,
+      0.4202238702040794,
+      0.42370939142272945,
+      0.4404090658038549,
+      0.43723395522354036,
+      0.4804291046190684,
+      0.48199192733266927,
+      0.5160185258852913
+    ],
+    "val_macro_auroc": [
+      0.7756185544140453,
+      0.8026840690021138,
+      0.8054524902525702,
+      0.7874481788924566,
+      0.7987160046837022,
+      0.7985184307637881,
+      0.7878673963405193,
+      0.787903053451432
+    ],
+    "val_auroc_NORM": [
+      0.839099529191449,
+      0.8714679467735766,
+      0.8728992751042944,
+      0.8619867153740313,
+      0.8663483983277724,
+      0.8560248987827555,
+      0.8477165125878644,
+      0.84611637895033
+    ],
+    "val_auroc_MI": [
+      0.7566106268161062,
+      0.7823993358239933,
+      0.7846132558461325,
+      0.7952158572021586,
+      0.8001003182510031,
+      0.7851252248512522,
+      0.7870370370370371,
+      0.7899358885660255
+    ],
+    "val_auroc_STTC": [
+      0.8186301363449077,
+      0.8404221448102784,
+      0.8387061280293665,
+      0.8180401824175001,
+      0.8339736206315316,
+      0.8349674120687719,
+      0.8217238828332772,
+      0.82672093306364
+    ],
+    "val_auroc_CD": [
+      0.7693739331534608,
+      0.7968100141328487,
+      0.8038947928711708,
+      0.7873899503820764,
+      0.781263880476479,
+      0.7978035962287932,
+      0.7782158349087483,
+      0.7659171974132604
+    ],
+    "val_auroc_HYP": [
+      0.694378546564303,
+      0.7223209034698711,
+      0.7271489994118863,
+      0.6746081890865163,
+      0.7118938057317247,
+      0.7186710218873683,
+      0.7046437143356699,
+      0.7108248692639041
+    ]
+  },
+  "results": {
+    "thresholds": {
+      "NORM": 0.42,
+      "MI": 0.29,
+      "STTC": 0.21,
+      "CD": 0.28,
+      "HYP": 0.13
+    },
+    "val": {
+      "loss": 0.42370939142272945,
+      "n_records": 2146,
+      "macro_auroc": 0.8054524902525702,
+      "macro_auroc_ci": [
+        0.792318943798419,
+        0.8185601383819151
+      ],
+      "macro_f1": 0.5857637811248125,
+      "macro_f1_ci": [
+        0.5696587771604235,
+        0.6008971013255678
+      ],
+      "bootstrap": {
+        "n_boot": 1000,
+        "n_skipped": 0,
+        "alpha": 0.05,
+        "seed": 42
+      },
+      "auroc_NORM": 0.8728992751042944,
+      "auroc_NORM_ci": [
+        0.8576831025561111,
+        0.887265018624796
+      ],
+      "f1_NORM": 0.788785046728972,
+      "auroc_MI": 0.7846132558461325,
+      "auroc_MI_ci": [
+        0.7632959568503123,
+        0.8079274296194519
+      ],
+      "f1_MI": 0.5641838351822503,
+      "auroc_STTC": 0.8387061280293665,
+      "auroc_STTC_ci": [
+        0.8208237800676796,
+        0.8566563515447291
+      ],
+      "f1_STTC": 0.612725844461901,
+      "auroc_CD": 0.8038947928711708,
+      "auroc_CD_ci": [
+        0.7787552699025214,
+        0.8273693384895157
+      ],
+      "f1_CD": 0.5959271168274384,
+      "auroc_HYP": 0.7271489994118863,
+      "auroc_HYP_ci": [
+        0.6901658796974284,
+        0.7613586978839926
+      ],
+      "f1_HYP": 0.3671970624235006
+    }
+  },
+  "checkpoint": "results/checkpoints/transfer_finetune_lr1e3_f10_s44_20261122-211642.pt",
+  "predictions": "results/predictions/transfer_finetune_lr1e3_f10_s44_20261122-211642.npz",
+  "meta": {
+    "created": "2026-11-22T21:17:53",
+    "git_commit": "f69c72f",
+    "git_dirty": true,
+    "python": "3.12.10",
+    "torch": "2.14.1+cu126",
+    "cuda": "12.6",
+    "cudnn": 91002,
+    "numpy": "2.5.5",
+    "sklearn": "1.9.1",
+    "device": "NVIDIA GeForce RTX 3050 Ti Laptop GPU",
+    "platform": "Windows-10-10.0.19045-SP0"
+  }
+}

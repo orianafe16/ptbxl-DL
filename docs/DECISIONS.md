@@ -553,6 +553,12 @@ Proposed by the assistant in chat DL 08 and accepted by OF and MM, who asked for
 
 **Not chosen**: gradual unfreezing, two learning rates (backbone and head) or linear probing followed by fine-tuning (one more factor each); fine-tuning the LSTM generator (the probe study compares architectures at a fraction of the cost); 1 % labels; another lead for T14; a second ECG dataset (optional extension of D7); prompt tuning or prompt ensembles for CLIP (it would no longer be zero-shot with fixed prompts); CLIP on 12-lead images.
 
+**2026-11-23 (OF + MM, chat DL 08), after the runs:**
+- T13 and T14 (66 `transfer_*` and 15 `onelead_*` runs) were run at commit `f69c72f` before the new files of this block were committed, so their logs say `git_dirty: true`. The assistant checked on the laptop that every file under `src/` had the size and modification time of the delivered version (the runs used exactly that code); it was then committed as `1b7b07f`. No run is repeated.
+- Zero-shot: the first run failed because the text features stayed on the GPU while the image features were moved to the CPU (AI Error Bounty B10). Fixed, and the model is now loaded as `ViT-B-32-quickgelu`: OpenAI trained ViT-B/32 with the QuickGELU activation, and open_clip's plain `ViT-B-32` configuration uses GELU (it warned of the mismatch), so it would not have been exactly the class notebook's model. Run at `5f8d0ac` (`git_dirty: false`).
+- The 10 % probe reached its best epoch at about 47 of the 50 allowed (D14 budget): it is reported as limited by the epoch budget, as the generators of D19; not re-run.
+- The probe study found that every other generator of D19 gives better frozen features than `vocab2560`, selected by generation quality. The main grid stays with the model fixed in advance; the finding is reported (block note 08), D19 is not changed.
+
 ## Open items
 
 | # | Item | Blocks |
@@ -582,3 +588,4 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-21: Generative block: lead II tokens on the microvolt grid (range 2.56 mV, V = 256 / 64 / 2560), bits per sample as the vocabulary-independent metric, random training windows of L = 250 (100, 500), ECG-GPT (causal Transformer) and LSTM of equal size, ablation grid, counting baselines, selection rule of the pre-trained model for chat DL 08, generation settings and statistics (heart rate from R peaks), outputs (D19). O6 closed. Accepted by OF and MM in chat DL 13.
 - 2026-11-22: D19 note after the runs: 50-epoch budget reached, median epoch time, smaller generation batches for long contexts. Decided by OF and MM in chat DL 13.
 - 2026-11-22: Learning strategies and final comparison: transfer from the ECG-GPT (scratch, linear probe, fine-tuning; 100 % and 10 % of the labels drawn by patient; batch of 32 records; learning-rate ablations; probe study on every generator), 12 leads vs lead II on the final model of each family, zero-shot CLIP on CIFAR-100 and ECG images, final comparison table and the rule for published results (D20). O7 opened. Accepted by OF and MM in chat DL 08.
+- 2026-11-23: D20 note after the runs: runs before the commit (code checked unchanged, committed as 1b7b07f), zero-shot fix (B10) and QuickGELU model, 10 % probe limited by the epoch budget, probe-study finding. Decided by OF and MM in chat DL 08.

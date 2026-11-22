@@ -1,0 +1,321 @@
+{
+  "run_id": "transfer_finetune_lr1e3_f100_s43_20261122-212708",
+  "schema": 2,
+  "task": "multilabel",
+  "fast": false,
+  "final": false,
+  "scalars": {
+    "best_epoch": 2,
+    "epochs_run": 7,
+    "n_params": 724101,
+    "n_trainable": 724101,
+    "train_time_s": 325.61998630000744,
+    "threshold_NORM": 0.56,
+    "threshold_MI": 0.23,
+    "threshold_STTC": 0.2,
+    "threshold_CD": 0.2,
+    "threshold_HYP": 0.15,
+    "val_loss": 0.40548624003866734,
+    "val_macro_auroc": 0.8290110663352944,
+    "val_macro_auroc_lo": 0.8168902638217027,
+    "val_macro_auroc_hi": 0.8408643484893971,
+    "val_macro_f1": 0.6123863511172438,
+    "val_macro_f1_lo": 0.5942654618581895,
+    "val_macro_f1_hi": 0.6298467189963697,
+    "val_auroc_NORM": 0.885421639609462,
+    "val_auroc_NORM_lo": 0.8704686256597919,
+    "val_auroc_NORM_hi": 0.8986948772294537,
+    "val_f1_NORM": 0.8007608178792202,
+    "val_auroc_MI": 0.8223248466399151,
+    "val_auroc_MI_lo": 0.8008566067869469,
+    "val_auroc_MI_hi": 0.8451537347626827,
+    "val_f1_MI": 0.6071146245059289,
+    "val_auroc_STTC": 0.8575647544667939,
+    "val_auroc_STTC_lo": 0.8398329727297927,
+    "val_auroc_STTC_hi": 0.8757186773093815,
+    "val_f1_STTC": 0.6353322528363047,
+    "val_auroc_CD": 0.8402963615562041,
+    "val_auroc_CD_lo": 0.8175408670914052,
+    "val_auroc_CD_hi": 0.8623175822354181,
+    "val_f1_CD": 0.6368715083798883,
+    "val_auroc_HYP": 0.7394477294040976,
+    "val_auroc_HYP_lo": 0.7040278686996791,
+    "val_auroc_HYP_hi": 0.7756179940615916,
+    "val_f1_HYP": 0.3818525519848771
+  },
+  "config": {
+    "model": "transfer",
+    "model_args": {
+      "strategy": "finetune",
+      "label_fraction": 1.0,
+      "generator": "vocab2560",
+      "generator_args": {
+        "arch": "gpt",
+        "vocab": 2560,
+        "context": 250,
+        "d_model": 128,
+        "num_heads": 4,
+        "num_layers": 2,
+        "d_ff": 512,
+        "dropout": 0.1,
+        "pos_encoding": "sinusoidal",
+        "causal": true
+      },
+      "generator_run": "generator_vocab2560_s43_20261121-231619",
+      "head_dropout": 0.5
+    },
+    "tag": "finetune_lr1e3_f100",
+    "seed": 43,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "batch_size": 32,
+    "max_epochs": 50,
+    "patience": 5,
+    "grad_clip": 1.0,
+    "deterministic": true,
+    "normalize": false,
+    "pos_weight": false,
+    "n_boot": 1000,
+    "fast": false,
+    "final": false,
+    "notes": "Fine-tuning at lr 1e-3, 100% labels"
+  },
+  "model": {
+    "name": "transfer",
+    "args": {
+      "strategy": "finetune",
+      "label_fraction": 1.0,
+      "generator": "vocab2560",
+      "generator_args": {
+        "arch": "gpt",
+        "vocab": 2560,
+        "context": 250,
+        "d_model": 128,
+        "num_heads": 4,
+        "num_layers": 2,
+        "d_ff": 512,
+        "dropout": 0.1,
+        "pos_encoding": "sinusoidal",
+        "causal": true
+      },
+      "generator_run": "generator_vocab2560_s43_20261121-231619",
+      "head_dropout": 0.5
+    },
+    "n_params": 724101,
+    "n_trainable": 724101
+  },
+  "data": {
+    "lead": "II",
+    "n_records": {
+      "train": 17084,
+      "val": 2146,
+      "test": 2158
+    },
+    "n_records_train_all": 17084,
+    "label_fraction": 1.0,
+    "n_patients_train": 14823,
+    "train_class_counts": {
+      "NORM": 7596,
+      "MI": 4379,
+      "STTC": 4186,
+      "CD": 3907,
+      "HYP": 2119
+    },
+    "include_no_superclass": false,
+    "fast_subset": null,
+    "tokenizer": {
+      "lo_uv": -1138,
+      "delta_uv": 1,
+      "vocab": 2560,
+      "span_uv": 2560
+    },
+    "batch_records": 32,
+    "cublas_workspace_config": ":4096:2",
+    "features": {
+      "frozen": false,
+      "precomputed": false
+    }
+  },
+  "selection": {
+    "metric": "macro_auroc",
+    "mode": "max",
+    "best_value": 0.8290110663352944,
+    "best_epoch": 2,
+    "stopped_early": true
+  },
+  "history": {
+    "epoch": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "train_loss": [
+      0.4248456414802045,
+      0.3858672883339772,
+      0.37003712022550156,
+      0.3543343283663419,
+      0.3401558624026201,
+      0.3241829374263002,
+      0.30543633801433023
+    ],
+    "lr": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+    ],
+    "time_s": [
+      46.20221160000074,
+      46.4700307000021,
+      46.62348039998324,
+      46.45978619999369,
+      46.572783300012816,
+      46.64102460001595,
+      46.64064820000203
+    ],
+    "val_loss": [
+      0.4292322572629694,
+      0.40548624003866734,
+      0.39944750702170045,
+      0.40073842830115797,
+      0.41450227702874953,
+      0.4253050066995932,
+      0.4461760400059283
+    ],
+    "val_macro_auroc": [
+      0.8273227322384391,
+      0.8290110663352944,
+      0.8272388960640363,
+      0.8230269852644059,
+      0.8252179731446931,
+      0.8185899158210977,
+      0.8061154152367997
+    ],
+    "val_auroc_NORM": [
+      0.888345839872341,
+      0.885421639609462,
+      0.8836395127505154,
+      0.8809236815382382,
+      0.8825387614789807,
+      0.8737494559985229,
+      0.865055982697456
+    ],
+    "val_auroc_MI": [
+      0.8258163830081638,
+      0.8223248466399151,
+      0.8211048844610489,
+      0.8124579124579125,
+      0.8158606614086066,
+      0.8092315852589825,
+      0.7999187076241872
+    ],
+    "val_auroc_STTC": [
+      0.8550597913623252,
+      0.8575647544667939,
+      0.8593662209236992,
+      0.8513210754017305,
+      0.8562291643255796,
+      0.8492737948084055,
+      0.8360724051391542
+    ],
+    "val_auroc_CD": [
+      0.8343972737673525,
+      0.8402963615562041,
+      0.8357873098030579,
+      0.8397188113723546,
+      0.833877233877234,
+      0.8354948638413204,
+      0.8325814168333853
+    ],
+    "val_auroc_HYP": [
+      0.7329943731820132,
+      0.7394477294040976,
+      0.7362965523818606,
+      0.7307134455517937,
+      0.7375840446330647,
+      0.7251998791982579,
+      0.6969485638898161
+    ]
+  },
+  "results": {
+    "thresholds": {
+      "NORM": 0.56,
+      "MI": 0.23,
+      "STTC": 0.2,
+      "CD": 0.2,
+      "HYP": 0.15
+    },
+    "val": {
+      "loss": 0.40548624003866734,
+      "n_records": 2146,
+      "macro_auroc": 0.8290110663352944,
+      "macro_auroc_ci": [
+        0.8168902638217027,
+        0.8408643484893971
+      ],
+      "macro_f1": 0.6123863511172438,
+      "macro_f1_ci": [
+        0.5942654618581895,
+        0.6298467189963697
+      ],
+      "bootstrap": {
+        "n_boot": 1000,
+        "n_skipped": 0,
+        "alpha": 0.05,
+        "seed": 42
+      },
+      "auroc_NORM": 0.885421639609462,
+      "auroc_NORM_ci": [
+        0.8704686256597919,
+        0.8986948772294537
+      ],
+      "f1_NORM": 0.8007608178792202,
+      "auroc_MI": 0.8223248466399151,
+      "auroc_MI_ci": [
+        0.8008566067869469,
+        0.8451537347626827
+      ],
+      "f1_MI": 0.6071146245059289,
+      "auroc_STTC": 0.8575647544667939,
+      "auroc_STTC_ci": [
+        0.8398329727297927,
+        0.8757186773093815
+      ],
+      "f1_STTC": 0.6353322528363047,
+      "auroc_CD": 0.8402963615562041,
+      "auroc_CD_ci": [
+        0.8175408670914052,
+        0.8623175822354181
+      ],
+      "f1_CD": 0.6368715083798883,
+      "auroc_HYP": 0.7394477294040976,
+      "auroc_HYP_ci": [
+        0.7040278686996791,
+        0.7756179940615916
+      ],
+      "f1_HYP": 0.3818525519848771
+    }
+  },
+  "checkpoint": "results/checkpoints/transfer_finetune_lr1e3_f100_s43_20261122-212708.pt",
+  "predictions": "results/predictions/transfer_finetune_lr1e3_f100_s43_20261122-212708.npz",
+  "meta": {
+    "created": "2026-11-22T21:32:51",
+    "git_commit": "f69c72f",
+    "git_dirty": true,
+    "python": "3.12.10",
+    "torch": "2.14.1+cu126",
+    "cuda": "12.6",
+    "cudnn": 91002,
+    "numpy": "2.5.5",
+    "sklearn": "1.9.1",
+    "device": "NVIDIA GeForce RTX 3050 Ti Laptop GPU",
+    "platform": "Windows-10-10.0.19045-SP0"
+  }
+}
