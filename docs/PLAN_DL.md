@@ -4,13 +4,13 @@ Team: Oriana Ferraz De Jesus (OF), María Martínez García-Taheño (MM).
 Dataset: PTB-XL 1.0.3, 5 diagnostic superclasses (see `DECISIONS.md`).
 Working mode: both work together on Oriana's laptop. The assistant writes code, figures and report drafts and explains each technique; OF/MM execute, check and decide. No result counts until one of us has run it.
 
-Last update: 2026-11-21.
+Last update: 2026-11-22.
 
 ## Roles
 
 | | Oriana (OF) | María (MM) |
 |---|---|---|
-| Owns | EDA; Dense; CNN; generative autoregressive model (ECG-GPT, owner to be confirmed); repository and decisions log | Data loading and split; evaluation protocol; RNN (LSTM/GRU) and RNN + attention; self-attention and Transformer |
+| Owns | EDA; Dense; CNN; generative autoregressive model (ECG-GPT); repository and decisions log | Data loading and split; evaluation protocol; RNN (LSTM/GRU) and RNN + attention; self-attention and Transformer |
 | Reviews | MM's blocks | OF's blocks |
 | Shared | Transfer learning and fine-tuning of the pre-trained ECG-GPT; zero-shot experiment; final comparison; cross-cutting ablation (12 leads vs 1 lead) | |
 | Reports | Own PRDL-DL and MLLB-DL | Own PRDL-DL and MLLB-DL |
@@ -46,7 +46,7 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | T20 | MLLB-DL report (Section 0 AI environment, code, training, evaluation), opening with a summary of at most 3 pages | each her own | cross | todo | | | |
 | T21 | `AI_USAGE_LOG.md` and AI Error Bounty sheets | each her own entries | cross | todo | | | |
 | T22 | Adversarial review before delivery; preparation of the class discussion and oral defence | OF + MM | — | todo | | | |
-| T23 | Generative autoregressive model (ECG-GPT): tokenisation of lead II, causal Transformer and LSTM, sampling with temperature, ablations (D13) | OF (to confirm) | MM | todo | | | |
+| T23 | Generative autoregressive model (ECG-GPT): tokenisation of lead II, causal Transformer and LSTM, sampling with temperature, ablations (D13) | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-22 |
 | T24 | Zero-shot learning: theory and a short experiment on the class CLIP notebook | OF + MM | — | todo | | | |
 | T25 | Initial draft of the DL reports submitted (due 1 December 2026) | each her own | — | todo | | | |
 
@@ -100,3 +100,4 @@ No fixed calendar; the team moves on as blocks close. Dependencies:
 - 2026-11-20: T10 done (1D CNN, 10 configurations x 3 seeds on validation, final model on test with 3 seeds compared with the final Dense and trivial models, summary, tables and interpretation figures; DECISIONS D16). Executed by OF on Oriana's laptop (runs at commit 3f9439f, report at 7eaf6ec); reviewed by MM.
 - 2026-11-21: T11 started in chat DL 06 (DECISIONS D17: LSTM/GRU over 100 frames, RNN + attention as a second final model, 12 configurations x 3 seeds). Done by MM, reviewed by OF; runs on Oriana's laptop.
 - 2026-11-21: T11 done (LSTM/GRU and RNN + attention, 12 configurations x 3 seeds on validation, two final models on test with 3 seeds compared with the final CNN, Dense and trivial models, summary, tables and interpretation figures; DECISIONS D17). Executed by MM on Oriana's laptop (runs at commit cae71d5); reviewed by OF.
+- 2026-11-22: T23 done (ECG-GPT and LSTM generators of lead II, 8 configurations x 3 seeds on validation, counting baselines, generation with greedy, temperature and top-k sampling, summary, tables and figures; pre-trained model for T13 selected: `vocab2560`; DECISIONS D19). Executed by OF on Oriana's laptop (runs at commit f010618, summary at 6326057); reviewed by MM. Owner of T23 confirmed (O6 closed).

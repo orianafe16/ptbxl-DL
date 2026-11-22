@@ -4,5 +4,6 @@
   "dense": "dense_summary",
   "cnn": "cnn_summary",
   "rnn": "rnn_summary",
-  "transformer": "transformer_summary"
+  "transformer": "transformer_summary",
+  "generative": "generative_summary"
 }
