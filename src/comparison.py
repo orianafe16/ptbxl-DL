@@ -292,7 +292,8 @@ def figure_overview(paths: Paths, summary: dict, fast: bool, suffix: str,
     ax.set_xlabel("test macro AUROC (dots: seeds; bar: mean; dashed: chance)")
     handles = [plt.Line2D([], [], color=colour[g], linewidth=2.5, label=t)
                for g, t in GROUPS if any(r["group"] == g for r in order)]
-    ax.legend(handles=handles, loc="lower left", fontsize=7)
+    ax.legend(handles=handles, loc="center left", bbox_to_anchor=(1.01, 0.5),
+              fontsize=7)
     dx._save(fig, paths, "comparison_overview" + suffix)
     return True
 
