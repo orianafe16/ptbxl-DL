@@ -1,0 +1,81 @@
+% =====================================================================
+% 1. Methodology and experimental design
+% =====================================================================
+\section{Methodology and experimental design}\label{sec:method}
+
+\subsection{From the guidelines to a plan}
+
+The professor's guidelines ask for three areas (core architectures, learning strategies, basic
+generative AI), mandatory ablations, simple models and methodological clarity
+\cite{course_message_2011}. We kept one use case for the three areas: the five-superclass task of
+PTB-XL \cite{wagner2020ptbxl}. One model serves two areas: the autoregressive generator of lead II
+(area 3) is also the model pre-trained without labels and transferred to the classification task
+(area 2). The project was planned as a list of tasks with an owner and a reviewer
+(\texttt{docs/PLAN\_DL.md}); each block was decided before it was coded (\texttt{docs/DECISIONS.md},
+entries D0--D20) and ended with a block note (\texttt{docs/blocks/}).
+
+\subsection{Protocol shared by every block}
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item \textbf{Same data, loss, metric and logging for every model}, so that differences come from the
+        model. Official folds: training 1--8, validation 9, test 10; records without a superclass left
+        out; per-lead z-score with training statistics.
+  \item \textbf{Baseline and one factor at a time.} Each ablation changes one thing with respect to a
+        named reference (the baseline, or another configuration when the question is an interaction, e.g.\
+        ``6 blocks without residual'' against ``6 blocks'').
+  \item \textbf{Three seeds for every configuration} (42, 43, 44). The first plan was one seed for ablations
+        and three for final models; from the Dense block on we decided three for every configuration, so
+        that each ablation is compared with its reference seed by seed.
+  \item \textbf{Equal, small budgets.} Adam, learning rate $10^{-3}$, batches of 64, at most 50 epochs,
+        early stopping with patience 5 on the validation selection metric; gradient clipping at norm 1
+        for recurrent, attention and generative models. Exceptions are written in the decisions log with
+        their reason (e.g.\ batches of 32 records in the transfer experiments, for GPU memory).
+  \item \textbf{Selection on validation, test once.} The rule that picks the final model of a block was
+        written before its runs; the test fold is read only by a \texttt{--final} run, and the training
+        code refuses a second final run of the same model, tag and seed.
+  \item \textbf{Paired comparisons.} Every run stores its predictions, so any two runs on the same split
+        can be compared with the paired patient bootstrap (Section~\ref{sec:training}).
+\end{itemize}
+
+\subsection{Working practices that saved time}
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item \textbf{Smoke mode.} \texttt{--fast} trains on 512 records for 2 epochs with 50 bootstrap
+        resamples. It runs the whole pipeline of a block in minutes, writes outputs whose names end in
+        \texttt{\_fast} (ignored by git) and is refused by the script that generates the numbers.
+  \item \textbf{Estimate before long runs.} The longer blocks have an \texttt{estimate} command that
+        measures time per batch and peak GPU memory of every configuration before the grid is launched.
+        It prevented memory errors in training, but not in generation, which it did not cover
+        (Appendix~\ref{app:ai-code}, Sheet C1).
+  \item \textbf{Determinism.} Python, NumPy and PyTorch are seeded before the model is built, the same
+        seed orders the batches, cuDNN runs in deterministic mode, and recurrent and attention models set
+        \texttt{CUBLAS\_WORKSPACE\_CONFIG} as the PyTorch documentation of \texttt{nn.LSTM} requires.
+        In the RNN and Transformer blocks the final runs reproduced their ablation runs exactly (same
+        validation AUROC and best epoch).
+  \item \textbf{Runs, then report.} Each block has \texttt{run} (training only, skipping what was already
+        run), \texttt{final} and \texttt{report} (summary log, tables, figures), so a figure can be
+        redrawn without retraining.
+\end{itemize}
+
+\subsection{What the project trained}
+
+\begin{table}[htbp]
+\centering
+\caption{Runs of the project, per block (all with seeds 42--44).}
+\label{tab:runs}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{2.7cm}}
+\toprule
+Block (owner) & Configurations & Test fold \\
+\midrule
+Dense (OF) & baseline + 10 ablations; final \texttt{no\_norm} & final model only \\
+1D CNN (OF) & baseline + 9 ablations; final \texttt{no\_dropout} & final model only \\
+RNN and RNN + attention (MM) & baseline + 11 ablations; finals \texttt{conv} and \texttt{raw\_attn} & final models only \\
+Transformer (MM) & baseline + 14 configurations (step by step and ablations); final \texttt{no\_pos} & final model only \\
+Generators (OF) & ECG-GPT baseline + 7 ablations & never read \\
+Transfer (OF + MM) & 3 strategies $\times$ 2 label fractions; 2 learning-rate ablations $\times$ 2 fractions; probes on 6 other generators $\times$ 2 fractions & 6 main configurations \\
+12 leads vs lead II (OF + MM) & final model of each of the 5 families on lead II & every run \\
+Zero-shot (OF + MM) & CLIP, no training & one evaluation \\
+\bottomrule
+\end{tabularx}
+\end{table}

@@ -1,0 +1,10 @@
+% Shared float (common/make_floats.py). Table: tables/generative_ablations.tex
+\begin{table}[htbp]
+\centering
+\caption[Generators: ablations (validation)]{Generators of lead II on the validation fold (mean $\pm$ SD over seeds 42--44). CE: cross-entropy per token (nats), not comparable across vocabularies; bits per sample: comparable; $\Delta$ bits: mean paired difference with the baseline (negative = better). The model without the causal mask is not compared (it sees its target).}
+\label{tab:generative_ablations}
+\small
+\begin{adjustbox}{max width=\textwidth}
+\input{tables/generative_ablations}
+\end{adjustbox}
+\end{table}

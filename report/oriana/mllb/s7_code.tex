@@ -1,0 +1,68 @@
+% =====================================================================
+% 7. Code distribution and reproduction
+% =====================================================================
+\section{Code distribution and reproduction}\label{sec:code}
+
+\subsection{Repository}
+
+All code, run logs, figures, tables and the sources of the four reports are in the public repository
+\url{https://github.com/orianafe16/ptbxl-DL}:
+
+\begin{lstlisting}[language={},numbers=none,caption={Structure of the repository.},label={lst:tree}]
+src/          data, models (src/models/), training loop, metrics, one *_experiments.py per block
+tests/        pytest suite, one file per block (synthetic data; the real cache when present)
+notebooks/    EDA and zero-shot notebooks (they call the functions of src/)
+results/logs/ one JSON per run and one summary per block (checkpoints and caches not committed)
+report/       numbers.tex (generated), runs.json, published.json, tables/, figures/,
+              common/ (shared LaTeX), one main file per report
+docs/         DECISIONS.md, PLAN_DL.md, AI_USAGE_LOG.md, blocks/ (one note per block),
+              literature/ (prompts, checked quotes, learning-strategies material)
+\end{lstlisting}
+
+The data are not committed: the README explains how to download PTB-XL 1.0.3 from PhysioNet, and
+\texttt{python -m src.prepare\_data} checks the files against the dataset's checksums and rebuilds the
+cache. Checkpoints and smoke-run outputs are ignored by git.
+
+\subsection{Reproducing the results}
+
+On a Windows laptop with an NVIDIA GPU (the README also covers the CPU case):
+\begin{lstlisting}[language={},numbers=none,caption={Commands to reproduce the project, from the folder \texttt{ptbxl-dl}.},label={lst:repro}]
+py -3.12 -m venv .venv ; .venv\Scripts\activate
+pip install torch --index-url https://download.pytorch.org/whl/cu126
+pip install -r requirements.txt
+python -m src.check_env ; python -m pytest -q tests
+python -m src.prepare_data                       # checksums + cache
+python -m src.eda                                # EDA: eda.json and figures
+python -m src.train --model trivial --final      # trivial reference
+python -m src.dense_experiments all              # likewise cnn_, rnn_, transformer_
+python -m src.generative_experiments all         # generators (no test fold)
+python -m src.transfer_experiments run ; python -m src.transfer_experiments report
+python -m src.leads_experiments all ; python -m src.zero_shot run
+python -m src.comparison report                  # final table and figures
+python report/make_numbers.py                    # report/numbers.tex
+python report/common/make_floats.py              # shared figure/table floats
+python report/common/make_contributions.py       # contribution tables from PLAN_DL.md
+python report/common/make_code_excerpts.py       # code listings of this report
+\end{lstlisting}
+
+Every block also has a smoke mode (\texttt{all --fast}) and, where runs are long, an \texttt{estimate}
+step. The reports compile from \texttt{report/} (on Overleaf, the folder \texttt{report/} uploaded as a
+project with \texttt{oriana\_mllb.tex} as main file).
+
+\subsection{Tests}
+
+Each block has its tests, run before every long execution: data (shapes, no patient in two splits, class
+counts against PhysioNet, normalisation statistics from training records only), metrics on toy cases,
+the loop over-fitting a small batch, receptive field and class activation maps of the CNN, attention
+against \texttt{nn.MultiheadAttention} with and without the causal mask, causality of the generators,
+the tokenizer, the frozen backbone of the probe, and every pipeline end to end on synthetic data.
+Regression tests were added for each code error found (Appendix~\ref{app:ai-code}).
+
+\subsection{Final results and traceability}
+
+\input{common/floats/tab_comparison_final}
+
+Table~\ref{tab:comparison_final} collects every final model; each value is a macro whose source is the
+summary log of its block, and each summary lists the run logs it read. The runs of the learning-strategy
+block were made one commit before their code was committed (the logs say so); we checked on the laptop
+that every file under \texttt{src/} was the delivered version and committed it unchanged.

@@ -1,0 +1,127 @@
+% =====================================================================
+% Structured summary (at most 3 pages), shared by Oriana's PRDL-DL and
+% MLLB-DL reports; the last paragraph depends on \ifprdl.
+% Required by the professor's message of 20/11/2026: scope, core methodology,
+% main findings, key conclusions.
+% =====================================================================
+\section*{Structured summary}
+\addcontentsline{toc}{section}{Structured summary}
+
+\paragraph{Scope.}
+The project studies the basic deep-learning modules of the course on one biomedical use case:
+multi-label classification of the five diagnostic superclasses (NORM, MI, STTC, CD, HYP) of the
+PTB-XL electrocardiogram dataset \cite{wagner2020ptbxl,ptbxl_physionet}, with \edaNRecordsAll{}
+ten-second 12-lead records from \edaNPatientsAll{} patients at 100\,Hz. Following the professor's
+guidelines \cite{course_message_2011}, it covers three areas with small models that train on a
+laptop GPU of 4\,GB: (1) core architectures (dense network, 1D CNN, LSTM and GRU, RNN + attention,
+self-attention and a Transformer encoder); (2) learning strategies (a model pre-trained by us without
+labels, then transferred by linear probing and fine-tuning, and zero-shot classification with CLIP);
+(3) basic generative AI (autoregressive generators of the ECG, a small GPT-like causal Transformer and
+an LSTM). The team was Oriana Ferraz and Mar\'ia Mart\'inez. My own blocks are the exploratory
+analysis, the dense network, the CNN and the generative models; the learning strategies and the final
+comparison were shared; the data pipeline, the evaluation protocol, the recurrent networks and the
+Transformer encoder are Mar\'ia's work, summarised here and attributed.
+
+\paragraph{Core methodology.}
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \textbf{Data.} Official patient-wise folds: training 1--8, validation 9, test 10
+        \cite{strodthoff2021deep}. The \edaNNosuperAll{} records without a diagnostic superclass are
+        left out, as in the benchmark \cite{strodthoff2021deep}. Per-lead z-score with training
+        statistics only.
+  \item \textbf{Metric.} Macro-averaged AUROC over the five classes (the benchmark metric,
+        threshold-free), per-class AUROC and macro F1 at thresholds chosen on validation.
+  \item \textbf{Protocol.} Decisions written before any run; one factor changed at a time; every
+        configuration trained with three seeds; ablations and model selection on the validation fold
+        only, with a selection rule fixed in advance; the test fold used once per final model. Two
+        models are compared with a paired bootstrap that resamples patients (records of one patient
+        are correlated), and a difference is claimed only when its 95\,\% interval excludes 0 in a
+        stated number of seeds.
+  \item \textbf{Reproducibility.} One JSON log per run; every number of this report is a macro
+        generated from those logs, and every literature claim comes from a quote checked against
+        its PDF. Code: \url{https://github.com/orianafe16/ptbxl-DL}.
+\end{itemize}
+
+\paragraph{Main findings.} Table~\ref{tab:summary} gathers the final models; all values are test macro
+AUROC, mean $\pm$ SD over three seeds.
+
+\begin{table}[H]
+\centering
+\caption{Final models on the test fold (macro AUROC, mean $\pm$ SD over seeds).}
+\label{tab:summary}
+\small
+\begin{tabular}{lcc}
+\toprule
+Model & 12 leads & Lead II only \\
+\midrule
+Trivial (logistic regression on lead means and SDs) & \comparisonTestAurocMeanTrivial{} & --- \\
+Dense network & \comparisonTestAurocMeanTwelveDense{} $\pm$ \comparisonTestAurocSdTwelveDense{} & \comparisonTestAurocMeanOneleadDense{} $\pm$ \comparisonTestAurocSdOneleadDense{} \\
+1D CNN & \textbf{\comparisonTestAurocMeanTwelveCnn{}} $\pm$ \comparisonTestAurocSdTwelveCnn{} & \textbf{\comparisonTestAurocMeanOneleadCnn{}} $\pm$ \comparisonTestAurocSdOneleadCnn{} \\
+RNN (conv.\ front end + LSTM) & \comparisonTestAurocMeanTwelveRnn{} $\pm$ \comparisonTestAurocSdTwelveRnn{} & \comparisonTestAurocMeanOneleadRnn{} $\pm$ \comparisonTestAurocSdOneleadRnn{} \\
+RNN + attention & \comparisonTestAurocMeanTwelveRnnattn{} $\pm$ \comparisonTestAurocSdTwelveRnnattn{} & \comparisonTestAurocMeanOneleadRnnattn{} $\pm$ \comparisonTestAurocSdOneleadRnnattn{} \\
+Transformer encoder & \comparisonTestAurocMeanTwelveTransformer{} $\pm$ \comparisonTestAurocSdTwelveTransformer{} & \comparisonTestAurocMeanOneleadTransformer{} $\pm$ \comparisonTestAurocSdOneleadTransformer{} \\
+\midrule
+ECG-GPT from scratch, 100\,\% / 10\,\% of labels & --- & \comparisonTestAurocMeanScratchFOneZeroZero{} / \comparisonTestAurocMeanScratchFOneZero{} \\
+ECG-GPT linear probe, 100\,\% / 10\,\% & --- & \comparisonTestAurocMeanProbeFOneZeroZero{} / \comparisonTestAurocMeanProbeFOneZero{} \\
+ECG-GPT fine-tuning, 100\,\% / 10\,\% & --- & \comparisonTestAurocMeanFinetuneFOneZeroZero{} / \comparisonTestAurocMeanFinetuneFOneZero{} \\
+CLIP zero-shot (lead II drawn as an image) & --- & \comparisonTestAurocMeanZeroshot{} \\
+\midrule
+Published best single model, 12 leads, other setting \cite{strodthoff2021deep} & \comparisonPublishedStrodthoffResnetOneDWang{} & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \textbf{Area 1, what matters is sharing weights over time.} The dense network, with one
+        weight per lead and sample, is only slightly above the trivial model; dropout and batch norm
+        are its most important components. The CNN gains \cnnDiffDenseMean{} of macro AUROC over it in every
+        seed with fewer parameters, and inside the CNN no ablation moves the validation result by more
+        than a few thousandths. The recurrent networks and the Transformer, which also share their
+        weights over time, land close to the CNN but below it in every seed (RNN $-$ CNN:
+        \rnnDiffCnnMean{}; Transformer $-$ CNN: \transformerDiffCnnMean{}). In the RNN, attention over
+        the hidden states works like a learned mean; the Transformer does not use the order of its
+        patches, so removing the positional encoding helped.
+  \item \textbf{Twelve leads carry information that lead II lacks.} Every family is worse with lead
+        II only, in every seed: the paired difference (lead II $-$ 12 leads) ranges from
+        \leadsTestDiffMeanTransformer{} (Transformer) to \leadsTestDiffMeanRnnattn{} (RNN + attention).
+  \item \textbf{Area 2, pre-training helps when the whole network is adapted.} Our ECG-GPT,
+        pre-trained only on the training folds to predict the next sample, fine-tuned with 10\,\% of
+        the labels beats the same network trained from scratch with all of them
+        (\transferTestDiffMeanFinetuneFOneZeroVsScratchFOneZeroZero{}, all seeds), and the gain comes
+        from the pre-trained weights, not from the learning rate. Its frozen features are weak (linear
+        probe below scratch with all labels), and the generator chosen for generating best gave the
+        worst frozen features. On the same input, the CNN trained from scratch is still better than
+        the fine-tuned ECG-GPT (\comparisonTestDiffMeanFinetuneFOneZeroZeroVsOneleadCnn{}). CLIP works
+        zero-shot on natural images (CIFAR-100 top-1 \zeroshotCifarTopOneNotebook{} against chance
+        \zeroshotCifarChanceTopOne{}) and recognises every ECG image as ``an electrocardiogram'', but
+        its diagnosis is close to chance (\zeroshotTestMacroAuroc{}).
+  \item \textbf{Area 3, the generators model the ECG, and sampling decides what they produce.} Every
+        generator with the causal mask codes the next sample with fewer bits than a bigram counting model (ECG-GPT baseline
+        \generativeBitsMeanBase{} against \generativeBigramBitsVTwoFiveSix{} bits per sample). The
+        same-size LSTM, a longer context and finer tokens are better; removing the positional encoding
+        is worse, the opposite of the classifier. Greedy decoding collapses into a flat line in every
+        record, temperature 0.8--1 produces beats whose amplitude distribution is close to the real one, and
+        temperature 1.5 produces noise.
+\end{itemize}
+
+\paragraph{Key conclusions.}
+(i) For this dataset size the inductive bias of the architecture matters more than its family name or
+than self-supervised pre-training: local filters shared over time (the CNN) win, and the other
+weight-sharing families come close. (ii) Ablations inside a well-designed family move the result much
+less than the choice of family; several ``best'' configurations selected by our rules are statistically
+indistinguishable from their baselines, and we report them as such. (iii) Self-supervised
+pre-training on unlabelled signals makes a model far more label-efficient, but the best pretext model
+for generation is not the best feature extractor. (iv) Zero-shot needs a shared space between inputs
+and class descriptions that covers the task; a general image--text model does not have one for ECG
+diagnosis. (v) A generator is judged by a metric that does not depend on its vocabulary (bits per
+sample) and by its samples, and the decoding rule matters as much as the model. Limits: one dataset, small
+models trained with a 50-epoch budget (the generators had not fully converged), and a ``foundation''
+model pre-trained on PTB-XL alone.
+\ifprdl
+\par\smallskip\noindent\textit{This PRDL report} explains the theory behind each module and analyses the
+results critically; the code, training details and PyTorch implementation are in the companion
+MLLB-DL report.
+\else
+\par\smallskip\noindent\textit{This MLLB report} describes how the experiments were designed,
+implemented in PyTorch, trained, evaluated and made reproducible; the theory and the critical analysis
+are in the companion PRDL-DL report.
+\fi

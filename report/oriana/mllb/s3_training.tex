@@ -1,0 +1,72 @@
+% =====================================================================
+% 3. Training loop (T8, OF + MM) and evaluation module (T7, MM)
+% =====================================================================
+\section{Training and evaluation code}\label{sec:training}
+
+\subsection{A task-agnostic training loop}
+
+The loop (\texttt{src/train.py}, written by both of us) serves every classifier and the generators,
+because everything specific to a task comes from a \emph{task} object: the loss, the metrics
+(accumulated batch by batch, so that a generator never keeps all its logits in memory) and the
+selection metric with its direction (macro AUROC, higher is better; or cross-entropy, lower is
+better). Listing~\ref{lst:loop} shows the five steps of an epoch and the evaluation pass.
+
+\lstinputlisting[firstnumber=101,caption={The training epoch and the evaluation pass
+(\texttt{src/train.py}, lines 101--139).},label={lst:loop}]{common/code/train_one_epoch.py}
+
+PyTorch details behind these lines:
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item \texttt{optimizer.zero\_grad()} is needed because PyTorch \emph{adds} new gradients to the
+        stored ones; \texttt{loss.backward()} fills \texttt{.grad} of every trainable parameter and
+        \texttt{optimizer.step()} uses them.
+  \item \texttt{model.train()} and \texttt{model.eval()} switch dropout and batch norm between their two
+        behaviours; \texttt{@torch.no\_grad()} on the evaluation pass avoids building the autograd graph
+        (less memory, faster).
+  \item \texttt{loss.item()} turns the loss into a Python number, so the graph of the batch is not kept
+        alive by the running sum. The evaluation sums the loss and divides once at the end, which gives
+        the exact mean even if the last batch is smaller.
+  \item The optimiser receives only parameters with \texttt{requires\_grad=True}; a frozen backbone
+        (Section~\ref{sec:strategies-code}) therefore needs no special code. The run log records total and
+        trainable parameters.
+  \item Gradient clipping (\texttt{clip\_grad\_norm\_}) rescales the whole gradient when its norm exceeds
+        a threshold; it is off for the Dense and CNN blocks and on for the others.
+\end{itemize}
+
+The classification loss is a single call (Listing~\ref{lst:bce}); the model outputs logits and the
+sigmoid lives inside the loss.
+
+\lstinputlisting[firstnumber=91,caption={Multi-label loss (\texttt{src/tasks.py}, lines 91--95). Class
+weights are available but were not used.},label={lst:bce}]{common/code/multilabel_loss.py}
+
+\subsection{Evaluation module (Mar\'ia's block, summary)}
+
+\texttt{src/metrics.py} (task T7, done by Mar\'ia and reviewed by me) computes the AUROC per class with
+scikit-learn, the macro AUROC as their plain mean, and per-class F1 thresholds chosen on validation on a
+grid from 0.01 to 0.99. Intervals use the patient bootstrap of Listing~\ref{lst:boot}: each resample
+draws patients with replacement and repeats every record of a drawn patient as many times as the
+patient was drawn. Because the resamples depend only on the patients and the seed, two models
+evaluated on the same split get the same resamples, which is what makes the paired comparison possible:
+the difference of the two metrics is computed on each resample, and its percentiles give the interval
+of the difference. Resamples in which a class has no positive or no negative record are discarded and
+counted.
+
+\lstinputlisting[firstnumber=101,caption={Patient bootstrap (\texttt{src/metrics.py}, lines
+101--119).},label={lst:boot}]{common/code/patient_bootstrap.py}
+
+\subsection{Run logs and numbers}
+
+Every run writes \texttt{results/logs/<run\_id>.json} with its configuration, data description, model
+size, per-epoch curves, best epoch, results per split, paths of the checkpoint and the saved predictions,
+and \texttt{meta} (date, commit, whether the code under \texttt{src/} had uncommitted changes,
+package versions, device). Each block summarises its runs in one summary log.
+\texttt{report/runs.json} maps a short alias to each summary, and \texttt{report/make\_numbers.py}
+turns every scalar of those logs into a \LaTeX{} macro (\texttt{\textbackslash cnnFinalTestMacroAurocMean}
+expands to \cnnFinalTestMacroAurocMean{}). Only the files listed in \texttt{runs.json} are read, so an
+old or smoke run cannot slip into a report, and a name collision stops the script. All the tables of the
+blocks are generated from the summaries and contain only macros. These reports therefore contain no
+measured number typed by hand; regenerating the logs and \texttt{numbers.tex} updates every report.
+
+The flag for uncommitted code had a bug that the assistant first explained wrongly
+(Appendix~\ref{app:ai-code}, Sheet C4): each run wrote its own predictions file before checking
+\texttt{git status}, so every run looked ``dirty''. The check now looks only at the code under
+\texttt{src/}.

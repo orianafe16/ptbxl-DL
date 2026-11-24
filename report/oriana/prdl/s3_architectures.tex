@@ -1,0 +1,255 @@
+% =====================================================================
+% 3. Area 1: core architectures
+%    Dense (T9) and CNN (T10): own blocks, in depth.
+%    RNN (T11) and Transformer (T12): Maria's blocks, summarised and attributed.
+% =====================================================================
+\section{Area 1: core architectures}\label{sec:arch}
+
+Five families were trained on the same 12-lead input with the protocol of
+Section~\ref{sec:framework}. Each block changed one factor at a time against a baseline, with three
+seeds per configuration. The dense network and the CNN are my blocks and are analysed in depth; the
+recurrent networks and the Transformer are Mar\'ia's blocks and are summarised.
+
+% ---------------------------------------------------------------------
+\subsection{Dense network (own block)}\label{sec:dense}
+
+\paragraph{Model and theory.} The record is flattened into a vector of 12\,000 numbers and passed
+through two hidden layers of 256 units (Linear $\to$ batch norm $\to$ ReLU $\to$ dropout) and a Linear
+layer with five logits (\denseParamsBase{} parameters, almost all of them in the first layer). Each
+unit of the first layer computes one weighted sum of the whole record: it has one weight for every
+lead and every instant. A QRS complex that occurs 0.3\,s later in another record meets different
+weights, so the network has to learn the same shape separately at every position. Nothing in the
+architecture says that the input is a time series; this is the limitation that the following
+families remove.
+
+Two regularisers are part of the baseline. \emph{Dropout} switches off each hidden unit at random
+during training, so every batch trains a different thinned network and no unit can rely on specific
+others; at test time all units are used. The rate 0.5 follows Srivastava et al., for whom the retention
+probability ``can simply be set at 0.5, which seems to be close to optimal for a wide range of networks
+and tasks'' \cite[p.~1930]{srivastava2014dropout}. \emph{Batch normalisation} standardises each
+pre-activation with the mean and variance of the current batch and then rescales it with two learned
+parameters; it is placed, as in Ioffe and Szegedy, ``immediately before the nonlinearity''
+\cite[p.~5]{ioffe2015batch}. At evaluation time it uses running averages collected during training,
+so a prediction does not depend on the other records of the batch.
+
+\paragraph{Results.} Table~\ref{tab:dense_ablations} and Figure~\ref{fig:dense_curves} summarise the
+ablations.
+
+\input{common/floats/tab_dense_ablations}
+\input{common/floats/fig_dense_curves}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{Dropout is the main defence against overfitting.} Without it the best epoch is, on
+        average, epoch \intval{\denseBestEpochMeanNoDropout}: the training loss keeps falling while the
+        validation loss rises (Figure~\ref{fig:dense_curves}b), and the validation AUROC drops by
+        \denseDiffMeanNoDropout{} in all seeds. A rate of 0.2 is in between
+        (\denseDiffMeanDropoutZeroTwo{}). With \denseParamsBase{} parameters and \edaNLabelledTrain{} training records, the network can
+        memorise the training set.
+  \item \textbf{Batch norm is essential and absorbs the input scaling.} Removing it costs
+        \denseDiffMeanNoBn{} in all seeds. With batch norm, feeding raw millivolts instead of the
+        z-scored input changes nothing (\denseDiffMeanNoNorm{}, no seed significant), because the
+        first batch-norm layer re-standardises the pre-activations whatever the scale of the input.
+        Without batch norm the input scale matters, and unexpectedly the raw millivolts did better
+        than the z-score (\denseDiffMeanNoNormNoBn{} against \denseDiffMeanNoBn{}). My explanation, not
+        tested: the ECG in millivolts is already on a small scale (training standard deviations between
+        \edaLeadStdAVR{} and \edaLeadStdVTwo{}\,mV per lead), so the z-score enlarges the input and
+        the first-layer pre-activations several times.
+  \item \textbf{Depth and width.} One hidden layer is clearly worse (\denseDiffMeanDepthOne{}); two
+        and three are equivalent, four slightly worse. Sixty-four units are too few
+        (\denseDiffMeanWidthSixFour{}); 1024 units add nothing and take \denseEpochTimeMeanWidthOneZeroTwoFour{}\,s per epoch against
+        \denseEpochTimeMeanBase{}\,s.
+        Extra layers change little because the first layer already holds almost every parameter.
+  \item \textbf{Validation loss and AUROC disagree} (Figure~\ref{fig:dense_curves}a): the validation
+        loss reaches its minimum early and then rises, while the AUROC keeps improving for several
+        more epochs. The network keeps ranking the records better while its probabilities become
+        over-confident. Early stopping on the AUROC therefore stops later than a rule based on the
+        loss would.
+  \item \textbf{Only a little better than the trivial model.} The final Dense model reaches a test
+        macro AUROC of \denseFinalTestMacroAurocMean{} against \trivialTestMacroAuroc{} for a logistic
+        regression on the mean and standard deviation of each lead; the paired difference
+        (\denseDiffTrivialMean{} on average) excludes 0 in all seeds, but for MI and CD the point
+        estimates are below the trivial model's (Table~\ref{tab:comparison_per_class}; no per-class
+        paired test, so this is an observation only).
+\end{enumerate}
+
+\paragraph{What the first layer learnt.} The weights of the three most important hidden units look
+like noise along time, with no heartbeat template (Figure~\ref{fig:dense_first_layer}), but some
+instants show vertical bands in which several limb leads take related or opposite signs. The
+augmented limb leads are computed from the same limb electrodes \cite[p.~e263]{wagner2009aha}, so
+reading these bands as the network weighing related leads together is plausible, but it remains a
+hypothesis. What the figure shows without interpretation is the point of item~5: one weight per
+instant, nothing that repeats from beat to beat.
+
+\input{common/floats/fig_dense_first_layer}
+
+\paragraph{Selection caveat.} The rule fixed before the runs selected \texttt{no\_norm}
+(no input z-score), whose validation AUROC is above the baseline's but whose paired interval contains
+0 in every seed. It is the baseline without input standardisation, statistically indistinguishable
+from it.
+
+% ---------------------------------------------------------------------
+\subsection{1D convolutional network (own block)}\label{sec:cnn}
+
+\paragraph{Model and theory.} A 1D convolution slides a small filter along time: a first-layer
+filter has $12\times7$ weights (all leads, seven samples, i.e.\ 70\,ms at 100\,Hz) and the same weights
+are applied at every position. This \emph{weight sharing} makes the response to a QRS complex the same
+wherever it occurs (translation equivariance) and divides the number of parameters by the length of
+the signal. The baseline stacks four residual blocks (Conv--BN--ReLU--Conv--BN, the shortcut added,
+ReLU, max pooling by 2) with 32, 64, 128 and 128 channels, followed by \emph{global average pooling}
+over time, dropout and a Linear layer (\cnnParamsBase{} parameters, fewer than the Dense network).
+Global average pooling turns each final feature map into one number, so the classifier sees how much
+of each learnt pattern the record contains, not where. One position of the last feature map depends
+on \cnnRfSamplesBase{} input samples (its \emph{receptive field}, about two seconds).
+
+The block structure follows the residual building block of He et al., with a ``projection shortcut
+\ldots\ done by 1$\times$1 convolutions'' where the number of channels changes
+\cite[p.~4]{he2016deep}; batch norm and the 1D ``same'' padding are our adaptation. A residual block
+learns $F(x)$ and outputs $F(x)+x$: if the identity is the best mapping, it only has to push $F$ to
+zero, and the gradient flows unchanged through the addition. He et al.\ motivate it by the degradation
+of plain networks: ``the deeper 34-layer plain net has higher validation error than the shallower
+18-layer plain net'' \cite[p.~4]{he2016deep}. Our CNNs have at most twelve convolutional layers.
+
+\paragraph{Results.} The CNN changes the picture completely (Tables~\ref{tab:cnn_ablations}
+and~\ref{tab:cnn_final}).
+
+\input{common/floats/tab_cnn_ablations}
+\input{common/floats/tab_cnn_final}
+\input{common/floats/fig_cnn_curves}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{Convolutions are the change that matters.} The final CNN gains \cnnDiffDenseMean{}
+        of test macro AUROC over the final Dense network, in every seed and in every class, with far
+        fewer parameters. The largest effect of any Dense ablation was several times smaller.
+  \item \textbf{Inside the CNN, no factor matters much.} The ten configurations lie between
+        \cnnValAurocMeanFlatten{} and \cnnValAurocMeanNoDropout{} on validation
+        (Table~\ref{tab:cnn_ablations}). The network is robust to these choices, and differences of
+        a few thousandths should not be over-interpreted. Only flatten (\cnnDiffMeanFlatten{}) and no
+        batch norm (\cnnDiffMeanNoBn{}) are worse in two seeds of three.
+  \item \textbf{Global pooling against flatten.} Flatten gives the classifier one weight per channel
+        and position, so it loses the translation invariance of the head; it is slightly worse and fits
+        the training set faster (training loss at epoch 5 \cnnTrainLossEpFiveDiffMeanFlatten{} with
+        respect to the baseline). It is the Dense network's problem on a small scale.
+  \item \textbf{Batch norm matters much less than in the Dense network} (\cnnDiffMeanNoBn{} here,
+        \denseDiffMeanNoBn{} there). Without it the CNN learns more slowly (best epoch
+        \intval{\cnnBestEpochMeanNoBn} against \intval{\cnnBestEpochMeanBase}) but reaches almost the
+        same result. My explanation, not tested: the convolutions see small windows of an already
+        standardised input and have few parameters.
+  \item \textbf{Skip connections help optimisation, not the result.} Without them the training loss at
+        epoch 5 is higher in all seeds, more so with six blocks (\cnnTrainLossEpFiveDiffMeanDepthSixNoResidual{})
+        than with four (\cnnTrainLossEpFiveDiffMeanNoResidual{}), as the degradation argument predicts
+        (Figure~\ref{fig:cnn_curves}c). The validation AUROC does not improve with them: with at most
+        twelve layers and early stopping after about ten epochs, our networks are far shallower than
+        those in which He et al.\ observed degradation.
+  \item \textbf{A wide range of receptive fields gives the same result.} Receptive fields from
+        \cnnRfSamplesDepthTwo{} to \cnnRfSamplesDepthSix{} samples (two blocks to six) all reach the
+        same level; even two blocks, whose receptive field is shorter than one beat, match the
+        baseline, although they fit the training set more slowly. For these five superclasses, local
+        beat-level patterns averaged over the record seem to be enough (an interpretation, not a
+        tested claim).
+  \item \textbf{Dropout before the classifier does not help} (no dropout: \cnnDiffMeanNoDropout{}).
+        After global average pooling the classifier has only a few hundred parameters, so there is
+        little to regularise, unlike the Dense network.
+\end{enumerate}
+
+\paragraph{What the CNN learnt.} The first-layer filters do not look like heartbeat templates, but
+their frequency responses form a bank of mostly low-frequency filters (Figure~\ref{fig:cnn_first_layer}):
+median peak \onedec{\cnnFirstLayerPeakHzMedian}\,Hz, \cnnFirstLayerNPeakBelowFiveHz{} of
+\cnnFirstLayerNFilters{} below 5\,Hz and \cnnFirstLayerNPeakAboveTwoZeroHz{} above 20\,Hz. This is
+consistent with the main ECG waves lying below 50\,Hz (P wave 0.67--5\,Hz, T wave 1--7\,Hz, QRS
+10--50\,Hz \cite[p.~12]{adam2025comparative}); the figure only shows what the network kept. In the
+feature maps (Figure~\ref{fig:cnn_feature_maps}) the channels of the first block fire at every QRS
+complex, the same filter applied at every position, and the last block still shows bands aligned with
+the beats. The class activation map (CAM) decomposes the logit over time: with global average pooling
+and one Linear layer, $z_c = b_c + \frac{1}{T}\sum_t \mathrm{CAM}_c(t)$. The idea is from Zhou et al.,
+who ``ignore the bias term'' \cite[pp.~2--3]{zhou2016learning}; our variant keeps it and uses the mean.
+The map must be read together with the prediction: the MI, CD and HYP examples are classified
+correctly, the NORM and STTC examples are missed, and the STTC map is negative almost throughout. A
+CAM shows where the evidence for or against a class lies, also when the model is wrong.
+
+\input{common/floats/fig_cnn_first_layer}
+\input{common/floats/fig_cnn_feature_maps}
+
+\paragraph{Selection caveat.} The rule selected \texttt{no\_dropout}, better than the baseline in one
+seed of three only: the final CNN is the baseline without dropout, statistically close to it.
+
+% ---------------------------------------------------------------------
+\subsection{Recurrent networks and RNN + attention (Mar\'ia's block, summary)}\label{sec:rnn}
+
+\paragraph{Theory.} A recurrent network reads the sequence step by step and updates a hidden state
+$h_t = f(h_{t-1}, x_t)$ with the same weights at every step, so it also shares weights over time.
+Gradients through many steps tend to vanish or explode; the LSTM and the GRU control them with gates
+that decide what to keep, write and output. The GRU was ``motivated by the LSTM unit but is much
+simpler to compute and implement'' \cite[p.~1725]{cho2014learning}, and a large comparison of LSTM
+variants found that ``none of the variants can improve upon the standard LSTM architecture
+significantly'' \cite[p.~1]{greff2017lstm}. Exploding gradients were handled with gradient clipping,
+which ``has been shown to do well in practice'' \cite[p.~6]{pascanu2013difficulty}. With attention,
+instead of using only the last state, a score is computed for every state, a softmax over time turns
+the scores into weights $\alpha_t$, and the classifier sees $\sum_t \alpha_t h_t$; the score function is
+an ``alignment model'' in the sense of Bahdanau et al.\ \cite[p.~3]{bahdanau2015neural}.
+
+\paragraph{Results (Mar\'ia).} The baseline is a two-layer LSTM over 100 frames of 100\,ms. The GRU
+was better than the LSTM (\rnnDiffMeanGru{}, all seeds); using every state (mean
+\rnnDiffMeanMean{}, attention \rnnDiffMeanAttn{}) mattered more than the cell type or the direction;
+1000 raw steps beat 100 frames (\rnnDiffMeanRaw{}) although they were much harder to optimise; and a
+convolutional front end was the best configuration (\rnnDiffMeanConv{}), which became the final RNN.
+Its test macro AUROC is \rnnFinalTestMacroAurocMean{}, below the CNN in every seed
+(\rnnDiffCnnMean{}). The attention weights rise and fall with the heartbeat
+(Figure~\ref{fig:rnn_attention}) but are spread out (for additive attention over 100 frames, normalised
+entropy \rnnAttnEntropyNormAttn{}, where 1 is uniform): in this task attention behaves like a learned mean and gains as much as plain
+averaging. The final RNN + attention (\rnnAttnfinalTestMacroAurocMean{} on test) cannot be told apart
+from the final RNN. My reading of the two blocks together: what helps is weight sharing over time,
+which the CNN provides most directly.
+
+\input{common/floats/fig_rnn_attention}
+
+% ---------------------------------------------------------------------
+\subsection{Self-attention and the Transformer (Mar\'ia's block, summary)}\label{sec:transformer}
+
+\paragraph{Theory.} Self-attention lets every token build its output from all the others: queries,
+keys and values are linear projections of the tokens, and each output is a weighted sum of the
+values, with weights $\mathrm{softmax}(QK^\top/\sqrt{d_k})$ (``Scaled Dot-Product Attention''
+\cite[p.~4]{vaswani2017attention}). Several heads in parallel let the model ``jointly attend to
+information from different representation subspaces at different positions''
+\cite[p.~5]{vaswani2017attention}. A Transformer block adds a feed-forward network, residual
+connections and layer normalisation; the original placed it after each residual addition
+(``LayerNorm(x + Sublayer(x))'' \cite[p.~3]{vaswani2017attention}), and the course notes that
+placing it before (Pre-LN) ``simply makes the optimization much easier''
+\cite{course_transformer_part2}. Attention ignores order, so a positional encoding (sine and cosine
+functions \cite[p.~6]{vaswani2017attention}) is added to the tokens.
+
+\paragraph{Results (Mar\'ia).} The record is cut into 100 patches of 100\,ms, each projected to a
+token. Built step by step (Figure~\ref{fig:transformer_curves}b), one single-head attention layer
+already reaches \transformerValAurocMeanSaSingle{} on validation, far above the Dense network, because
+the same projection is applied to every patch; multiple heads and the residual path with LayerNorm
+give the largest further gains, and the paired difference between a bare attention layer and a
+full block is \transformerPairSaVsBlockMean{}, worse in all seeds. The models do not use the order
+of the patches: shuffling them changes the validation AUROC by about a thousandth, and removing the
+positional encoding was better (\transformerDiffMeanNoPos{}, all seeds), so the final Transformer
+(\texttt{no\_pos}) classifies the \emph{set} of patches. On test it reaches
+\transformerFinalTestMacroAurocMean{}, below the CNN (\transformerDiffCnnMean{}) and the RNN
+(\transformerDiffRnnMean{}) in every seed.
+
+\input{common/floats/fig_transformer_curves}
+
+% ---------------------------------------------------------------------
+\subsection{Across families: twelve leads against lead II}\label{sec:leads}
+
+The final model of each family was trained again on lead II only (shared task T14,
+Table~\ref{tab:leads}). Every family loses in every seed, by a similar amount, and the CNN stays first.
+The other eleven leads are not redundant with lead II for these superclasses. For MI there is a
+reason in the literature: anterior infarction is ``expressed as ST elevation in some or all of leads
+V1 through V6'' \cite[p.~e265]{wagner2009aha}, which lead II does not show. For HYP and the other
+classes the explanation would be a hypothesis; Table~\ref{tab:comparison_per_class} gives the
+per-class values.
+
+\input{common/floats/tab_leads}
+\input{common/floats/tab_comparison_per_class}
+
+\paragraph{Critical reading of area 1.} With 12 leads and with lead II alone, the CNN is first and,
+among the four weight-sharing families, the Transformer last; the RNN and the RNN + attention swap
+places. The gaps among these four are small compared with the gap to the Dense network. The common factor of the good models is not
+recurrence or attention but sharing weights over time; the CNN encodes it most directly. The Transformer's indifference to patch order and the RNN's attention that
+acts as an average both suggest that, for these superclasses, \emph{what} patterns a record contains
+matters more than \emph{when} they occur, which favours a convolutional bias with global pooling. A
+label set that depends on rhythm (intervals between beats) would be the test of this interpretation;
+we did not run it.

@@ -1,0 +1,126 @@
+% =====================================================================
+% 4. Area 2: learning strategies (T13, T24: shared tasks, OF + MM)
+% =====================================================================
+\section{Area 2: learning strategies}\label{sec:strategies}
+
+\subsection{Concepts}
+
+The course distinguishes the strategies by what is re-used and which labels are needed. Transfer
+learning and self-supervised learning ``both re-use knowledge'', but transfer learning is usually
+trained ``with manually labelled data'', while self-supervised learning builds a more general model
+``without manual labels'' by solving a \emph{pretext task} \cite{course_summary_0910}.
+Self-supervised learning is a way of ``overcoming the challenges related to the scarcity of
+`labelled' data'' \cite[p.~1]{soltanieh2022analysis}. A pre-trained network can be re-used in two
+ways: ``fitting a linear classifier on a representation extracted from the model'' (a \emph{linear
+probe} on frozen features) or ``end-to-end fine-tuning of the model'' \cite[p.~11]{radford2021learning}.
+Fine-tuning usually lowers the learning rate ``to prevent catastrophic forgetting''
+\cite[p.~6]{soltanieh2023indistribution}, i.e.\ to avoid ``overwriting information captured during the
+initial training phase'' \cite[p.~1521]{strodthoff2021deep}. On ECG, the benefit of pre-training grows
+as the labelled set shrinks \cite[p.~1524]{strodthoff2021deep}, and on 12-lead ECG ``the performance level of the supervised models at 4 folds is approximately
+reached by the pretrained model trained only on two folds'' \cite[pp.~7--8]{mehari2022self}. Zero-shot classification goes one step further: no labelled
+example of the target task is used. With several modalities it is possible ``thanks to a Multimodal
+Correspondence'', i.e.\ embeddings of the different modalities in the same vector space
+\cite{course_summary_0910}. Appendix~\ref{app:strategies} gathers these takeaways.
+
+\subsection{Our design: a self-supervised ECG-GPT, transferred}
+
+The ECG-GPT of area 3 (Section~\ref{sec:generative}, my block) is our self-supervised model: a small
+causal Transformer trained to predict the next sample of lead II, with no diagnostic label. Its
+pretext task is the GPT recipe, a ``standard language modeling objective'' \cite[p.~3]{radford2018improving}
+applied to a tokenised signal; token-based autoregressive pre-training has also been applied to ECG
+\cite[p.~1]{yang2025heartllm}. The pre-trained model was fixed before any transfer experiment by the
+rule of the generative block (lowest validation bits per sample): the ECG-GPT with 2560 levels of
+1\,\textmu V. It was pre-trained on the training folds of PTB-XL only (\generativeNRecordsTrain{}
+records): a ``foundation'' model only in a very modest sense.
+
+For the five superclasses, the network without its next-token head gives one vector per record (the
+mean of its outputs over four windows of 2.5\,s), followed by dropout and a Linear layer. Three
+strategies use exactly this architecture and input (tokenised lead II):
+\emph{from scratch} (random weights, all trainable, learning rate $10^{-3}$), \emph{linear probe}
+(pre-trained network frozen, only the head trained) and \emph{fine-tuning} (pre-trained network and
+head trained together, learning rate $10^{-4}$, as in the course notebook \cite{course_nb_transfer}).
+Each runs with 100\,\% and with 10\,\% of the training labels; the 10\,\% subset is drawn by patient
+and is the same for the three strategies of a seed. ``10\,\%'' means 10\,\% of the \emph{labels}:
+the generator had already seen the signals of every training record without labels. The reference
+on the same input is the CNN trained on lead II (Section~\ref{sec:leads}).
+
+\subsection{Results}
+
+\input{common/floats/tab_transfer_main}
+\input{common/floats/fig_transfer_strategies}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{Pre-training pays off when the whole network is adapted.} Fine-tuning beats the same
+        network from scratch by \transferTestDiffMeanFinetuneVsScratchFOneZeroZero{} with all the labels
+        and by \transferTestDiffMeanFinetuneVsScratchFOneZero{} with 10\,\%, in every seed
+        (Table~\ref{tab:transfer_comparisons}). The gain comes from the pre-trained weights, not from
+        the smaller learning rate: with both at $10^{-4}$, fine-tuning still wins by
+        \transferValDiffMeanFinetuneVsScratchLrOneEFourFOneZeroZero{} and
+        \transferValDiffMeanFinetuneVsScratchLrOneEFourFOneZero{} on validation, in every seed.
+  \item \textbf{Label efficiency.} Fine-tuning with 10\,\% of the labels beats training from scratch
+        with all of them (\transferTestDiffMeanFinetuneFOneZeroVsScratchFOneZeroZero{}, all seeds).
+        Going from 100\,\% to 10\,\% costs fine-tuning \transferTestDiffMeanFinetuneFOneZeroZeroVsFOneZero{}
+        and training from scratch \transferTestDiffMeanScratchFOneZeroZeroVsFOneZero{}, as the
+        literature on ECG pre-training predicts.
+  \item \textbf{The frozen features are weakly diagnostic.} The linear probe is worse than training
+        from scratch with all labels (\transferTestDiffMeanProbeVsScratchFOneZeroZero{}) and better
+        only with 10\,\% (\transferTestDiffMeanProbeVsScratchFOneZero{}). The representation is a good
+        starting point but not linearly separable by superclass. \emph{Hypothesis:} predicting the next
+        sample rewards local waveform detail more than the global features that separate the classes.
+  \item \textbf{The smaller learning rate was not essential.} At $10^{-3}$ fine-tuning reaches almost
+        the same validation AUROC (\transferValDiffMeanLrOneEThreeVsFinetuneFOneZeroZero{} with all
+        labels), only faster.
+  \item \textbf{Architecture still beats pre-training here.} On the same input the CNN trained from
+        scratch remains better than the fine-tuned ECG-GPT
+        (\comparisonTestDiffMeanFinetuneFOneZeroZeroVsOneleadCnn{} with all labels, all seeds).
+        Pre-training closes most of the gap between the ECG-GPT from scratch and the CNN, not all of
+        it.
+\end{enumerate}
+
+\input{common/floats/tab_transfer_comparisons}
+
+\paragraph{A better generator does not give better features.} We also trained the same linear probe
+on every other generator of area 3 (Figure~\ref{fig:transfer_probe_study}). All of them give better
+frozen features than the selected one, chosen for being the best density model; the correlation
+between bits per sample and probe AUROC is positive (Spearman \transferProbeSpearmanFOneZeroZero{}
+with all labels, \transferProbeSpearmanFOneZero{} with 10\,\%), i.e.\ worse generators tend to give
+\emph{better} features. The LSTM generator gives the best probe with all labels
+(\transferValAurocMeanProbeLstmFOneZeroZero{} against \transferValAurocMeanProbeFOneZeroZero{}).
+\emph{Hypotheses, not tested:} with 2560 levels the embedding spends its capacity on fine amplitude
+detail; the LSTM state summarises the window more than a mean of causal outputs does. The selection
+rule was reasonable and fixed in advance, but in hindsight it was not the best rule for transfer. We
+report this as a finding and did not change the main experiment after the fact.
+
+\input{common/floats/fig_transfer_probe_study}
+
+\paragraph{Limitations.} The probe with 10\,\% of the labels reached its best epoch near the 50-epoch
+limit (on average epoch \intval{\transferBestEpochMeanProbeFOneZero}), so it was limited by the
+budget. Early stopping and the F1 thresholds of the 10\,\% runs used the whole validation fold, which
+has about as many labelled records as the 10\,\% training subset; a truly label-scarce setting would
+also have a small validation set.
+
+\subsection{Zero-shot learning with CLIP}
+
+Our ECG-GPT has no text side, so it can be transferred but cannot classify zero-shot. To study
+zero-shot we used CLIP, the model of the course notebook \cite{course_nb_clip}, trained on ``400
+million (image, text) pairs collected form a variety of publicly available sources on the Internet''
+\cite[p.~3]{radford2021learning}. It classifies by computing the cosine similarity between the image
+and each class sentence, ``scaled by a temperature parameter $\tau$, and normalized into a probability
+distribution via a softmax'' \cite[p.~6]{radford2021learning}. Nothing was trained or tuned; the
+sentences were fixed before the run.
+
+\input{common/floats/tab_zeroshot}
+\input{common/floats/fig_zeroshot_examples}
+
+On CIFAR-100, where zero-shot is expected to work, CLIP picks the right class among
+\zeroshotCifarNClasses{} for a share \zeroshotCifarTopOneNotebook{} of the test images (chance
+\zeroshotCifarChanceTopOne{}), and the notebook's sentence ``This is a photo of a \{label\}'' helps
+over the bare label. On ECG images drawn from lead II, CLIP recognises the modality (the sentence
+``an electrocardiogram'' is the closest of six for \zeroshotFracModalityEcgTestPct{} of the test
+records) but not the diagnosis: macro AUROC \zeroshotTestMacroAuroc{}, barely above chance and below
+the trivial model (\comparisonTestDiffMeanZeroshotVsTrivial{}). The ST-T sentence wins for
+\zeroshotFracTopSTTCTestPct{} of the records whatever their class, and MI is ranked against the truth
+(AUROC \zeroshotTestAurocMI{}). The source states what CLIP was trained on, not whether ECG traces
+paired with diagnoses are among those pairs; that they are too rare to tie the trace to the diagnosis
+is our \emph{hypothesis}. Zero-shot therefore needs a shared space that covers the task, not only the
+modality.

@@ -1,0 +1,85 @@
+% =====================================================================
+% 6. Final comparison, critical discussion and conclusions
+% =====================================================================
+\section{Final comparison and critical discussion}\label{sec:discussion}
+
+\subsection{All final models}
+
+Table~\ref{tab:comparison_final} and Figure~\ref{fig:comparison_overview} collect every final model of
+the three areas on the test fold (shared task T15).
+
+\input{common/floats/tab_comparison_final}
+\input{common/floats/fig_comparison_overview}
+
+\subsection{Published results}\label{sec:published}
+
+The published rows are the macro AUC of the superclass task in Table~I of Strodthoff et al.\
+\cite[p.~1523]{strodthoff2021deep} (journal version), and they come from a different setting, which we
+describe rather than adjust. Like us, they use the recommended folds, the 100\,Hz signals and the
+records with at least one label of the task \cite[pp.~1520--1523]{strodthoff2021deep}. Unlike us, they
+train on windows of 2.5\,s whose predictions are ``aggregated using the element-wise maximum'', with
+``1-cycle learning rate scheduling \ldots\ and the AdamW optimizer'' \cite[p.~1521]{strodthoff2021deep};
+each value is one model, not a mean over three seeds, and the number in brackets of their table gives
+the bootstrap interval as a deviation from the point estimate (``0.743(09) is supposed to be understood as
+0.743 $\pm$ 0.009'' \cite[p.~1522]{strodthoff2021deep}), not a standard deviation over seeds. With these differences in mind, our best model (the 12-lead CNN,
+\comparisonTestAurocMeanTwelveCnn{}) is at the level of their best single model
+(\comparisonPublishedStrodthoffResnetOneDWang{}); in their study ``only in the super-diagnostic case the
+ensemble outperforms the best-performing single model in a statistically significant manner''
+\cite[p.~1523]{strodthoff2021deep}. The goal of this project was understanding, not the
+state of the art; the comparison only shows that our pipeline is sound.
+
+\subsection{Critical discussion}
+
+\paragraph{What the experiments support.}
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item The decisive design choice for ECG classification here is weight sharing over time with a
+        pooled readout; the family name (convolution, recurrence, attention) matters much less, and the
+        Dense network is a lower bound that shows why.
+  \item Inside each family, the ablations confirm the textbook role of each component mostly in the
+        \emph{training dynamics} (dropout against overfitting in the Dense network, skip connections and
+        batch norm for faster optimisation and, weakly, Pre-LN against Post-LN) and much less in the final metric.
+        Reading only the final AUROC would have hidden most of what the components do.
+  \item Self-supervised pre-training on unlabelled signals makes the same network far more
+        label-efficient, but only when it is fine-tuned, and it did not overcome a better architectural
+        bias trained from scratch.
+  \item Generators need to be judged with a vocabulary-independent metric and with their samples; the
+        decoding rule changes the output as much as the model does.
+\end{itemize}
+
+\paragraph{Threats to validity.}
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item \textbf{Many comparisons on one validation fold.} Dozens of ablations were compared on fold 9
+        without a correction for multiple comparisons; a difference significant in one seed of three is
+        weak evidence. This is why we count seeds and why the selected final models are described as
+        indistinguishable from their baselines when the intervals say so.
+  \item \textbf{Budget.} Every family used the same small budget (at most 50 epochs, early stopping),
+        which favours models that learn fast; the generators and the 10\,\% probe were still improving at
+        the limit.
+  \item \textbf{One dataset, one task.} The conclusions about architectures concern these five superclasses;
+        a task defined by rhythm could rank the families differently, and the
+        ``foundation'' model was pre-trained on the same dataset.
+  \item \textbf{Labels and shortcuts.} Only \edaFracValidatedByHumanTrainPct{} of the training reports
+        were validated by a person (all validation and test reports were), and NORM patients are younger;
+        the models may have used age-related features. Neither was tested.
+  \item \textbf{Interpretation figures} (first-layer weights, feature maps, attention maps) were read
+        on a few records; every reading not backed by a number is labelled as an observation or a
+        hypothesis.
+\end{itemize}
+
+\subsection{Conclusions}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
+  \item Convolutions with global pooling are the most effective of the basic modules for this task;
+        recurrent and attention models come close, and a dense network on the raw signal does not.
+  \item Removing or adding a component inside a sound architecture changes the result little; its
+        effect shows in how the model trains. Ablations should therefore report training curves, not only
+        the final metric.
+  \item A model pre-trained without labels (our ECG-GPT) is a better starting point than random weights,
+        especially with few labels, but its frozen features are weak, and the best pretext model for
+        generation was the worst feature extractor.
+  \item Zero-shot classification requires a shared space that covers the task: CLIP recognises an ECG
+        but not its diagnosis.
+  \item An autoregressive Transformer or LSTM can learn to generate plausible ECG beats with
+        \generativeParamsBase{} to \generativeParamsVocabTwoFiveSixZero{} parameters, provided the samples are drawn with a sensible temperature; greedy
+        decoding fails completely.
+\end{enumerate}

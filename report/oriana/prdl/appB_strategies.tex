@@ -1,0 +1,80 @@
+% =====================================================================
+% APPENDIX B (PRDL): learning strategies, main takeaways
+% Required by the weekly summary of 9/10 ("include an annex with your main
+% takeaways in your final DL PRDL ... Report"). Built from the checked quotes of
+% docs/literature/learning_strategies.md (T18), without the first assignment.
+% =====================================================================
+\appendixbanner{APPENDIX B: LEARNING STRATEGIES, MAIN TAKEAWAYS}
+\addcontentsline{toc}{section}{Appendix B: Learning strategies, main takeaways}\label{app:strategies}
+
+The weekly summary of 9 October asks for an annex with the main takeaways on learning strategies
+\cite{course_summary_0910}. This annex connects each strategy with what area 2 of the project actually
+did (Section~\ref{sec:strategies}). The first class assignment on this topic is not included.
+
+\subsection*{1. Transfer learning}
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item \textbf{What it is.} Re-using what a model learnt on one task or domain for another; in a
+        survey of visual transfer learning, it ``groups approaches dealing with such an unpredictable
+        distribution shift'' \cite[p.~2]{monka2022survey}. In the course view it is usually trained with
+        manually labelled data \cite{course_summary_0910}.
+  \item \textbf{How.} A linear classifier on frozen features (linear probe) or end-to-end fine-tuning
+        of the whole network \cite[p.~11]{radford2021learning}. Fine-tuning uses a smaller learning rate
+        so that the pre-trained weights are not overwritten (catastrophic forgetting)
+        \cite[p.~6]{soltanieh2023indistribution}, \cite[p.~1521]{strodthoff2021deep}.
+  \item \textbf{When it helps most.} On ECG, pre-training on PTB-XL and fine-tuning on a smaller dataset
+        helps more as the target training set shrinks \cite[p.~1524]{strodthoff2021deep}.
+  \item \textbf{In our project.} From scratch, linear probe and fine-tuning of the same network, with all
+        the labels and with 10\,\% of them, and a $2\times2$ ablation of initialisation and learning rate.
+        Takeaway: the pre-trained weights, not the learning rate, made the difference, and fine-tuning was
+        far better than probing.
+\end{itemize}
+
+\subsection*{2. Self-supervised learning}
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item \textbf{What it is.} Learning features without manual labels, to overcome the scarcity of
+        labelled data \cite[p.~1]{soltanieh2022analysis}: the model solves a pretext task and is then
+        re-used for downstream tasks \cite{course_summary_0910}. Both transfer and self-supervised
+        learning re-use knowledge; the difference is the labels used in pre-training
+        \cite{course_summary_0910}.
+  \item \textbf{Evidence on ECG.} Self-supervised pre-training on 12-lead ECG reaches the supervised
+        level with fewer labelled folds \cite[pp.~7--8]{mehari2022self}.
+  \item \textbf{A generative pretext task.} The GPT recipe pre-trains a decoder-only Transformer with the
+        next-token (language-modelling) objective \cite[pp.~3,5]{radford2018improving}; token-based
+        autoregressive pre-training has been applied to ECG \cite[p.~1]{han2025ecgbyte},
+        \cite[p.~1]{yang2025heartllm}.
+  \item \textbf{In our project.} The ECG-GPT was pre-trained on lead II of the training folds to predict
+        the next sample, then transferred. ``10\,\% of the labels'' is a semi-supervised setting: the
+        signals of every training record were seen during pre-training. Takeaway: a self-supervised
+        objective is not automatically the best for every downstream task; the generator that predicted
+        best gave the worst frozen features.
+\end{itemize}
+
+\subsection*{3. Zero-shot learning}
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item \textbf{What it is.} In the visual transfer view, a task ``with labeled source domain data and
+        unlabeled target domain data'' \cite[p.~4]{monka2022survey}: the target classes are never seen
+        with labels. The course takes the zero-shot and few-shot terms of NLP from the GPT-3 paper
+        \cite{course_summary_0910}.
+  \item \textbf{With other modalities} it needs a shared embedding space for inputs and class
+        descriptions, a ``Multimodal Correspondence'' \cite{course_summary_0910}. CLIP is such a model:
+        trained on 400 million image--text pairs from the Internet \cite[p.~3]{radford2021learning}, it
+        classifies by the cosine similarity between the image and each class prompt, scaled and passed
+        through a softmax \cite[p.~6]{radford2021learning}, with prompts such as ``A photo of a
+        \{label\}.'' \cite[p.~7]{radford2021learning}.
+  \item \textbf{In our project.} CLIP works zero-shot on CIFAR-100 and recognises ECG images as ECGs,
+        but cannot tell the superclasses apart. Our ECG-GPT has no text side and therefore cannot be used
+        zero-shot at all. Why CLIP fails on ECG diagnosis is a hypothesis: its source says what kind of
+        data it was trained on, not whether ECG traces with diagnoses are among them.
+\end{itemize}
+
+\subsection*{4. Connections}
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item The strategies are not exclusive: our ECG-GPT is self-supervised pre-training followed by
+        transfer; CLIP is pre-training on paired data followed by zero-shot use.
+  \item What decides the strategy is what is available: labels for the target task (transfer),
+        unlabelled signals of the domain (self-supervised pre-training), or a space shared with text that
+        covers the task (zero-shot).
+  \item The amount of target labels matters: the benefit of pre-training grows as the labelled set
+        shrinks \cite[p.~1524]{strodthoff2021deep}, \cite[pp.~7--8]{mehari2022self}, which is why our
+        transfer experiment was run with 100\,\% and 10\,\% of the labels.
+\end{itemize}

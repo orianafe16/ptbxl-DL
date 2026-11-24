@@ -39,7 +39,8 @@ Source for the AI appendix of the four reports. Append only. Lives in `ptbxl-dl/
 | 2026-11-23 | DL 00 Coordination | OF + MM | Check the closing of chat DL 08, update the chat cards and write the start prompt of chat DL 09 | Commits and summary logs checked on the laptop; card 08 closed except O7; notes passed to cards 09, 10, 11; format of `report/published.json` taken from `src/comparison.py`; chat 09 prompt | [to confirm by OF and MM] |
 | 2026-11-23 | DL 09 Literature | OF + MM | Read the project files; design the literature flow with one prompt per stage | `docs/literature/prompts.md`: four Perplexity prompts (candidate papers, no quotes, no numbers) and five NotebookLM prompts (literal quote, file and printed page, or NOT FOUND); a checking stage by the assistant added to D8; the GPT-3 paper flagged as Brown et al. 2020 (the course cites it starting with Mann) | Perplexity and NotebookLM run by OF (T16) and MM (T17); PDFs downloaded by hand into `contexto_DL/literature/` (32 files) |
 | 2026-11-24 | DL 09 Literature | OF + MM | Check the NotebookLM answers N1-N5 against the PDFs; write the published results for O7, the quotes, the bibliography and the closure of every `[verify]` | Every quote searched verbatim, page by page, in the text of its PDF (pdftotext, script in the assistant's workspace); Table I of the journal version of Strodthoff et al. read from the rendered page (it is an image) and compared with arXiv v1; six NotebookLM errors found (B12-B17); further quotes taken directly from the PDFs (Vaswani, Bahdanau, He, Cho, Fan, AHA 2009, ECG-Byte, HeartLLM) and from the course material (Transformer Part II slide 36, RNN slide 64, summary 9/10), all checked the same way; `report/published.json` (8 rows, validated with the rule of `src/comparison.py`), `docs/literature/quotes.md` (sections A-G, closure table), `report/references.bib` (27 entries, fields read from each PDF's first page), `docs/literature/learning_strategies.md` (annex material, T18 without the first assignments) | OF ran `python -m src.comparison report` and `python report/make_numbers.py` on Oriana's laptop (340 numbers, 18 models; 4,484 macros from 11 logs); the assistant read `comparison_final.tex`, `comparison_summary.json` and `numbers.tex` from the folder (8 published rows and macros present); T16 done by OF and reviewed by MM, T17 done by MM and reviewed by OF, T18 each her own with cross review |
-
+| 2026-11-24 | DL 00 Coordination | OF + MM | Check the closing of chat DL 09, give the project status and pass its notes to cards 10 and 11 | Commit, files and the 8 published rows of the final table checked in the folder; status summary; note of 24/11 in cards 10 and 11; start prompt of chat DL 10 reviewed | [to confirm by OF and MM] |
+| 2026-11-24 | DL 08 Learning strategies and comparison (reopened) | OF + MM | Fix the legend of `comparison_overview`, which hid the CLIP point (found in chat DL 10) | One-line change in `src/comparison.py::figure_overview` (legend outside the axes, right), proposed with the alternative (upper left, empty only with the current data) and applied after OF and MM's yes; folder copy compared byte by byte | OF ran `comparison report` and `make_numbers.py` on Oriana's laptop (commit 032cea4, `git_dirty: false`; 340 numbers, 4,484 macros); the assistant inspected the new figure in the folder |
 ## 2. AI Error Bounty candidates
 
 One entry per assistant error that one of us detected and corrected.
@@ -191,6 +192,14 @@ Template:
 - Evidence that it was wrong: no first assignment among the PDFs in `contexto_DL/literature/`; the "statements" repeat the quotes of N3 word for word.
 - Correction: N5 not used; T18 built from the checked quotes (`learning_strategies.md`) by decision of OF and MM.
 - Reproduction (how to check it again): compare the N5 answer with the N3 answer.
+
+### B18 — Figure legend placed over a data point
+- Date, chat, detected by: 2026-11-24, DL 10 Reports Oriana (fixed in DL 08); detected by OF when reading the final figures for the report.
+- Prompt: OF and MM asked for the final comparison of T15; the assistant wrote `src/comparison.py::figure_overview`.
+- Wrong answer: the legend was fixed at `loc="lower left"`, the corner where the lowest row (zero-shot CLIP, macro AUROC near 0.5) is drawn; the assistant inspected the figure on synthetic data and on the real data (chat 08) without noticing that the legend covered that point.
+- Evidence that it was wrong: `report/figures/comparison_overview.png` of 2026-11-24 before the fix: the CLIP dot and bar at 0.527 are under the legend box.
+- Correction: legend outside the axes (`loc="center left", bbox_to_anchor=(1.01, 0.5)`), commit 032cea4; figure regenerated and inspected; no number changed.
+- Reproduction (how to check it again): put back `loc="lower left"` in `figure_overview` and run `python -m src.comparison report`.
 
 ## 3. Notes on unverified assistant statements
 

@@ -1,0 +1,50 @@
+% =====================================================================
+% 8. Practical conclusions and own activities
+% =====================================================================
+\section{Practical conclusions and my activities}\label{sec:conclusions}
+
+\subsection{Practical conclusions}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
+  \item \textbf{A shared, task-agnostic loop paid off.} The same five-step loop, logging and comparison
+        tools served five classifier families, two generators and the transfer experiments; differences
+        between blocks are therefore differences between models, and a bug fixed once was fixed
+        everywhere.
+  \item \textbf{Smoke runs and estimates before long runs.} Every long grid was preceded by a
+        \texttt{--fast} run and, where it existed, an \texttt{estimate}. The two failures on the real
+        hardware happened in steps not covered by them (generation memory, CLIP on the GPU): what is not
+        tested on the target device is not tested.
+  \item \textbf{Three seeds and paired intervals change the conclusions.} Several configurations that
+        looked better by their mean were better in one seed of three only; without the paired bootstrap
+        we would have reported them as improvements.
+  \item \textbf{Training curves explain what the final metric hides:} faster or slower optimisation
+        (batch norm, skip connections, LayerNorm placement), overfitting (dropout), or a budget that was
+        too short (the generators, the 10\,\% probe).
+  \item \textbf{Generated numbers and checked quotes} made the reports slower to write and much easier to
+        trust: a change in a log updates every report, and every literature claim has a page.
+  \item \textbf{GPU memory is a design constraint.} The 4\,GB GPU fixed the batch of the transfer
+        experiments, the context length of the generators and the generation batch; attention memory
+        grows with the square of the sequence length.
+\end{enumerate}
+
+\subsection{My activities in the team}
+
+Table~\ref{tab:contrib_of_mllb} is generated from the task log of the repository
+(\texttt{docs/PLAN\_DL.md}), which records who did and who reviewed each task; ``did (shared)'' marks
+tasks done by both of us. All code was drafted with the AI assistant (Section~\ref{sec:ai-env}) and run
+on my laptop.
+
+\begin{table}[htbp]
+\centering
+\caption{My role in each task of the project (generated from \texttt{docs/PLAN\_DL.md}).}
+\label{tab:contrib_of_mllb}
+\input{common/contributions_OF}
+\end{table}
+
+In my own blocks (EDA, Dense, CNN and the generators) I decided the experiments with Mar\'ia's review,
+ran every smoke test, run and report step, checked the code line by line, inspected the figures and
+wrote the block notes. I set up the repository and the environment and keep the decisions log. With
+Mar\'ia I wrote the training loop and ran the learning-strategy, 12-lead against lead II, zero-shot and
+final-comparison experiments. I reviewed her data pipeline, evaluation module, recurrent networks and
+Transformer. The implementation of her blocks is summarised here from her block notes and attributed to
+her.

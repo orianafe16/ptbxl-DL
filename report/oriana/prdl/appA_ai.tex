@@ -1,0 +1,124 @@
+% =====================================================================
+% APPENDIX A (PRDL): use of AI scientific assistants
+% Source: docs/AI_USAGE_LOG.md (session log, Bounty candidates B1-B17),
+% docs/literature/quotes.md (sections E and G), DECISIONS D8 and D10.
+% =====================================================================
+\appendixbanner{APPENDIX A: USE OF AI SCIENTIFIC ASSISTANTS}
+\addcontentsline{toc}{section}{Appendix A: Use of AI scientific assistants}\label{app:ai}
+
+\subsection*{Workflow}
+
+Every interaction is recorded in \texttt{docs/AI\_USAGE\_LOG.md} of the repository (date, chat, who
+was working, what was asked, what the assistant produced and how we checked it). For the theory and the
+literature of this report the flow had four stages, each with its own role:
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
+  \item \textbf{Perplexity} proposed candidate papers per topic (PTB-XL and its benchmark, architectures
+        and training, learning strategies, autoregressive generation), without quotes or numbers. We
+        downloaded the PDFs by hand.
+  \item \textbf{NotebookLM}, restricted to those PDFs, answered one prompt per topic with, for each
+        claim, a literal quote, the file and the printed page, or ``NOT FOUND''.
+  \item \textbf{Claude} checked every quote verbatim, page by page, against the text of its PDF; only
+        checked quotes enter the reports (\texttt{docs/literature/quotes.md}). A claim without a checked
+        quote was reworded, stated as a hypothesis or left out; the closure of every such claim is
+        documented in section~G of that file. Course materials are cited as course materials, never as
+        the paper they mention.
+  \item \textbf{Claude} also drafted the text of the reports from the block notes, the decisions log and
+        the checked quotes; I checked every sentence against the figures, the tables and the logs, and
+        every interpretation not backed by a number is labelled as a hypothesis.
+\end{enumerate}
+No output of one AI tool was accepted as verification of another.
+
+\subsection*{Errors detected (candidates for the AI Error Bounty)}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
+  \item \textbf{Two versions of the benchmark paper mixed} (NotebookLM; Sheet P1).
+  \item \textbf{Wrong page numbers} in most NotebookLM answers, e.g.\ quotes from page 12 of the dataset
+        paper given as page 8. Pages were re-read from the PDFs.
+  \item \textbf{The article's licence quoted as the dataset's} (NotebookLM). The open-access notice of
+        the journal article is not a statement about the data; the dataset licence was taken from the
+        PhysioNet page.
+  \item \textbf{A frequency band offered as support for a duration} (NotebookLM; Sheet P2).
+  \item \textbf{A secondary source quoted for top-$k$ sampling} (NotebookLM): Holtzman et al.'s
+        description was offered although the primary source, Fan et al., was among the PDFs; the report
+        cites Fan et al.
+  \item \textbf{Statements attributed to documents that were not uploaded} (NotebookLM; Sheet P4).
+  \item \textbf{A labelling rule stated from memory as the benchmark's} (Claude; Sheet P3).
+\end{enumerate}
+
+\subsection*{AI Error Bounty sheets}
+
+\subsubsection*{Sheet P1. Two versions of the benchmark mixed (NotebookLM)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] For every model of the superclass task of Strodthoff et al., the macro AUC with its
+        interval, the table and the page, with a literal quote.
+  \item[Faulty response] The values of Table~I of the journal version attributed to the arXiv~v1 file,
+        to its ``Table~II'' and to its page~4, plus a row (``naive'') that only exists in v1; one entry
+        rendered as a symmetric 95\,\% interval.
+  \item[Proof] Table~II of arXiv~v1 (page~4) prints different intervals for several models; Table~I of
+        the journal version (p.~1523) has no ``naive'' row; the paper defines its bracket notation on
+        p.~1522 \cite{strodthoff2021deep}.
+  \item[Correction] The published values were read from the rendered Table~I of the journal version
+        (the table is an image in the PDF) and stored in \texttt{report/published.json} with file, page
+        and quote; the bibliography cites the journal version, so pages match.
+  \item[Reproduction] Compare Table~II of \texttt{2004.13701v1.pdf} (p.~4) with Table~I of the journal
+        PDF (p.~1523).
+  \item[Reflection] A number with a correct-looking source can still come from another version of the
+        same paper; the version is part of the reference.
+\end{description}
+
+\subsubsection*{Sheet P2. A frequency band as evidence for a duration (NotebookLM)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] A literal quote supporting the duration of the QRS complex (the reason first given for
+        a CNN kernel of seven samples).
+  \item[Faulty response] A quote giving the frequency band of the QRS complex.
+  \item[Proof] A band in hertz is not a duration in milliseconds; no PDF of the folder states the
+        duration.
+  \item[Correction] The report states only what is ours: a kernel of seven samples spans 70\,ms at
+        100\,Hz. The quote is used only for what it says, the frequency content of the waves
+        (Section~\ref{sec:cnn}).
+  \item[Reproduction] \texttt{s41598-025-26476-1.pdf}, p.~12.
+  \item[Reflection] A quote can be literal and still not support the claim; the checking stage compares
+        the claim with the quote, not only the quote with the PDF.
+\end{description}
+
+\subsubsection*{Sheet P3. A rule stated from memory as the benchmark's (Claude)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] Which decisions were needed before writing the label code, and which option was best.
+  \item[Faulty response] Assign a superclass only for statements with likelihood above 0, ``which is
+        what the reference benchmark does'', stated without a source.
+  \item[Proof] The script distributed with PTB-XL assigns the superclass whatever the likelihood; with
+        that rule the class counts equal the table of the PhysioNet page, while the proposed rule loses
+        STTC records and the class-count test fails.
+  \item[Correction] Likelihood ignored (decision D2); the class counts are checked by a test against the
+        published table.
+  \item[Reproduction] \texttt{python -m src.prepare\_data} prints the counts; changing the loop of
+        \file{src/data.py::superclass_labels} to skip statements with likelihood 0 lowers STTC.
+  \item[Reflection] ``This is what the benchmark does'' is a factual claim and needs the same check as a
+        quote. The error was caught by the assistant itself when we asked it to analyse the options, before
+        any code depended on it.
+\end{description}
+
+\subsubsection*{Sheet P4. Statements from documents that were not uploaded (NotebookLM)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] List the statements of the uploaded first assignment on learning strategies and whether
+        the sources support them.
+  \item[Faulty response] A list of ``statements'' that were the source definitions themselves, three of
+        them marked ``NOT SUPPORTED'', although no first assignment had been uploaded.
+  \item[Proof] No first assignment among the PDFs of the notebook; the ``statements'' repeat word for
+        word the quotes of the previous answer.
+  \item[Correction] The answer was not used. The learning-strategies annex (Appendix~\ref{app:strategies})
+        was built from the checked quotes.
+  \item[Reproduction] Compare the answers to prompts N5 and N3 in \texttt{docs/literature/prompts.md}.
+  \item[Reflection] A tool restricted to the user's documents can still invent the document it is asked
+        about.
+\end{description}
+
+These errors were found in the checking stage, by the assistant comparing each answer with the PDFs;
+the corrected quotes were then re-read by us before use.
+
+\subsection*{Reflection}
+
+The checking stage changed which sources the report could use: several statements we wanted to make
+(the clinical duration of the QRS, the first use of gradient clipping, the definitions of the GPT-3
+paper) have no checked quote and were reworded or left out. The result is a report that says less, but
+everything it attributes to a source can be traced to a page.

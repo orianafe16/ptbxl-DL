@@ -1,0 +1,67 @@
+% =====================================================================
+% 2. Learning and evaluation framework (shared protocol; T7 by MM, T8 shared)
+% =====================================================================
+\section{Learning and evaluation framework}\label{sec:framework}
+
+Every classifier of the project shares the data, the loss, the optimiser, the metric and the
+comparison rules, so that differences between models come from the architecture. The evaluation
+module was written by Mar\'ia (task T7) and the training loop by both of us (T8).
+
+\subsection{Output, loss and optimisation}
+
+A model maps a record $x \in \mathbb{R}^{12\times1000}$ to five real scores (logits) $z_1,\dots,z_5$,
+one per superclass. Each class is an independent yes/no question, so its probability is a sigmoid,
+$p_c = \sigma(z_c) = 1/(1+e^{-z_c})$, and the loss is the binary cross-entropy averaged over the five
+classes and the records of a batch:
+\begin{equation}
+\mathcal{L} = -\frac{1}{5}\sum_{c=1}^{5}\Big[\,y_c \log \sigma(z_c) + (1-y_c)\log\big(1-\sigma(z_c)\big)\Big],
+\qquad y_c \in \{0,1\}.
+\end{equation}
+It is the negative log-likelihood of five Bernoulli variables. The sigmoid is not part of the network:
+PyTorch's \texttt{BCEWithLogitsLoss} applies it inside the loss in a numerically stable way, and the
+probabilities are computed only when evaluating. A softmax would be wrong here, because it forces the
+five probabilities to sum to one and makes the classes compete, while
+\edaFracMultilabelAllPct{} of the records have several of them.
+
+The weights are trained with Adam, whose hyper-parameters ``typically require little tuning''
+\cite[p.~1]{kingma2015adam}, with the same defaults for every family (learning rate $10^{-3}$,
+batches of 64 records, at most 50 epochs). Each epoch the model is evaluated on the validation fold;
+training stops when the validation macro AUROC has not improved for five epochs (\emph{early
+stopping}) and the weights of the best epoch are restored. Early stopping is a regulariser: it limits
+how far the weights move towards fitting the training set once validation stops improving.
+
+\subsection{Metric and thresholds}
+
+The area under the ROC curve (AUROC) of one class is the probability that a randomly chosen positive
+record receives a higher score than a randomly chosen negative one; 0.5 is chance and 1 a perfect
+ranking. It needs no threshold and does not change with the prevalence of the class, which makes it
+suitable for imbalanced classes. As in the benchmark, the main metric is the macro AUROC, ``obtained
+by averaging class-wise AUCs over all classes'' \cite[p.~1522]{strodthoff2021deep}, so that HYP
+weighs as much as NORM. A decision rule is still needed for the F1 score: for each class, the
+threshold that maximises its F1 on the validation fold is applied unchanged to the test fold.
+
+\subsection{Uncertainty and comparisons}
+
+A single test number hides two sources of variation: the random initialisation and order of the
+batches (\emph{seed}) and the finite test set. Every configuration is therefore trained with three
+seeds (42, 43, 44), and the reports give the mean and standard deviation over seeds. The finite test
+set is handled with the bootstrap: the test patients are resampled with replacement 1000 times
+(all records of a drawn patient enter together, because records of the same patient are correlated),
+the metric is recomputed on each resample, and the 2.5 and 97.5 percentiles form a 95\,\% interval.
+Resampling records instead of patients would give intervals that are too narrow.
+
+To compare two models we use the \emph{paired} bootstrap: both are evaluated on the same resamples,
+and the interval of the \emph{difference} is computed. Two models with overlapping individual intervals
+can still differ consistently, because most of the variation of a resample affects both in the same
+way. A model is called better only when the interval of the difference lies wholly above zero; the
+tables report in how many of the three seeds this happens (``seeds better / worse'').
+
+\subsection{Model selection}
+
+All ablations and every choice of a final model use the validation fold only. The selection rule of
+each block (the configuration with the highest mean validation macro AUROC) was written down before
+its runs, and the test fold was evaluated once per final model; the training code refuses a second
+test run of the same model and seed. A consequence, discussed in each block, is that a rule fixed in
+advance sometimes selects a configuration that is statistically indistinguishable from its baseline.
+We keep the rule's choice, because changing it after seeing the results would be selection on noise,
+and we say so.

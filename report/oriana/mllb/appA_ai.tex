@@ -1,0 +1,108 @@
+% =====================================================================
+% APPENDIX A (MLLB): use of AI code assistants
+% Source: docs/AI_USAGE_LOG.md (session log, Bounty candidates B1-B11).
+% =====================================================================
+\appendixbanner{APPENDIX A: USE OF AI CODE ASSISTANTS}
+\addcontentsline{toc}{section}{Appendix A: Use of AI code assistants}\label{app:ai-code}
+
+\subsection*{Workflow}
+
+The environment and the control rules are in Section~\ref{sec:ai-env}. For each block the assistant
+proposed the decisions, we accepted or changed them, the assistant wrote the code and its tests and ran
+them on a CPU copy with synthetic data, and we ran the tests, the smoke run, the real runs and the report
+on the laptop, pasting the output back. After the runs the assistant recomputed the main metrics from
+the saved predictions and compared them with the summaries before writing the block note. Every step is
+logged in \texttt{docs/AI\_USAGE\_LOG.md}.
+
+\subsection*{Errors detected (candidates for the AI Error Bounty)}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
+  \item \textbf{Out of GPU memory when generating with a long context} (detected by me; Sheet C1).
+  \item \textbf{Tensors on two devices in the zero-shot code} (detected by Mar\'ia and me; Sheet C2).
+  \item \textbf{Commands given without changing to the repository folder} (detected by me; Sheet C3).
+  \item \textbf{A wrong cause given for the ``uncommitted code'' flag} (detected from my terminal output;
+        Sheet C4).
+  \item \textbf{Files reported as written when an older copy had reached the folder}, several times in
+        different blocks (detected by the assistant itself when it re-read the folder). The rule of
+        comparing every written file with the intended version came from these cases.
+  \item \textbf{Smoke mode of the Dense report stopped} when it tried to pair runs evaluated on different
+        test records (detected by the assistant from the missing outputs of my smoke run; fixed with a
+        regression test).
+  \item \textbf{A wrong code comment} said that a non-persistent buffer is saved in the checkpoint
+        (detected by the assistant when checking the block note against the code; behaviour unchanged).
+\end{enumerate}
+
+\subsection*{AI Error Bounty sheets}
+
+\subsubsection*{Sheet C1. Generation ran out of GPU memory (Claude)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] Write the complete generative block: training, generation with several sampling settings,
+        statistics and figures.
+  \item[Faulty response] \texttt{generate} used batches of 64 sequences for every context length. With
+        a context of 500 tokens, the attention matrices of 64 windows (64 $\times$ 4 heads $\times$ 500
+        $\times$ 500 floats, several per layer) do not fit in 4\,GB. Training memory had been measured with
+        \texttt{estimate}, generation memory had not, and the synthetic tests ran on the CPU.
+  \item[Proof] I ran \texttt{python -m src.generative\_experiments report}; it stopped with
+        \texttt{CUDA error: out of memory} in \texttt{scores = q @ k.transpose(-2, -1)} while generating
+        with the 5\,s context.
+  \item[Correction] Generation batches of $64\,(250/L)^2$ windows for $L > 250$ and the GPU freed between
+        models; a test was added and the report was run again. The trained models were not affected.
+  \item[Reproduction] Remove the line that shrinks \texttt{batch} in \texttt{src/generative.py::generate}
+        and run \texttt{report} on the laptop: it stops at the 5\,s context.
+  \item[Reflection] The assistant knew that attention memory grows with $L^2$ and still checked only the
+        training path. A test on the CPU cannot reveal a memory limit of the GPU.
+\end{description}
+
+\subsubsection*{Sheet C2. Tensors on two devices (Claude)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] Write the zero-shot experiment with CLIP (task T24).
+  \item[Faulty response] \texttt{image\_features} moved the image embeddings to the CPU,
+        \texttt{text\_features} left the text embeddings on the GPU, and \texttt{zero\_shot\_probs}
+        multiplied them. The tests used a fake CLIP on the CPU only.
+  \item[Proof] \texttt{python -m src.zero\_shot run} stopped on the laptop with ``Expected all tensors to be
+        on the same device, but got mat2 is on cuda:0''.
+  \item[Correction] Both embeddings on the CPU before the product, with a regression test. The same
+        run's warning showed that the model had been loaded with GELU instead of the QuickGELU of the
+        original weights; it is now loaded as \texttt{ViT-B-32-quickgelu}. Run again on a clean commit.
+  \item[Reproduction] Remove \texttt{.cpu()} from \texttt{text\_features} and \texttt{zero\_shot\_probs} in
+        \texttt{src/zero\_shot.py} and run \texttt{python -m src.zero\_shot run --fast} on the GPU.
+  \item[Reflection] A second error (the activation) was visible in a warning of the same failed run:
+        reading the whole output of a failure, not only the last line, found it.
+\end{description}
+
+\subsubsection*{Sheet C3. Commands without the repository folder (Claude)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] What to run after the code of the learning-strategy block was delivered.
+  \item[Faulty response] Activation of the environment and \texttt{python -m pytest -q tests} without
+        \texttt{cd} into \texttt{ptbxl-dl}, although the terminal prompt showed the parent folder.
+  \item[Proof] PowerShell answered that \texttt{.venv\textbackslash Scripts\textbackslash activate} was
+        not found and ``ERROR: file or directory not found: tests''.
+  \item[Correction] Every later list of commands starts with \texttt{cd C:\textbackslash Users\textbackslash ori\textbackslash DL\textbackslash ptbxl-dl}.
+  \item[Reproduction] From the parent folder, \texttt{python -m pytest -q tests} gives the same error.
+  \item[Reflection] A small error, but it shows that the assistant reasons about the repository, not
+        about the terminal the user is in.
+\end{description}
+
+\subsubsection*{Sheet C4. A wrong cause stated as fact (Claude)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] Why does the log of the trivial run say \texttt{git\_dirty: true}?
+  \item[Faulty response] ``The run was made before the code was committed'', written as the cause in a
+        block note.
+  \item[Proof] Every Dense run, all made after the commit with identical code, also said
+        \texttt{git\_dirty: true}. From the \texttt{git status --short} output I pasted, the real cause
+        appeared: each run writes its own predictions file before running \texttt{git status}, which lists
+        untracked files, so every full run looked dirty.
+  \item[Correction] The flag now looks only at the code under \texttt{src/} (log schema 2), with tests on a
+        temporary repository; the old logs keep a note that their flag carries no information.
+  \item[Reproduction] With a clean tree and the old check, \texttt{python -m src.train --model trivial
+        --max-epochs 1 --tag check} logs \texttt{git\_dirty: true}.
+  \item[Reflection] A plausible explanation was accepted without a second observation; the second block
+        provided it.
+\end{description}
+
+\subsection*{Reflection}
+
+Most errors of the assistant were not in the deep-learning code but at its edges: the device, the memory,
+the folder, the copy of a file. They were found because we ran everything ourselves on the real hardware
+and read the whole output. The rule that the assistant proposes and explains while we decide and execute
+kept every result one that we can reproduce and explain.

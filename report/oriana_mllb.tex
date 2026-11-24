@@ -1,0 +1,51 @@
+% =====================================================================
+% MLLB-DL report of Oriana Ferraz De Jesus (experimental design, PyTorch,
+% training, evaluation, reproducibility).
+% Compile from report/:  pdflatex oriana_mllb && bibtex oriana_mllb && pdflatex x2
+% Shared parts: common/ (preamble, floats, code excerpts, contributions); text: oriana/.
+% =====================================================================
+\documentclass[11pt]{article}
+\input{common/preamble}
+\prdlfalse
+
+\begin{document}
+
+\reportcover{Machine Learning Lab}%
+            {MLLB-DL: design, implementation and evaluation of deep-learning models on PTB-XL}%
+            {Oriana Andrea Ferraz De Jesus}{December 2026}
+
+\tableofcontents
+\vspace{1cm}
+\listoftables
+\vspace{1cm}
+\listoffigures
+\newpage
+
+\input{oriana/summary}
+\newpage
+
+% Section 0 is the initial section required by the course for MLLB reports;
+% the following sections keep the numbering 1, 2, ...
+\setcounter{section}{-1}
+\input{oriana/mllb/s0_ai_environment}
+\input{oriana/mllb/s1_methodology}
+\input{oriana/mllb/s2_data}
+\input{oriana/mllb/s3_training}
+\input{oriana/mllb/s4_architectures}
+\input{oriana/mllb/s5_strategies}
+\input{oriana/mllb/s6_generative}
+\input{oriana/mllb/s7_code}
+\input{oriana/mllb/s8_conclusions}
+
+\clearpage
+\section{References}
+\begingroup
+\renewcommand{\section}[2]{}
+\bibliographystyle{IEEEtran}
+\bibliography{references,common/course}
+\endgroup
+
+\newpage
+\input{oriana/mllb/appA_ai}
+
+\end{document}

@@ -1,0 +1,133 @@
+% =====================================================================
+% Shared preamble of the four DL reports (PRDL-DL and MLLB-DL of each author).
+% Written once; each main file (report/<author>_<course>.tex) does
+%     \documentclass[11pt]{article}
+%     \input{common/preamble}
+% and is compiled from the folder report/, so every path below is relative
+% to report/ (also on Overleaf: upload report/ and choose the main file).
+% Style taken from the ML reports (contexto_DL/ML_ref_*_main.tex.txt).
+% =====================================================================
+
+% ---------- Packages ----------
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[explicit]{titlesec}
+\usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{array}
+\usepackage{adjustbox}   % tables shrink to the text width only when wider
+\usepackage{listings}
+\usepackage{siunitx}
+\usepackage{cite}
+\usepackage{hyperref}
+\hypersetup{hidelinks}
+
+% ---------- Colours ----------
+\definecolor{etsitorange}{RGB}{237,125,49}
+\definecolor{etsitblue}{RGB}{31,73,125}
+\definecolor{codebg}{RGB}{245,245,245}
+
+% ---------- Code listings (MLLB) ----------
+\lstset{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  keepspaces=true,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{etsitblue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  showstringspaces=false
+}
+
+% ---------- Section banners (orange bar, as in the course template) ----------
+\titleformat{\section}
+  {\bfseries\Large\color{white}}
+  {}{0pt}
+  {\colorbox{etsitorange}{\parbox{\dimexpr\textwidth-4\fboxsep-12pt\relax}{\centering\thesection.\ #1}}}
+\titlespacing*{\section}{0pt}{18pt}{12pt}
+\titleformat{name=\section,numberless}
+  {\bfseries\Large\color{white}}
+  {}{0pt}
+  {\colorbox{etsitorange}{\parbox{\dimexpr\textwidth-4\fboxsep-12pt\relax}{\centering#1}}}
+\titlespacing*{name=\section,numberless}{0pt}{18pt}{12pt}
+\titleformat{\subsection}{\bfseries\large}{\thesubsection.}{0.5em}{#1}
+\titlespacing*{\subsection}{0pt}{12pt}{6pt}
+\titleformat{\subsubsection}{\bfseries\normalsize}{\thesubsubsection}{0.5em}{#1}
+\titlespacing*{\subsubsection}{0pt}{10pt}{4pt}
+
+% Appendix banner (no number)
+\newcommand{\appendixbanner}[1]{%
+  \colorbox{etsitorange}{\parbox{\dimexpr\textwidth-4\fboxsep-12pt\relax}{\centering\bfseries\Large\color{white} #1}}%
+  \vspace{12pt}}
+
+\renewcommand{\contentsname}{CONTENTS}
+\renewcommand{\listtablename}{LIST OF TABLES}
+\renewcommand{\listfigurename}{LIST OF FIGURES}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\thepage}
+
+\captionsetup{font=small,labelfont=bf}
+\graphicspath{{figures/}}
+\setlength{\emergencystretch}{2em}
+
+% ---------- Numbers ----------
+% Every measured number is a macro generated from results/logs/*.json by
+% report/make_numbers.py; published results come from report/published.json.
+\input{numbers}
+
+% A claim without a checked quote would be tagged with this macro; the final
+% version must contain none (checked before delivery).
+\newcommand{\todoverify}[1]{\textcolor{red}{\,\textsf{\footnotesize[verify: #1]}}}
+
+% ---------- Helpers ----------
+% Rounded display of a number macro (only for macros without a thousands
+% separator), e.g. \intval{\edaAgeMedianNORM} -> 54; the value still comes from the log.
+\newcommand{\intval}[1]{\num[round-mode=places,round-precision=0]{#1}}
+\newcommand{\onedec}[1]{\num[round-mode=places,round-precision=1]{#1}}
+% File or code name in typewriter font (url's \path breaks long names at / . _)
+\newcommand{\file}[1]{\path{#1}}
+% Report kind: \prdltrue in PRDL mains, \prdlfalse in MLLB mains
+\newif\ifprdl
+
+% Cover page: \reportcover{course}{report title}{author}{date}
+\newcommand{\reportcover}[4]{%
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+\IfFileExists{figures/etsit_logo.jpeg}{\includegraphics[width=0.4\textwidth]{figures/etsit_logo.jpeg}\par}{}
+\vspace{1.5cm}
+{\color{etsitblue}\bfseries\Large Course:}\par
+\vspace{0.5cm}
+{\bfseries\huge #1}\par
+\vspace{1cm}
+{\Large Deep Learning Report}\par
+{\bfseries\Large #2}\par
+\vspace{0.5cm}
+\rule{0.7\textwidth}{0.4pt}\par
+\vspace{0.5cm}
+{\large Master in Signal Theory and Communications (MUTSC), ETSIT -- Universidad Polit\'ecnica de Madrid}\par
+\vspace{2.5cm}
+\large Name: \underline{\hspace{2mm}#3\hspace{2mm}}\par
+\vspace{0.3cm}
+\large Team: Oriana Andrea Ferraz De Jesus and Mar\'ia Mart\'inez Garc\'ia-Tahe\~no\par
+\vspace{0.5cm}
+\hfill Date: \underline{\hspace{2mm}#4\hspace{2mm}}\par
+\vfill
+{\small Code and results: \url{https://github.com/orianafe16/ptbxl-DL}}\par
+\end{titlepage}}

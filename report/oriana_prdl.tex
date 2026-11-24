@@ -1,0 +1,47 @@
+% =====================================================================
+% PRDL-DL report of Oriana Ferraz De Jesus (theory and critical analysis).
+% Compile from report/:  pdflatex oriana_prdl && bibtex oriana_prdl && pdflatex x2
+% Shared parts: common/ (preamble, floats, contributions); text: oriana/.
+% =====================================================================
+\documentclass[11pt]{article}
+\input{common/preamble}
+\prdltrue
+
+\begin{document}
+
+\reportcover{Predictive and Descriptive Learning}%
+            {PRDL-DL: theory and critical analysis of deep-learning models on PTB-XL}%
+            {Oriana Andrea Ferraz De Jesus}{December 2026}
+
+\tableofcontents
+\vspace{1cm}
+\listoftables
+\vspace{1cm}
+\listoffigures
+\newpage
+
+\input{oriana/summary}
+\newpage
+
+\input{oriana/prdl/s1_problem_data}
+\input{oriana/prdl/s2_framework}
+\input{oriana/prdl/s3_architectures}
+\input{oriana/prdl/s4_strategies}
+\input{oriana/prdl/s5_generative}
+\input{oriana/prdl/s6_discussion}
+\input{oriana/prdl/s7_activities}
+
+\clearpage
+\section{References}
+\begingroup
+\renewcommand{\section}[2]{}
+\bibliographystyle{IEEEtran}
+\bibliography{references,common/course}
+\endgroup
+
+\newpage
+\input{oriana/prdl/appA_ai}
+\newpage
+\input{oriana/prdl/appB_strategies}
+
+\end{document}
