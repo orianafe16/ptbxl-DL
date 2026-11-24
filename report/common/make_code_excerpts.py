@@ -25,6 +25,17 @@ EXCERPTS = {
     "tokenizer": ("generative.py", 69, 74, "    def encode"),
     "sample_next": ("generative.py", 468, 485, "def sample_next"),
     "transfer_classifier": ("transfer.py", 185, 212, "class TransferClassifier"),
+    # Added by chat DL 11 (2026-11-24) for Maria's MLLB report; the entries
+    # above are unchanged.
+    "superclass_labels": ("data.py", 63, 80, "def superclass_labels"),
+    "lead_stats": ("dataset.py", 29, 44, "def lead_stats"),
+    "make_loaders": ("dataset.py", 83, 98, "    X, y = cache"),
+    "paired_bootstrap": ("metrics.py", 164, 184, "def paired_bootstrap_diff"),
+    "rnn_sequence_encode": ("models/rnn.py", 152, 180, "    def sequence"),
+    "attention_pooling": ("models/rnn.py", 66, 80, "    def scores"),
+    "mhsa_split_forward": ("models/attention.py", 93, 116, "    def _split"),
+    "block_sublayer": ("models/attention.py", 173, 188, "    def _sublayer"),
+    "patch_tokens": ("models/transformer.py", 96, 116, "    def tokens"),
 }
 
 

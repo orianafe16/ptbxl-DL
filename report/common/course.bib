@@ -3,15 +3,32 @@
 % as the primary paper they mention (DECISIONS D8, note of 2026-11-24).
 % They are internal (contexto_DL/, not in the repository); the quotes used are
 % in docs/literature/quotes.md, section F.
-% The dataset entry uses only the DOI and URL recorded in DECISIONS D1
-% (checked on the PhysioNet page by OF and MM on 2026-11-14).
+% Dataset entries: DOI and URL recorded in DECISIONS D1 (checked on the PhysioNet
+% page by OF and MM on 2026-11-14). Authors, year and the standard PhysioNet
+% citation copied from the "cite" box of https://physionet.org/content/ptb-xl/1.0.3/
+% (read by the assistant on 2026-11-24; to be checked by OF/MM on that page).
+% D1 asks for three citations: Wagner et al. 2020 (references.bib), the dataset
+% DOI (ptbxl_physionet) and the standard PhysioNet citation (pollard2026physionet).
 
 @misc{ptbxl_physionet,
-  title        = {{PTB-XL}, a large publicly available electrocardiography dataset, version 1.0.3},
+  author       = {Wagner, Patrick and Strodthoff, Nils and Bousseljot, Ralf and Samek, Wojciech and Schaeffter, Tobias},
+  title        = {{PTB-XL}, a large publicly available electrocardiography dataset (version 1.0.3)},
   howpublished = {PhysioNet},
+  year         = {2022},
+  note         = {RRID:SCR\_007345. Licence CC BY 4.0},
   doi          = {10.13026/kfzx-aw45},
-  url          = {https://physionet.org/content/ptb-xl/1.0.3/},
-  note         = {Licence CC BY 4.0; data descriptor in Wagner et al.\ (2020)}
+  url          = {https://physionet.org/content/ptb-xl/1.0.3/}
+}
+
+@article{pollard2026physionet,
+  author       = {Pollard, Tom and Moody, Benjamin E. and Lehman, Li-wei and Gow, Brian and Fernandes, Chrystinne and Xie, Chenyu and Johnson, Alistair and Mark, Roger G. and Heldt, Thomas},
+  title        = {{PhysioNet} as a global platform for biomedical research},
+  journal      = {Nature Health},
+  volume       = {1},
+  number       = {8},
+  pages        = {792--795},
+  year         = {2026},
+  doi          = {10.1038/s44360-026-00096-z}
 }
 
 @misc{course_summary_0910,
