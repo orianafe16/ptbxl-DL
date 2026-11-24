@@ -1,0 +1,78 @@
+% =====================================================================
+% 2. Data pipeline in PyTorch (MLLB, Maria Martinez; own block T5)
+% src/data.py, src/dataset.py; DECISIONS D1-D3, D12; block note 01.
+% =====================================================================
+\section{Data pipeline}\label{sec:mllb-data}
+
+I wrote the data pipeline (task T5, reviewed by Oriana). It goes from the raw PhysioNet files to three
+PyTorch \texttt{DataLoader}s in two stages: a one-off cache, and a light \texttt{Dataset} on top of it.
+
+\subsection{Integrity check and cache}
+
+\texttt{python -m src.prepare\_data} first hashes with SHA-256 every file we use and compares it with the
+\texttt{SHA256SUMS.txt} list published with the dataset. It then reads each record once with \texttt{wfdb},
+checks the sampling rate, the twelve expected leads and the 1000 samples, and stores everything in one
+compressed NumPy file: the signals as an array of shape (\edaNRecordsAll{}, 12, 1000), the labels, the
+record and patient identifiers, the fold and a flag \texttt{has\_superclass}. Two details are worth
+explaining. \texttt{wfdb} returns (time, lead), but \texttt{Conv1d} expects (channel, time), so each record is
+transposed once here instead of in every batch. And the cache is written to a temporary file and renamed at
+the end, so an interrupted run never leaves a half-written cache that a later run would load. Reading the
+\edaNRecordsAll{} small files takes minutes; loading the cache takes seconds, and every experiment starts from
+it.
+
+\subsection{Labels}
+
+Listing~\ref{lst:labels} builds the multi-hot label matrix. A record gets superclass $c$ if any of its SCP
+codes is a diagnostic statement of class $c$ in \texttt{scp\_statements.csv}, whatever its likelihood: the
+rule of the example script distributed with the dataset, which reproduces the class counts of the PhysioNet
+page. The labels are stored as \texttt{float32}, because \texttt{BCEWithLogitsLoss} expects float targets.
+
+\lstinputlisting[firstnumber=63,caption={Superclass labels (\texttt{src/data.py}).},label={lst:labels}]{common/code/superclass_labels.py}
+
+\subsection{Split and normalisation}
+
+\texttt{split\_indices} returns the row indices of each split from the official folds (training 1--8,
+validation 9, test 10), leaving out by default the records without a superclass. The per-lead statistics
+are computed by Listing~\ref{lst:leadstats} on the training indices only: passing validation or test
+indices would leak information about the evaluation folds into the model. The sums are done in
+\texttt{float64}, one lead at a time, because adding millions of \texttt{float32} values loses precision and a
+\texttt{float64} copy of the whole array at once would double the memory of the cache.
+
+\lstinputlisting[firstnumber=29,caption={Per-lead statistics on the training records (\texttt{src/dataset.py}).},label={lst:leadstats}]{common/code/lead_stats.py}
+
+\subsection{Dataset and DataLoader}
+
+\texttt{PTBXLDataset} keeps a reference to the full cache and a list of row indices, so the three splits do
+not copy the 1\,GB array. \texttt{\_\_len\_\_} returns the number of records of the split and
+\texttt{\_\_getitem\_\_} returns one pair: the record of shape (12, 1000), standardised with the training
+mean and standard deviation (stored with shape (12, 1) so that they broadcast over time), and its five
+labels. Listing~\ref{lst:loaders} builds the loaders.
+
+\lstinputlisting[firstnumber=83,caption={Construction of the three DataLoaders (\texttt{src/dataset.py}).},label={lst:loaders}]{common/code/make_loaders.py}
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item Only the training loader shuffles, and it does so with its own seeded \texttt{torch.Generator}, so
+        the batch order depends only on the seed of the run.
+  \item \texttt{num\_workers=0}: on Windows each extra worker process would receive its own copy of the
+        in-memory cache.
+  \item \texttt{pin\_memory} speeds up the copy of each batch to the GPU.
+  \item The function returns, with the loaders, an \texttt{info} dictionary (split sizes and normalisation
+        statistics) that the training loop writes into every run log, so that a log describes exactly the
+        data it was trained on.
+\end{itemize}
+With the default settings the three splits have \edaNLabelledTrain{}, \edaNLabelledVal{} and
+\edaNLabelledTest{} records, and a batch is a pair of tensors of shapes (64, 12, 1000) and (64, 5).
+
+\subsection{Tests of the pipeline}
+
+\texttt{tests/test\_data.py} checks the pipeline in two ways. On a small synthetic cache: the split by fold,
+the exclusion of records without a superclass, statistics computed on training records only, and a
+normalised batch with mean 0 and standard deviation 1. On the real cache, when it exists: the shapes, the
+class counts against the PhysioNet table, that no patient appears in two splits, and the shapes of a batch.
+The test on the class counts is the one that would have caught the labelling rule first proposed by the
+assistant (described in Appendix~A of my PRDL report).
+
+\paragraph{Lessons.} The two hardest bugs of a data pipeline are silent: a wrong label rule and a leak of
+evaluation data into the normalisation. Both produce models that train well and give plausible numbers.
+Here the first is protected by a test against published counts, and the second by computing the
+statistics in a function that only ever receives the training indices.

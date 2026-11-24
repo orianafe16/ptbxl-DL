@@ -1,0 +1,80 @@
+% =====================================================================
+% 2. Evaluation framework (PRDL, Maria Martinez)
+% Own block in depth: evaluation protocol (T7; DECISIONS D3, D4, D14;
+% block note 03). Shared training loop (T8, OF + MM).
+% =====================================================================
+\section{Evaluation framework}\label{sec:evaluation}
+
+I designed and wrote the evaluation module (task T7, reviewed by Oriana); the training loop was written
+by the two of us (T8). The aim of the protocol is that every number in this report means the same thing
+for every model, and that a difference is claimed only when it is larger than what chance alone would
+produce.
+
+\subsection{Loss and outputs}
+
+Each model returns five logits, one per superclass, with no sigmoid inside the model. The loss is the
+binary cross-entropy with logits, averaged over the five classes and the batch: each class is an
+independent yes/no question, which is what a multi-label task needs (a softmax would force the five
+probabilities to compete and sum to 1). Probabilities are obtained afterwards as
+$\sigma(\text{logit})$. The optimiser is Adam with learning rate $10^{-3}$, whose hyper-parameters
+``typically require little tuning'' \cite{kingma2015adam}; batch 64, at most 50 epochs, and early
+stopping with a patience of 5 epochs on the validation macro AUROC, after which the weights of the best
+epoch are restored.
+
+\subsection{Metrics}
+
+\paragraph{Macro AUROC.} The main metric is the area under the ROC curve of each class, averaged over the
+five classes. The AUROC is the probability that a randomly chosen positive record gets a higher score than
+a randomly chosen negative one, so it needs no threshold and does not change with the class prevalence.
+Averaging over classes (macro) gives HYP, the rarest class, the same weight as NORM. It is also the
+metric of the benchmark, ``obtained by averaging class-wise AUCs over all classes''
+\cite{strodthoff2021deep}, which makes a comparison possible (Section~\ref{sec:discussion}).
+
+\paragraph{Macro F1.} As a secondary metric, which does depend on a decision, each class gets the
+threshold that maximises its F1 on the validation fold (grid 0.01 to 0.99); the same thresholds are
+applied unchanged to the test fold. A fixed threshold of 0.5 for every class was rejected because it
+penalises the rare classes, whose probabilities rarely reach 0.5.
+
+\subsection{Uncertainty and comparison of models}
+
+\paragraph{Patient bootstrap.} The test fold is a sample, so every metric has a confidence interval: the
+predictions are resampled 1000 times and the 2.5 and 97.5 percentiles of the metric are reported. The
+resampling unit is the patient, not the record: when a patient is drawn, all of his or her records enter
+together. Records of the same patient are correlated, and resampling them one by one would pretend that
+we have more independent evidence than we do, giving intervals that are too narrow. The model is not
+retrained, only its predictions are resampled.
+
+\paragraph{Paired comparison.} Two models evaluated on the same records can be compared on the same
+resamples: the draws depend only on the patients and on the seed, so for each resample we compute the
+difference of their macro AUROCs and take its 95\,\% interval. If the interval contains 0, neither model
+is declared better. Pairing removes the variation that comes from which patients happen to be in the
+sample, so it detects much smaller differences than comparing two separate intervals. Every model saves
+its predictions record by record, so any two runs can be compared afterwards.
+
+\paragraph{Seeds.} A single training run is itself a random draw (initial weights, batch order,
+dropout). Every configuration was trained with three seeds (42, 43, 44), and a configuration is compared
+with its reference trained with the same seed. Tables report the mean and standard deviation over the
+seeds and in how many seeds the paired interval excludes 0 in each direction. A factor is said to change
+the result only when it does so consistently.
+
+\subsection{Selection and use of the test fold}
+
+All ablations and every choice of a final model use the validation fold only. The selection rule of each
+block (the configuration with the highest mean validation macro AUROC; for RNN + attention, the best of
+the attention configurations) was written in the decisions log before the runs of that block, and each
+final model was trained again with the three seeds and evaluated once on the test fold; the training code
+refuses a second test run of the same model and seed. A rule fixed in advance can select a configuration
+that is only marginally better than its baseline; we keep its choice and say so, because changing it
+after seeing the test results would be selection on noise.
+
+\subsection{Traceability}
+
+Every run writes a log with its configuration, seed, data description, learning curves, metrics,
+software versions and code commit, and its predictions. No number of this report is typed by hand: each
+is a macro generated from those logs by a script, and only the logs listed in a fixed file can appear in a
+report, so an old or test run cannot slip in. The only numbers typed by hand in the whole project are the
+published benchmark values, each stored with its file, page and quote.
+
+As a floor for every comparison, a trivial model (logistic regression on the mean and standard deviation
+of each lead, 24 numbers per record) reaches a test macro AUROC of \trivialTestMacroAuroc{}
+[\trivialTestMacroAurocLo{}, \trivialTestMacroAurocHi{}]: any real architecture must beat it clearly.

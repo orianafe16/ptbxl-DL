@@ -1,0 +1,47 @@
+% =====================================================================
+% PRDL-DL report of Maria Martinez Garcia-Taheno (theory and critical analysis).
+% Compile from report/:  pdflatex maria_prdl && bibtex maria_prdl && pdflatex x2
+% Shared parts: common/ (preamble, floats, contributions); text: maria/.
+% =====================================================================
+\documentclass[11pt]{article}
+\input{common/preamble}
+\prdltrue
+
+\begin{document}
+
+\reportcover{Predictive and Descriptive Learning}%
+            {PRDL-DL: theory and critical analysis of deep-learning models on PTB-XL}%
+            {Mar\'ia Mart\'inez Garc\'ia-Tahe\~no}{December 2026}
+
+\tableofcontents
+\vspace{1cm}
+\listoftables
+\vspace{1cm}
+\listoffigures
+\newpage
+
+\input{maria/summary}
+\newpage
+
+\input{maria/prdl/s1_problem_data}
+\input{maria/prdl/s2_evaluation}
+\input{maria/prdl/s3_architectures}
+\input{maria/prdl/s4_strategies}
+\input{maria/prdl/s5_generative}
+\input{maria/prdl/s6_discussion}
+\input{maria/prdl/s7_activities}
+
+\clearpage
+\section{References}
+\begingroup
+\renewcommand{\section}[2]{}
+\bibliographystyle{IEEEtran}
+\bibliography{references,common/course}
+\endgroup
+
+\newpage
+\input{maria/prdl/appA_ai}
+\newpage
+\input{maria/prdl/appB_strategies}
+
+\end{document}

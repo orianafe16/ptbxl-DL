@@ -1,0 +1,81 @@
+% =====================================================================
+% 6. Final comparison and discussion (PRDL, Maria Martinez)
+% T15 (shared); published results from report/published.json (chat DL 09).
+% =====================================================================
+\section{Final comparison and discussion}\label{sec:discussion}
+
+\subsection{All final models on the test fold}
+
+Table~\ref{tab:comparison_final} and Figure~\ref{fig:comparison_overview} gather every final model of the
+project on the test fold: the trivial model, the five families with 12 leads, the same five on lead II,
+the six transfer configurations of the ECG-GPT and zero-shot CLIP. Table~\ref{tab:comparison_per_class}
+gives the AUROC per superclass. With 12 leads, HYP is the hardest class for the CNN and the recurrent
+models and CD for the Transformer, and the ranking of the families with 12 leads is the same as in Section~\ref{sec:arch-summary}.
+
+\input{common/floats/tab_comparison_final}
+\input{common/floats/fig_comparison_overview}
+
+\subsection{Comparison with published results}
+
+The last rows of Table~\ref{tab:comparison_final} are the eight models of the superclass column of
+Table~I of the PTB-XL benchmark \cite{strodthoff2021deep}, the only numbers of the project typed by hand,
+each stored with its file, page and quote. They share our task, our folds (training 1--8, validation 9,
+test 10), our sampling rate and our metric, and they also leave out the records without a superclass
+\cite{strodthoff2021deep}. But the setting is different in ways that matter, and the values are not
+adjusted:
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item they train on windows of 2.5\,s and aggregate the predictions over windows ``using the
+        element-wise maximum'' \cite{strodthoff2021deep}, while our models see the whole 10\,s record;
+  \item they use the AdamW optimiser with a 1-cycle learning-rate schedule \cite{strodthoff2021deep};
+        we use Adam with a fixed rate;
+  \item each published value is one trained model evaluated on the whole test set, with an interval given
+        as the maximal deviation of the bootstrap bounds \cite{strodthoff2021deep}; ours are means over
+        three seeds, with patient-bootstrap intervals for the first seed.
+\end{itemize}
+With those caveats, our CNN (\comparisonTestAurocMeanTwelveCnn{}) and the published residual network
+(\comparisonPublishedStrodthoffResnetOneDWang{}) are in the same range, and our final RNN
+(\comparisonTestAurocMeanTwelveRnn{}) is slightly below the published LSTMs
+(\comparisonPublishedStrodthoffLstm{} and \comparisonPublishedStrodthoffLstmBidir{}). The conclusion I draw is modest: our small models, trained
+within a course and a 4\,GB GPU, behave like the published baselines of the same families. They are not
+meant to compete with them, which the guidelines explicitly do not ask for \cite{course_message_2011}.
+
+\input{common/floats/tab_comparison_per_class}
+
+\subsection{Limitations}
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item \textbf{One dataset, one task, small budgets.} Every conclusion is about five superclasses of
+        PTB-XL; long memory or the order of events may matter for other labels (rhythm, for example),
+        which we did not test.
+  \item \textbf{Three seeds.} They allow paired, per-seed statements, but the standard deviations over
+        seeds rest on three values.
+  \item \textbf{Selection rules fixed in advance.} They protect the test fold, but they can select a
+        configuration only marginally different from its neighbours (the two final recurrent models, or
+        \texttt{no\_pos} and \texttt{patch5} in the Transformer).
+  \item \textbf{Interpretation figures.} Attention weights, attention maps and input sensitivities were
+        computed for one seed and a few example records; what they show about QRS complexes is a visual
+        observation, not a measured result.
+  \item \textbf{Area 2.} The pre-trained model is small and pre-trained on PTB-XL itself, and zero-shot
+        was tested with one general image--text model and fixed sentences.
+\end{itemize}
+
+\subsection{Conclusions}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{Weight sharing over time is the main ingredient.} All architectures that apply the same
+        weights along the record (CNN, LSTM and GRU, attention models) are far above the dense network; the
+        differences among them are small.
+  \item \textbf{For recurrent networks, reading all hidden states matters more than the cell or the
+        direction}, and a GRU was better than an LSTM. Attention pooling helped exactly as much as a mean
+        and spread its weights almost uniformly: on this task it worked as a learned mean.
+  \item \textbf{Self-attention is built from parts that each add something}, with the largest gains from
+        several heads and from the residual path with LayerNorm. But no Transformer used the order of the
+        patches, and the final one has no positional encoding: it classifies a set of beat fragments.
+  \item \textbf{Local features win.} The best recurrent model has a convolutional front end, raw samples
+        beat flattened frames, short patches beat long ones, and the CNN is the best model on 12 leads and
+        on lead II, also against a fine-tuned self-supervised Transformer.
+  \item \textbf{Methodology.} Deciding the protocol before the runs, pairing comparisons on the same
+        patients and seeds, and generating every number from the logs made it possible to say which
+        differences are real; several ablations change nothing in any seed, and the two final recurrent
+        models cannot be told apart, and we report them so.
+\end{enumerate}

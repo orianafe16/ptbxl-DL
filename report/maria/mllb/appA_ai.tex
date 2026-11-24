@@ -1,0 +1,95 @@
+% =====================================================================
+% APPENDIX A (MLLB, Maria Martinez): use of AI code assistants
+% Sources: docs/AI_USAGE_LOG.md (session log; Bounty candidates B3, B6,
+% B10), CHATS protocol.
+% =====================================================================
+\appendixbanner{APPENDIX A: USE OF AI CODE ASSISTANTS}
+\addcontentsline{toc}{section}{Appendix A: Use of AI code assistants}\label{app:ai-code}
+
+\subsection*{Workflow}
+
+For the code, each block went through the same cycle with Claude: a written proposal of the decisions,
+which we accepted or changed; code and tests written by the assistant and run by it on a CPU copy with
+synthetic data; then our own run of the tests, the smoke test and the real runs on the laptop, whose output
+we pasted back; and finally the analysis, in which the assistant recomputed the metrics from the saved
+predictions and we checked the figures and tables. For my blocks (data, evaluation, recurrent networks,
+self-attention and Transformer) I read each function with the assistant's explanation before running it.
+Every session is in \texttt{docs/AI\_USAGE\_LOG.md}.
+
+\subsection*{Errors detected (candidates for the AI Error Bounty)}
+
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt]
+  \item \textbf{A code comment that contradicted the code} in my Transformer model (Sheet C1; detected by
+        the assistant itself, after the runs).
+  \item \textbf{An incomplete copy of the decisions file} written to the folder in the evaluation block
+        (Sheet C2; detected by the assistant itself, before building on it).
+  \item \textbf{Tensors on two devices} in the zero-shot code (Sheet C3; detected by Oriana and me when the
+        run stopped on the laptop).
+  \item The other errors of the coding assistant (files reported as written when an older copy had reached
+        the folder in other blocks, a smoke test that stopped, a wrong cause for a log flag, commands without
+        the repository folder, out of memory when generating, a figure legend over a data point) are recorded
+        in the log; those of Oriana's blocks are in her report.
+\end{itemize}
+
+\subsection*{AI Error Bounty sheets}
+
+\subsubsection*{Sheet C1. A comment that contradicted the code (Claude)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] The complete self-attention and Transformer block (decision D18): model, experiments and
+        tests.
+  \item[Faulty response] The comment above \texttt{register\_buffer("pe", \ldots, persistent=False)} in
+        \file{src/models/transformer.py} said that the positional-encoding buffer is ``saved with the model''.
+  \item[Proof] With \texttt{persistent=False} PyTorch leaves the buffer out of \texttt{state\_dict()}, so it
+        is not in the checkpoint: \texttt{'pe' in TransformerClassifier().state\_dict()} is \texttt{False},
+        while the attribute \texttt{pe} exists.
+  \item[Correction] Comment rewritten: the buffer moves to the GPU with the model, is not trained, and is
+        not saved, because it is rebuilt when the model is created. The behaviour of the code did not change,
+        so the runs and the results stand.
+  \item[Reproduction] \texttt{python -c "from src.models.transformer import TransformerClassifier as T;
+        print('pe' in T().state\_dict())"} prints \texttt{False}.
+  \item[Reflection] A wrong comment is dangerous in a course with an oral defence about specific lines: it
+        would have taught me the wrong behaviour. Buffers, parameters and the state dictionary are now one of
+        the PyTorch points I can explain with this example.
+\end{description}
+
+\subsubsection*{Sheet C2. An incomplete file written to the folder (Claude)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] After we accepted the evaluation and training decisions, add the new decision and its
+        change-log line to \file{docs/DECISIONS.md}.
+  \item[Faulty response] The assistant edited the file in several steps and copied it to the folder right
+        away; the copy that arrived had only part of the changes.
+  \item[Proof] The size and the modification time of the file in the folder did not match the edited
+        version, and no other conversation had changed it.
+  \item[Correction] The complete file was copied again, and from then on every file was compared with the
+        intended version (by size or by content) before being reported as written; this check became part of
+        the common protocol of all conversations.
+  \item[Reproduction] Not in git, because the incomplete copy was never committed; the evidence is the two
+        sizes recorded in the log. The check is repeated at the end of every conversation.
+  \item[Reflection] An assistant that can write files can also leave the wrong version behind; ``done'' is
+        only true after looking at the folder.
+\end{description}
+
+\subsubsection*{Sheet C3. Tensors on two devices (Claude)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] The zero-shot experiment with CLIP on CIFAR-100 and on ECG images (shared task T24).
+  \item[Faulty response] The image features were moved to the CPU while the text features stayed on the
+        GPU, and the two were multiplied. The assistant's tests used a fake CLIP on the CPU only, so they
+        could not show it.
+  \item[Proof] On the laptop the run stopped with \texttt{RuntimeError: Expected all tensors to be on the
+        same device}.
+  \item[Correction] Both feature sets are returned on the CPU, with a regression test. In the same fix the
+        model was loaded as \texttt{ViT-B-32-quickgelu}, the exact activation of the OpenAI weights used in the
+        class notebook.
+  \item[Reproduction] Remove \texttt{.cpu()} from the text features and from the similarity function of
+        \file{src/zero_shot.py} and run \texttt{python -m src.zero\_shot run --fast} on the GPU: same error.
+  \item[Reflection] Tests on the CPU cannot catch device errors; the smoke run on the real GPU is a test in
+        its own right and must not be skipped.
+\end{description}
+
+\subsection*{Reflection}
+
+The coding assistant was most useful for long code that can be checked: experiment scripts, tests,
+summaries, tables and figures. Its errors fell where its own checks could not reach: the real GPU, the
+real folder, and statements it did not verify. The rules of Section~\ref{sec:ai-env}, above all running
+everything ourselves and generating every number from the logs, are what kept those errors out of the
+results.

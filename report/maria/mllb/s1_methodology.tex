@@ -1,0 +1,84 @@
+% =====================================================================
+% 1. Methodology (MLLB, Maria Martinez): experimental design.
+% DECISIONS D3, D4, D14, D17, D18.
+% =====================================================================
+\section{Methodology}\label{sec:methodology}
+
+\subsection{One protocol for every model}
+
+The project compares architectures, so everything that is not the architecture is fixed and shared: the
+data pipeline and split (Section~\ref{sec:mllb-data}), the loss, the training loop, the metrics and the run
+logs (Section~\ref{sec:mllb-training}). A new model only has to be a \texttt{torch.nn.Module} that maps a
+batch of shape (batch, 12, 1000) to five logits and to be registered by name; the same command trains it,
+evaluates it and writes its log. In this way a difference between two models comes from the models and
+not from two slightly different pieces of training code.
+
+\subsection{Design of each block}
+
+Each model block followed the same steps, and each step was a written decision before it was code:
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
+  \item \textbf{Baseline and grid.} A baseline and a list of configurations, each changing one factor with
+        respect to a stated reference configuration. For the recurrent block (decision D17): 12
+        configurations (cell, depth, direction, readout, attention score, attention crossed with cell,
+        direction and length, input sequence). For the self-attention and Transformer block (D18): 15
+        configurations, five of them rebuilding an encoder block one component at a time.
+  \item \textbf{Time estimate.} Before the long runs, an \texttt{estimate} command measured the time per
+        batch and the peak GPU memory of every configuration on the laptop, to check that the grid fitted
+        the 4\,GB GPU and the time available.
+  \item \textbf{Smoke test.} \texttt{all --fast} ran the whole pipeline on a few hundred records and two
+        epochs; its outputs end in \texttt{\_fast}, are ignored by git and are rejected by the script that
+        builds the numbers of the reports.
+  \item \textbf{Validation runs.} Every configuration with seeds 42, 43 and 44, validation fold only.
+  \item \textbf{Final models.} The selection rule fixed in step 1 picks the final model(s); each is trained
+        again with \texttt{--final} and the three seeds, and only then evaluated on the test fold.
+  \item \textbf{Report.} One command computes the summary, the paired comparisons, the tables and the
+        figures from the logs and the saved predictions.
+\end{enumerate}
+The selection rules were: the best mean validation macro AUROC among all configurations (final RNN and
+final Transformer), and the best among the five attention configurations (final RNN + attention).
+
+\subsection{Comparisons and seeds}
+
+A comparison between two configurations is always paired: same seed, same validation records, same
+patient-bootstrap resamples (Section~\ref{sec:mllb-training}). For each seed we obtain the interval of the
+difference in macro AUROC, and the tables report the mean difference and in how many seeds the interval
+excludes 0 in each direction. Three seeds were chosen as the smallest number that lets us see whether an
+effect repeats; with one seed, a difference within the noise of training would look like a result.
+
+\subsection{Compute budget}
+
+All runs used Adam with learning rate $10^{-3}$, batch 64, at most 50 epochs and early stopping with patience
+5 on the validation macro AUROC (decision D14). Table~\ref{tab:mllb-cost} gives the cost of the main
+configurations of my blocks, measured in the logs. The recurrent networks over 1000 raw steps were by far
+the slowest, as expected from a sequential computation over ten times more steps; the Transformer, whose
+attention over 100 tokens is computed in parallel, was cheaper than the LSTM over 1000 steps even with four
+blocks.
+
+\begin{table}[htbp]
+\centering
+\caption[Cost of the main configurations of my blocks]{Cost of the main configurations of my blocks
+(mean over the three seeds, from the run logs): trainable parameters, sequence length, seconds per epoch,
+best epoch and minutes per run.}
+\label{tab:mllb-cost}
+\small
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{llrrrrr}
+\toprule
+Block & Configuration & Parameters & Steps & s / epoch & Best epoch & min / run \\
+\midrule
+RNN & LSTM baseline (frames) & \rnnParamsBase{} & \rnnStepsBase{} & \onedec{\rnnEpochTimeMeanBase} & \onedec{\rnnBestEpochMeanBase} & \onedec{\rnnTrainTimeMinMeanBase} \\
+RNN & GRU & \rnnParamsGru{} & \rnnStepsGru{} & \onedec{\rnnEpochTimeMeanGru} & \onedec{\rnnBestEpochMeanGru} & \onedec{\rnnTrainTimeMinMeanGru} \\
+RNN & Bidirectional LSTM & \rnnParamsBi{} & \rnnStepsBi{} & \onedec{\rnnEpochTimeMeanBi} & \onedec{\rnnBestEpochMeanBi} & \onedec{\rnnTrainTimeMinMeanBi} \\
+RNN & Convolutional front end & \rnnParamsConv{} & \rnnStepsConv{} & \onedec{\rnnEpochTimeMeanConv} & \onedec{\rnnBestEpochMeanConv} & \onedec{\rnnTrainTimeMinMeanConv} \\
+RNN & Raw samples & \rnnParamsRaw{} & \rnnStepsRaw{} & \onedec{\rnnEpochTimeMeanRaw} & \onedec{\rnnBestEpochMeanRaw} & \onedec{\rnnTrainTimeMinMeanRaw} \\
+RNN & Raw samples + attention & \rnnParamsRawAttn{} & \rnnStepsRawAttn{} & \onedec{\rnnEpochTimeMeanRawAttn} & \onedec{\rnnBestEpochMeanRawAttn} & \onedec{\rnnTrainTimeMinMeanRawAttn} \\
+\midrule
+Transformer & One self-attention layer & \transformerParamsSaSingle{} & \transformerTokensSaSingle{} & \onedec{\transformerEpochTimeMeanSaSingle} & \onedec{\transformerBestEpochMeanSaSingle} & \onedec{\transformerTrainTimeMinMeanSaSingle} \\
+Transformer & Baseline (2 blocks) & \transformerParamsBase{} & \transformerTokensBase{} & \onedec{\transformerEpochTimeMeanBase} & \onedec{\transformerBestEpochMeanBase} & \onedec{\transformerTrainTimeMinMeanBase} \\
+Transformer & 4 blocks & \transformerParamsLayersFour{} & \transformerTokensLayersFour{} & \onedec{\transformerEpochTimeMeanLayersFour} & \onedec{\transformerBestEpochMeanLayersFour} & \onedec{\transformerTrainTimeMinMeanLayersFour} \\
+Transformer & Patches of 5 samples & \transformerParamsPatchFive{} & \transformerTokensPatchFive{} & \onedec{\transformerEpochTimeMeanPatchFive} & \onedec{\transformerBestEpochMeanPatchFive} & \onedec{\transformerTrainTimeMinMeanPatchFive} \\
+Transformer & No positional encoding (final) & \transformerParamsNoPos{} & \transformerTokensNoPos{} & \onedec{\transformerEpochTimeMeanNoPos} & \onedec{\transformerBestEpochMeanNoPos} & \onedec{\transformerTrainTimeMinMeanNoPos} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

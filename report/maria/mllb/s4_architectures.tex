@@ -1,0 +1,120 @@
+% =====================================================================
+% 4. Architectures in PyTorch (MLLB, Maria Martinez)
+% Own blocks in depth: src/models/rnn.py (T11), src/models/attention.py and
+% src/models/transformer.py (T12). Dense and CNN (Oriana) summarised.
+% =====================================================================
+\section{Architectures in PyTorch}\label{sec:mllb-arch}
+
+This section explains how my models are implemented, with the PyTorch details that matter for them; the
+theory and the analysis of the results are in my PRDL report. All models map (batch, 12, 1000) to five
+logits, and my models end with the head of the CNN baseline: dropout 0.5 and one linear layer.
+
+\subsection{Dense network and CNN (Oriana's blocks)}
+
+Oriana's dense network flattens the record (\texttt{nn.Flatten}) and applies fully connected layers with
+batch norm, ReLU and dropout. Her CNN stacks residual blocks of \texttt{Conv1d}, batch norm and ReLU with a
+$1\times1$ convolution on the shortcut when the number of channels changes, and ends with global average
+pooling. I reused the first three of her convolutional blocks, unchanged, as the front end of my best
+recurrent model.
+
+\subsection{Recurrent networks}
+
+\paragraph{From a signal to a sequence.} \texttt{nn.LSTM(batch\_first=True)} expects (batch, time,
+features), the opposite axis order of \texttt{Conv1d} (batch, channels, time). Listing~\ref{lst:rnnseq}
+builds the sequence. For frames, \texttt{reshape(b, c, t, frame)} cuts each lead into $t$ frames,
+\texttt{permute(0, 2, 1, 3)} moves time before the leads, and the last \texttt{reshape} flattens the 12
+leads $\times$ 10 samples of each frame into one vector of 120 numbers; a test checks this element by
+element. For the convolutional front end, the output of the CNN blocks (batch, 128, 125) is simply
+permuted to (batch, 125, 128). No padding is needed, because every record has exactly 1000 samples.
+
+\lstinputlisting[firstnumber=152,caption={From the signal to the sequence read by the RNN, and the final state (\texttt{src/models/rnn.py}).},label={lst:rnnseq}]{common/code/rnn_sequence_encode.py}
+
+\paragraph{What \texttt{nn.LSTM} returns.} The second part of Listing~\ref{lst:rnnseq} handles the outputs:
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item \texttt{out} has the hidden states of the top layer at every step, (batch, $T$, hidden) or
+        (batch, $T$, 2 $\times$ hidden) if bidirectional.
+  \item The LSTM also returns \texttt{(h\_n, c\_n)}, the final hidden and cell states of every layer and
+        direction; the GRU returns only \texttt{h\_n}, because it has no cell state. The code checks for a
+        tuple so that one class handles both cells.
+  \item For a unidirectional network, \texttt{h\_n[-1]} (top layer) equals \texttt{out[:, -1, :]}.
+  \item For a bidirectional network the final summary is the concatenation of \texttt{h\_n[-2]}, the
+        forward direction, which has read the record from left to right, and \texttt{h\_n[-1]}, the
+        backward direction, which has read it from right to left. The backward final state is at
+        \texttt{out[:, 0, hidden:]}, not at \texttt{out[:, -1, :]}: taking the last row of \texttt{out}
+        would pair the forward summary with a backward state that has read only one step. A test checks
+        both facts.
+\end{itemize}
+Two more details. The \texttt{dropout} argument of \texttt{nn.LSTM} only acts between stacked layers, so it is
+left at 0 and dropout is applied to the summary vector before the classifier. And a test checks causality:
+in a unidirectional network, changing the second half of the record leaves the states of the first half
+unchanged.
+
+\paragraph{Attention pooling.} Listing~\ref{lst:attnpool} computes the scores, the weights and the context
+vector. \texttt{nn.Linear} acts on the last axis, with the same weights at every time step, so it is already
+``time distributed''. The softmax is taken over time (\texttt{dim=1}), and \texttt{torch.bmm} multiplies the
+weights (batch, 1, $T$) by the states (batch, $T$, $d$) to give the context vector (batch, 1, $d$). The weights
+are returned too, for the figures.
+
+\lstinputlisting[firstnumber=66,caption={Attention scores and context vector over the RNN states (\texttt{src/models/rnn.py}).},label={lst:attnpool}]{common/code/attention_pooling.py}
+
+\paragraph{Gradients with respect to the input.} The sensitivity analysis needs
+$\partial\,\mathrm{logit}/\partial x$: the input tensor gets \texttt{requires\_grad\_(True)} and
+\texttt{torch.autograd.grad} computes the gradient of the summed logit. In eval mode the records of a batch do
+not interact, so the gradient of the sum gives each record's gradient. This is computed on the CPU, because
+cuDNN only runs the backward pass of an RNN in training mode, where dropout would change the result.
+
+\subsection{Self-attention and the Transformer, written by hand}
+
+I wrote multi-head self-attention myself instead of using \file{nn.MultiheadAttention} or
+\file{nn.TransformerEncoderLayer}, so that every step can be explained and the attention weights are
+available; a test checks that my module gives the same output as \texttt{nn.MultiheadAttention} with the
+same weights, with and without a causal mask.
+
+\paragraph{Patches as tokens.} Listing~\ref{lst:patches} cuts the record into patches with the same
+reshape and permute as the RNN frames, so both models see the same 100 steps. One linear layer embeds each
+patch; it is exactly a \texttt{Conv1d} with kernel and stride equal to the patch length (checked by a test).
+An optional CLS token is an \texttt{nn.Parameter} of shape (1, 1, $d$), expanded to the batch and
+concatenated in front of the patches. The sinusoidal positional encoding is registered as a buffer with
+\texttt{persistent=False}: it moves to the GPU with the model, the optimiser does not change it, and it is
+not saved in the checkpoint, because it is rebuilt when the model is created.
+
+\lstinputlisting[firstnumber=96,caption={Patch tokens, CLS token and positional encoding (\texttt{src/models/transformer.py}).},label={lst:patches}]{common/code/patch_tokens.py}
+
+\paragraph{Scaled dot-product attention.} In Listing~\ref{lst:attn}, \texttt{q @ k.transpose(-2, -1)} computes
+all query--key dot products at once, shape (\ldots, $T$, $T$); they are divided by $\sqrt{d_k}$, the dimension
+of one head, not of the model. Masked scores are set to $-\infty$ with \texttt{masked\_fill} before the
+softmax, so their weights are exactly 0; the softmax is over the keys (last axis), so each query's weights
+sum to 1. My classifier does not use the mask, but Oriana's generator reuses this same function with the
+causal mask of \texttt{causal\_mask}, a lower-triangular boolean matrix.
+
+\lstinputlisting[firstnumber=29,caption={Causal mask and scaled dot-product attention (\texttt{src/models/attention.py}).},label={lst:attn}]{common/code/causal_attention.py}
+
+\paragraph{Splitting into heads.} Listing~\ref{lst:mhsa} projects the input into queries, keys and values
+with three bias-free linear layers and splits $d_\text{model}$ into heads: \texttt{view(b, t, heads,
+head\_dim)} cuts the last axis and \texttt{permute(0, 2, 1, 3)} moves the heads before time, giving (batch,
+heads, $T$, head\_dim), so the attention runs on every head in parallel. Joining the heads back needs
+\texttt{reshape}, not \texttt{view}: after \texttt{permute} the tensor is no longer contiguous in memory and
+\texttt{view} would fail. $W_O$ then mixes the concatenated heads.
+
+\lstinputlisting[firstnumber=93,caption={Multi-head self-attention: heads, attention and $W_O$ (\texttt{src/models/attention.py}).},label={lst:mhsa}]{common/code/mhsa_split_forward.py}
+
+\paragraph{Pre-LN and Post-LN in one function.} Listing~\ref{lst:sublayer} applies one sub-layer with its
+skip connection and LayerNorm. With Pre-LN the input is normalised before the sub-layer and the result is
+added to the unnormalised residual stream; with Post-LN the LayerNorm is applied after the addition. The
+flags \texttt{residual}, \texttt{ffn} and \texttt{out\_proj} remove components, which is how the five models of
+the step-by-step study are built from the same class. Because Pre-LN leaves the residual stream
+unnormalised after the last block, the encoder applies a final LayerNorm. The attention maps are returned by
+every block and collected in eval mode on the CPU.
+
+\lstinputlisting[firstnumber=173,caption={One sub-layer with skip connection and LayerNorm (\texttt{src/models/attention.py}).},label={lst:sublayer}]{common/code/block_sublayer.py}
+
+\subsection{Results of my blocks in brief}
+
+The final models are an LSTM with a convolutional front end (\texttt{conv},
+\rnnFinalTestMacroAurocMean{}~$\pm$~\rnnFinalTestMacroAurocSd{} on test), an LSTM with attention over 1000 raw
+steps (\texttt{raw\_attn}, \rnnAttnfinalTestMacroAurocMean{}~$\pm$~\rnnAttnfinalTestMacroAurocSd{}) and a
+two-block Transformer without positional encoding (\texttt{no\_pos},
+\transformerFinalTestMacroAurocMean{}~$\pm$~\transformerFinalTestMacroAurocSd{}), against
+\cnnFinalTestMacroAurocMean{} for the CNN (Table~\ref{tab:comparison_final}). The implementation points that
+mattered most for these results were the axis order of the sequence (any mistake there would silently mix
+leads and time), reading all hidden states instead of the last one, and the shapes of the attention heads.

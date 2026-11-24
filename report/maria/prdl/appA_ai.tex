@@ -1,0 +1,111 @@
+% =====================================================================
+% APPENDIX A (PRDL, Maria Martinez): use of AI scientific assistants
+% Sources: docs/AI_USAGE_LOG.md (sessions, Bounty candidates B1, B13, B14,
+% section 3), docs/literature/quotes.md (sections E and G), DECISIONS D8, D10.
+% =====================================================================
+\appendixbanner{APPENDIX A: USE OF AI SCIENTIFIC ASSISTANTS}
+\addcontentsline{toc}{section}{Appendix A: Use of AI scientific assistants}\label{app:ai}
+
+\subsection*{Workflow}
+
+Every interaction with an AI assistant is recorded in \texttt{docs/AI\_USAGE\_LOG.md} of the repository:
+date, conversation, who was working, what was asked, what the assistant produced and how we checked it.
+For the theory and the literature of this report, four stages were kept separate:
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
+  \item \textbf{Perplexity} proposed candidate papers for each topic, without quotes or numbers; my topic
+        was the recurrent and attention models (task T17). We downloaded the PDFs by hand.
+  \item \textbf{NotebookLM}, restricted to those PDFs, answered one prompt per topic with, for each claim, a
+        literal quote with its file and printed page, or ``NOT FOUND''.
+  \item \textbf{Claude} checked every quote verbatim, page by page, against the text of the PDF; only the
+        checked quotes (\texttt{docs/literature/quotes.md}) are used in the reports. Course materials are
+        cited as course materials, never as the paper they mention.
+  \item \textbf{Claude} drafted this report from the block notes, the decisions log and the checked quotes.
+        I checked each sentence against the figures, the tables and the logs, and every interpretation
+        without a number behind it is written as a hypothesis.
+\end{enumerate}
+No output of one AI tool was accepted as the verification of another.
+
+\subsection*{Claims of my blocks that were checked before writing}
+
+While the recurrent and attention blocks were designed, the assistant attributed several statements to
+primary papers that it had seen cited in the course slides, and flagged them itself as unverified. In the
+literature stage each one was closed: the comparison of LSTM variants, the alignment model of additive
+attention, gradient clipping and every component of the Transformer (scaled dot-product attention,
+multi-head attention, Post-LN, sinusoidal encoding, dropout rate) now rest on checked quotes of the
+original papers. Two claims had no PDF in the folder and were rewritten: gradient clipping is cited from
+Pascanu et al.\ instead of ``first published'' in an earlier toolkit, and the easier optimisation of Pre-LN
+is cited from the course slides that state it. The original LSTM paper and the papers behind the CLS token,
+patch tokens and GELU were not in the folder either, so these components are described without
+attribution. Explanations that are not measured (why the GRU beats the LSTM, why raw samples beat frames,
+why positions do not help, the alignment of attention with the QRS) remain hypotheses.
+
+\subsection*{Errors detected (candidates for the AI Error Bounty)}
+
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt]
+  \item \textbf{A labelling rule stated from memory as the benchmark's} (Claude; Sheet P1). In my data
+        block, before any code.
+  \item \textbf{Wrong page numbers in most answers} (NotebookLM; Sheet P2), including quotes of my topic.
+  \item \textbf{The article's licence given as the dataset's} (NotebookLM; Sheet P3), a claim about the data
+        of my block.
+  \item Other NotebookLM errors of the same checking stage (two versions of the benchmark paper mixed, a
+        frequency band offered as support for a duration, top-$k$ sampling attributed to a secondary source,
+        statements attributed to documents that were not uploaded) are recorded in the log and in
+        Oriana's report.
+\end{itemize}
+All three errors below were detected by the assistant itself, while checking its own claims or the
+answers of another tool, not by me; they are reported because they would have reached the report without
+that check.
+
+\subsection*{AI Error Bounty sheets}
+
+\subsubsection*{Sheet P1. A labelling rule stated from memory as the benchmark's (Claude)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] Which decisions were needed before writing the label code, and which option was best
+        (conversation of the data block, 20 November).
+  \item[Faulty response] Assign a superclass only for diagnostic statements with a likelihood above zero,
+        presented as ``what the reference benchmark does'', without a source.
+  \item[Proof] The example script distributed with PTB-XL assigns the superclass whatever the likelihood;
+        with that rule the class counts equal the table of the PhysioNet page, while the proposed rule loses
+        STTC records and the class-count test fails.
+  \item[Correction] Likelihood ignored (decision D2); a test compares the class counts with the published
+        table every time the cache is built.
+  \item[Reproduction] \texttt{python -m src.prepare\_data} prints the counts. Changing the loop of
+        \file{src/data.py::superclass_labels} so that it skips statements with likelihood 0 lowers the STTC
+        count.
+  \item[Reflection] ``This is what the benchmark does'' is a factual claim and needs the same check as a
+        quote. Labelling rules are checked against the dataset's own files and published counts, because an
+        error there changes every result of the project.
+\end{description}
+
+\subsubsection*{Sheet P2. Wrong page numbers (NotebookLM)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] Preamble of every NotebookLM prompt: for each claim, the literal quote, the file and ``the
+        page number printed on the PDF page (not the viewer page)''.
+  \item[Faulty response] The quotes were mostly correct, but most answers gave wrong pages, in several
+        papers (the dataset paper, the dropout paper, CLIP, and in my topic the paper on the difficulty of
+        training recurrent networks).
+  \item[Proof] Each quote was searched in the text of its PDF page by page, and the printed page was read
+        on the page where it appears.
+  \item[Correction] The pages in \texttt{docs/literature/quotes.md} are taken from the PDF, printed page
+        first; no page given by NotebookLM is used.
+  \item[Reproduction] Open each PDF at the page given in \texttt{quotes.md}; the quote is there.
+\end{description}
+
+\subsubsection*{Sheet P3. The article's licence given as the dataset's (NotebookLM)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] For the dataset paper, the licence of the data, with a literal quote, file and page.
+  \item[Faulty response] A quote with the licence of the published article, given as the licence of the
+        dataset.
+  \item[Proof] The quote is in the article's own copyright notice and says nothing about the data files.
+  \item[Correction] Row not used (\texttt{quotes.md}, A16). The dataset licence had already been confirmed
+        on the PhysioNet page by Oriana and me, and the report cites that page.
+  \item[Reproduction] Read the licence notice at the end of the dataset paper and the licence on the
+        PhysioNet page of PTB-XL 1.0.3.
+\end{description}
+
+\subsection*{Reflection}
+
+The assistants were most useful where their output can be checked mechanically: code with tests,
+metrics recomputed from saved predictions, quotes searched in the PDF. They were least reliable when they
+stated facts from memory or summarised a source. For the defence I studied each technique of my blocks
+until I could explain it without the assistant, and I re-read the code line by line before running it.

@@ -1,0 +1,50 @@
+% =====================================================================
+% MLLB-DL report of Maria Martinez Garcia-Taheno (experimental design,
+% PyTorch, training, evaluation, reproducibility).
+% Compile from report/:  pdflatex maria_mllb && bibtex maria_mllb && pdflatex x2
+% Shared parts: common/ (preamble, floats, code excerpts, contributions); text: maria/.
+% =====================================================================
+\documentclass[11pt]{article}
+\input{common/preamble}
+\prdlfalse
+
+\begin{document}
+
+\reportcover{Machine Learning Lab}%
+            {MLLB-DL: design, implementation and evaluation of deep-learning models on PTB-XL}%
+            {Mar\'ia Mart\'inez Garc\'ia-Tahe\~no}{December 2026}
+
+\tableofcontents
+\vspace{1cm}
+\listoftables
+\vspace{1cm}
+\listoffigures
+\newpage
+
+\input{maria/summary}
+\newpage
+
+% Section 0 is the initial section required by the course for MLLB reports;
+% the following sections keep the numbering 1, 2, ...
+\setcounter{section}{-1}
+\input{maria/mllb/s0_ai_environment}
+\input{maria/mllb/s1_methodology}
+\input{maria/mllb/s2_data}
+\input{maria/mllb/s3_training}
+\input{maria/mllb/s4_architectures}
+\input{maria/mllb/s5_strategies_generative}
+\input{maria/mllb/s6_code}
+\input{maria/mllb/s7_conclusions}
+
+\clearpage
+\section{References}
+\begingroup
+\renewcommand{\section}[2]{}
+\bibliographystyle{IEEEtran}
+\bibliography{references,common/course}
+\endgroup
+
+\newpage
+\input{maria/mllb/appA_ai}
+
+\end{document}

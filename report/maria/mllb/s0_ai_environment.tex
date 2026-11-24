@@ -1,0 +1,65 @@
+% =====================================================================
+% 0. AI assistant environment (initial section required by the course;
+% MLLB, Maria Martinez). Sources: docs/AI_USAGE_LOG.md, DECISIONS D5, D8,
+% D10, D11, CHATS protocol.
+% =====================================================================
+\section{AI assistant environment}\label{sec:ai-env}
+
+MLLB reports open with the AI environment that was used and how it was kept under control. The full record
+of the interactions is \texttt{docs/AI\_USAGE\_LOG.md} in the repository; the errors of the coding
+assistant that concern my blocks are in Appendix~\ref{app:ai-code}. Oriana and I worked with the same
+environment, on her laptop.
+
+\subsection{Tools and roles}
+
+\begin{table}[htbp]
+\centering
+\caption{AI assistants and supporting tools of the project.}
+\label{tab:ai-tools}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.3cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Tool} & \textbf{What it did} & \textbf{Limits we met} \\
+\midrule
+Claude (Anthropic), in a project with access to the working folder & Proposed every design decision with its
+reasons and course sources; wrote \texttt{src/}, \texttt{tests/}, the figure and table generators, the block
+notes and drafts of the reports; tested its code on a CPU copy with synthetic data before handing it over &
+Errors that only appear on the real GPU or data; older copies of files reaching the folder; comments and
+claims stated without checking (Appendix~\ref{app:ai-code}) \\
+Perplexity & Candidate papers for each literature topic, without quotes or numbers & Used only to find
+PDFs \\
+NotebookLM, restricted to the downloaded PDFs & Literal quotes with file and page for each claim & Wrong
+pages, mixed versions of a paper, quotes that do not support the claim \\
+\midrule
+VS Code, Python 3.12 virtual environment, PyTorch with CUDA 12.6 & Every test, smoke run, real run and report
+step, executed by us on an NVIDIA RTX 3050 Ti laptop GPU with 4\,GB & --- \\
+git and GitHub & Version control; every commit and push made by us & --- \\
+Overleaf & Compilation of the reports & --- \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{How the assistant was kept under control}
+
+An assistant that writes whole pipelines makes it easy to accept results one cannot explain. The rules we
+followed:
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
+  \item \textbf{Decisions before code.} Each block began with a written proposal (architecture, ablation
+        grid, seeds, selection rule, outputs). We accepted or changed it, it was written as a dated entry of
+        \texttt{docs/DECISIONS.md}, and only then was code written. A decision changes only with a new
+        dated entry.
+  \item \textbf{We execute, the assistant does not.} The assistant never trained on the real data. We ran
+        the tests, the smoke runs (\texttt{--fast}) and the real runs, and pasted the output back. No result
+        counts until one of us has run it; the runs of my blocks were executed by me.
+  \item \textbf{No number typed by hand.} Every number of the reports is a macro generated from the run logs
+        (Section~\ref{sec:code}).
+  \item \textbf{No claim without a checked quote.} Literature claims come only from quotes checked against
+        the PDFs; interpretations that no number supports are written as hypotheses.
+  \item \textbf{Every figure inspected} against the numbers it shows before it was accepted.
+  \item \textbf{Every write checked.} After older copies of files reached the folder several times, every
+        file written by the assistant is compared with the intended version before it is reported as written.
+  \item \textbf{One block per conversation.} The work was split into one conversation per block, which share
+        only the project folder; each closes with a block note, the updated plan and log, and our commit.
+\end{enumerate}
+For my blocks I went through every function with the assistant's explanation before running it, because
+the oral defence asks about the theory and about specific lines of the code.

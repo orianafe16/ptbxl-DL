@@ -1,0 +1,30 @@
+% =====================================================================
+% 7. Conclusions (MLLB, Maria Martinez)
+% =====================================================================
+\section{Conclusions}\label{sec:mllb-conclusions}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{A shared pipeline makes architectures comparable.} One data pipeline, one training loop
+        driven by a task object, one evaluation module and one log format served every classifier and the
+        generators. Adding a model meant writing an \texttt{nn.Module}; nothing else changed, so the
+        differences we report come from the models.
+  \item \textbf{The silent errors are in the data and the shapes.} A wrong label rule, statistics computed
+        on evaluation records, a wrong axis order or the wrong row of a bidirectional output all train
+        without error and give plausible numbers. Each of them is now covered by a test that checks a known
+        answer: published class counts, training-only statistics, element-by-element framing, the forward
+        and backward final states, equality with \texttt{nn.MultiheadAttention}.
+  \item \textbf{Writing attention by hand was worth it.} It made every step explainable (scores, scaling,
+        mask, heads, $W_O$, Pre-LN), gave the attention maps for free, and the same module served
+        Oriana's generator with a causal mask.
+  \item \textbf{Reproducibility needs more than a seed.} Seeding the libraries, a seeded generator for the
+        batch order, deterministic cuDNN and \texttt{CUBLAS\_WORKSPACE\_CONFIG} made the final runs of my
+        blocks reproduce their validation runs exactly on the laptop's GPU.
+  \item \textbf{Numbers from logs, comparisons on the same patients.} Generating every number from the
+        logs, and comparing models on the same patient-bootstrap resamples seed by seed, is what allowed
+        us to say which ablations mattered (reading all hidden states, the GRU, the convolutional front
+        end, the heads and the residual path of self-attention) and which did not (the attention score, the
+        number of heads beyond one block, the readout of the Transformer).
+  \item \textbf{Limits.} Small models and budgets on a 4\,GB GPU, three seeds, and one dataset. The
+        cost table shows the price of recurrence over long sequences: the LSTMs over 1000 raw steps, with and
+        without attention, were the slowest configurations of my blocks (Table~\ref{tab:mllb-cost}).
+\end{enumerate}
