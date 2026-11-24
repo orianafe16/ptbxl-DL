@@ -8,36 +8,36 @@
 \addcontentsline{toc}{section}{Structured summary}
 
 \paragraph{Scope.}
-This project studies the basic deep-learning modules of the course on one biomedical problem:
-multi-label classification of the five diagnostic superclasses (NORM, MI, STTC, CD, HYP) of the PTB-XL
-electrocardiogram dataset \cite{wagner2020ptbxl,ptbxl_physionet,pollard2026physionet}, with \edaNRecordsAll{} records of
-10\,s and 12 leads from \edaNPatientsAll{} patients, at 100\,Hz. Following the guidelines of the course
-\cite{course_message_2011}, it covers three areas with small models trained on a 4\,GB laptop GPU:
-(1) core architectures: dense network, 1D CNN, LSTM and GRU, RNN + attention, self-attention and a
-Transformer encoder; (2) learning strategies: a model pre-trained by us without labels and then transferred
-by linear probing and fine-tuning, and zero-shot classification with CLIP; (3) basic generative AI:
-autoregressive generators of the ECG (a small GPT-like causal Transformer and an LSTM). The team was
-Oriana Ferraz and Mar\'ia Mart\'inez. My own blocks are the data pipeline, the evaluation protocol, the
-recurrent networks (LSTM, GRU, RNN + attention) and the self-attention and Transformer study, which this
-report analyses in depth; the learning strategies and the final comparison were shared; the exploratory
-analysis, the dense network, the CNN and the generative models are Oriana's work, summarised and
-attributed.
+My question was how much each basic deep-learning module of the course contributes on a real
+biomedical signal. The task is the multi-label recognition of the five diagnostic superclasses (NORM, MI,
+STTC, CD, HYP) in PTB-XL \cite{wagner2020ptbxl,ptbxl_physionet,pollard2026physionet}: \edaNRecordsAll{}
+twelve-lead ECGs of 10\,s from \edaNPatientsAll{} patients, sampled at 100\,Hz, each with one or more
+superclasses. As the course guidelines ask \cite{course_message_2011}, the project spans core
+architectures (a dense baseline, a 1D CNN, LSTM and GRU, RNN + attention, self-attention and a
+Transformer encoder), learning strategies (a self-supervised model we pre-trained ourselves, then reused
+frozen or fine-tuned, and zero-shot CLIP) and basic generative AI (two autoregressive ECG generators),
+always with models that fit a 4\,GB GPU. The work was shared with Oriana Ferraz. I was in charge of the
+data pipeline, the evaluation protocol, the recurrent networks and the self-attention and Transformer
+study, which this report treats in depth; Oriana's blocks (exploratory analysis, dense network, CNN,
+generators) are summarised and attributed; the learning-strategy experiments and the final comparison
+were joint work.
 
 \paragraph{Core methodology.}
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
-  \item \textbf{Data.} Official patient-wise folds: training 1--8, validation 9, test 10
-        \cite{strodthoff2021deep}. Labels from the dataset's diagnostic statements, checked against the
-        published class counts; the \edaNNosuperAll{} records without a superclass are left out, as in the
-        benchmark \cite{strodthoff2021deep}. Per-lead z-score with training statistics only.
-  \item \textbf{Metric.} Macro AUROC over the five classes (threshold-free, the benchmark's metric), AUROC
-        per class, and macro F1 at thresholds chosen on validation.
-  \item \textbf{Protocol.} Every design decision written down before its runs; one factor changed at a time;
-        every configuration trained with three seeds; ablations and model selection on validation only,
-        with a rule fixed in advance; the test fold used once per final model. Two models are compared on
-        the same patient-bootstrap resamples, and a difference is claimed only when its 95\,\% interval
-        excludes 0, counted seed by seed.
-  \item \textbf{Reproducibility.} One log per run; every number of the report is a macro generated from the
-        logs, and every literature claim comes from a quote checked against the PDF.
+  \item \textbf{Data.} Labels are built from the diagnostic statements and reproduce the published class
+        counts. The dataset's own folds keep every patient in one split (training 1--8, validation 9,
+        test 10) \cite{strodthoff2021deep}. The \edaNNosuperAll{} records without any superclass are not
+        used for classification, the same choice as the benchmark \cite{strodthoff2021deep}, and the
+        z-score of each lead uses training statistics only.
+  \item \textbf{Metrics.} Threshold-free macro AUROC as the main score, per-class AUROC, and macro F1 with
+        thresholds learnt on validation.
+  \item \textbf{Comparisons.} The design of each block was fixed in writing before running it. Each
+        ablation changes one factor, each configuration is trained with seeds 42, 43 and 44, model
+        selection never looks at the test fold, and each final model is tested once. Differences are
+        judged seed by seed on paired patient-bootstrap resamples; I call a difference real only when its
+        95\,\% interval excludes 0 in all three seeds.
+  \item \textbf{Reproducibility.} Each run leaves a JSON log, the report's numbers are macros generated
+        from those logs, and the literature is cited only through quotes verified in the PDFs.
 \end{itemize}
 
 \paragraph{Main findings.} Table~\ref{tab:summary} gathers the final models (test macro AUROC, mean
@@ -85,11 +85,11 @@ CLIP zero-shot (ECG drawn as an image) & lead II & 0 & 0\,\% & \comparisonTestAu
         100\,ms patches.
   \item \textbf{Learning strategies.} Fine-tuning the self-supervised ECG-GPT beats training it from
         scratch (\transferTestDiffMeanFinetuneVsScratchFOneZeroZero{} with all labels,
-        \transferTestDiffMeanFinetuneVsScratchFOneZero{} with 10\,\%), and with 10\,\% of the labels it beats
-        scratch with all of them; its frozen features are weak, and on lead II a CNN from scratch is still
-        better. With one lead instead of twelve every family loses between \leadsTestDiffMeanRnnattn{} and
+        \transferTestDiffMeanFinetuneVsScratchFOneZero{} with 10\,\%), and with 10\,\% of the training labels
+        it beats scratch with all of them, although its early stopping still used the whole validation
+        fold; its frozen features are weak, and on lead II a CNN from scratch is still better. With one lead instead of twelve every family loses between \leadsTestDiffMeanRnnattn{} and
         \leadsTestDiffMeanTransformer{}. CLIP recognises ECG images but cannot diagnose them (macro AUROC
-        \zeroshotTestMacroAuroc{}).
+        \zeroshotTestMacroAuroc{}; below 0.5 for MI, CD and HYP).
   \item \textbf{Generation} (Oriana's block). The generators code lead II in fewer bits than a counting
         bigram; positional encoding is essential for generation, unlike for my classifier; greedy decoding
         collapses to a flat line and sampling with temperature gives realistic beats.
@@ -98,14 +98,14 @@ CLIP zero-shot (ECG drawn as an image) & lead II & 0 & 0\,\% & \comparisonTestAu
 \paragraph{Key conclusions.}
 (i) On this dataset, weight sharing over time is the main ingredient, and local features are what the ECG
 rewards most: the best recurrent model has a convolutional front end, and the CNN beats a fine-tuned
-self-supervised Transformer on the same lead. (ii) The mechanisms that make recurrence and attention
-powerful on language, long memory and order, were not used by this task: attention pooling acted as a
-mean, and no Transformer used the order of its tokens. (iii) Self-supervised pre-training makes a model
+self-supervised Transformer on the same lead. (ii) Long memory and token order, the mechanisms that make
+recurrence and attention powerful on language, were not exploited by our models on these labels:
+attention pooling acted as a mean, and no Transformer used the order of its tokens. (iii) Self-supervised pre-training makes a model
 far more label-efficient, but the best generator is not the best feature extractor. (iv) Zero-shot needs a
 shared space between inputs and class descriptions that covers the task. (v) Fixing the protocol before the
 runs and pairing every comparison showed which differences are real and which are not. Limits: one dataset,
-five labels, three seeds, small models and budgets; interpretation figures are observations on a few
-records.
+five labels, three seeds, small models and budgets, no external or clinical validation; interpretation
+figures are observations on a few records.
 
 \paragraph{How this report is organised.}
 \ifprdl

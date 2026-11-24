@@ -45,8 +45,15 @@ python report/common/make_contributions.py       # contribution tables from PLAN
 python report/common/make_code_excerpts.py       # code listings of this report
 \end{lstlisting}
 
-Every block also has a smoke mode (\texttt{all --fast}) and, where runs are long, an \texttt{estimate}
-step. The reports compile from \texttt{report/} (on Overleaf, the folder \texttt{report/} uploaded as a
+The order matters: each block compares its final models with those of earlier blocks (Dense, then CNN,
+RNN and Transformer), the generators must exist before the transfer experiments, and the comparison comes
+last. Every block also has a smoke mode (\texttt{all --fast}) and, where runs are long, an \texttt{estimate}
+step. Reproduction has three levels. Without data or GPU, a clean clone runs the tests on synthetic data
+and rebuilds \file{numbers.tex} from the committed logs (we checked that the macros come out identical),
+which is all the reports need. With the data and the checkpoints (kept outside git and backed up
+separately), the \texttt{report} steps rebuild every table and figure, including those that load a model.
+Retraining repeats the runs, with small GPU differences because the fully deterministic mode of PyTorch is
+not enabled. The reports compile from \texttt{report/} (on Overleaf, the folder \texttt{report/} uploaded as a
 project with \texttt{oriana\_mllb.tex} as main file).
 
 \subsection{Tests}

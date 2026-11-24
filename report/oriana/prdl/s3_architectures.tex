@@ -134,11 +134,14 @@ and~\ref{tab:cnn_final}).
         \intval{\cnnBestEpochMeanNoBn} against \intval{\cnnBestEpochMeanBase}) but reaches almost the
         same result. My explanation, not tested: the convolutions see small windows of an already
         standardised input and have few parameters.
-  \item \textbf{Skip connections help optimisation, not the result.} Without them the training loss at
-        epoch 5 is higher in all seeds, more so with six blocks (\cnnTrainLossEpFiveDiffMeanDepthSixNoResidual{})
-        than with four (\cnnTrainLossEpFiveDiffMeanNoResidual{}), as the degradation argument predicts
-        (Figure~\ref{fig:cnn_curves}c). The validation AUROC does not improve with them: with at most
-        twelve layers and early stopping after about ten epochs, our networks are far shallower than
+  \item \textbf{Skip connections: no measurable effect at this depth.} The validation AUROC does not
+        change without them (\cnnDiffMeanNoResidual{} with four blocks, \cnnDiffMeanDepthSixNoResidual{}
+        with six). Without them the training loss at epoch 5 is slightly higher
+        (\cnnTrainLossEpFiveDiffMeanNoResidual{} with four blocks, \cnnTrainLossEpFiveDiffMeanDepthSixNoResidual{}
+        with six; Figure~\ref{fig:cnn_curves}c), which points in the direction of the degradation argument,
+        but this is weak evidence: almost every change of the baseline (kernel size, depth, batch norm)
+        also raises that loss in all seeds, and the loss is a single number without an interval. With at
+        most twelve layers and early stopping after about ten epochs, our networks are far shallower than
         those in which He et al.\ observed degradation.
   \item \textbf{A wide range of receptive fields gives the same result.} Receptive fields from
         \cnnRfSamplesDepthTwo{} to \cnnRfSamplesDepthSix{} samples (two blocks to six) all reach the
@@ -189,12 +192,13 @@ an ``alignment model'' in the sense of Bahdanau et al.\ \cite[p.~3]{bahdanau2015
 
 \paragraph{Results (Mar\'ia).} The baseline is a two-layer LSTM over 100 frames of 100\,ms. The GRU
 was better than the LSTM (\rnnDiffMeanGru{}, all seeds); using every state (mean
-\rnnDiffMeanMean{}, attention \rnnDiffMeanAttn{}) mattered more than the cell type or the direction;
+\rnnDiffMeanMean{}, attention \rnnDiffMeanAttn{}) mattered more than the direction;
 1000 raw steps beat 100 frames (\rnnDiffMeanRaw{}) although they were much harder to optimise; and a
 convolutional front end was the best configuration (\rnnDiffMeanConv{}), which became the final RNN.
 Its test macro AUROC is \rnnFinalTestMacroAurocMean{}, below the CNN in every seed
-(\rnnDiffCnnMean{}). The attention weights rise and fall with the heartbeat
-(Figure~\ref{fig:rnn_attention}) but are spread out (for additive attention over 100 frames, normalised
+(\rnnDiffCnnMean{}). In the five example records of Figure~\ref{fig:rnn_attention} the attention weights seem to rise and
+fall with the heartbeat, but this is a visual observation that the correlation measured by Mar\'ia does
+not confirm (\rnnAttnSpearmanActivityRawAttn{}); what is measured is that the weights are spread out (for additive attention over 100 frames, normalised
 entropy \rnnAttnEntropyNormAttn{}, where 1 is uniform): in this task attention behaves like a learned mean and gains as much as plain
 averaging. The final RNN + attention (\rnnAttnfinalTestMacroAurocMean{} on test) cannot be told apart
 from the final RNN. My reading of the two blocks together: what helps is weight sharing over time,
@@ -219,8 +223,8 @@ functions \cite[p.~6]{vaswani2017attention}) is added to the tokens.
 
 \paragraph{Results (Mar\'ia).} The record is cut into 100 patches of 100\,ms, each projected to a
 token. Built step by step (Figure~\ref{fig:transformer_curves}b), one single-head attention layer
-already reaches \transformerValAurocMeanSaSingle{} on validation, far above the Dense network, because
-the same projection is applied to every patch; multiple heads and the residual path with LayerNorm
+already reaches \transformerValAurocMeanSaSingle{} on validation, far above the Dense network, which
+Mar\'ia attributes to the same projection being applied to every patch; multiple heads and the residual path with LayerNorm
 give the largest further gains, and the paired difference between a bare attention layer and a
 full block is \transformerPairSaVsBlockMean{}, worse in all seeds. The models do not use the order
 of the patches: shuffling them changes the validation AUROC by about a thousandth, and removing the
@@ -236,11 +240,12 @@ positional encoding was better (\transformerDiffMeanNoPos{}, all seeds), so the 
 
 The final model of each family was trained again on lead II only (shared task T14,
 Table~\ref{tab:leads}). Every family loses in every seed, by a similar amount, and the CNN stays first.
-The other eleven leads are not redundant with lead II for these superclasses. For MI there is a
-reason in the literature: anterior infarction is ``expressed as ST elevation in some or all of leads
-V1 through V6'' \cite[p.~e265]{wagner2009aha}, which lead II does not show. For HYP and the other
-classes the explanation would be a hypothesis; Table~\ref{tab:comparison_per_class} gives the
-per-class values.
+The other eleven leads are not redundant with lead II for these superclasses; MI and HYP lose most
+(Table~\ref{tab:comparison_per_class}). For part of MI there is a reason in the literature: anterior
+infarction is ``expressed as ST elevation in some or all of leads V1 through V6''
+\cite[p.~e265]{wagner2009aha}, chest leads that a lead-II model never sees. This explains at most the
+anterior infarctions, not every MI record; for HYP and the other classes any explanation would be a
+hypothesis.
 
 \input{common/floats/tab_leads}
 \input{common/floats/tab_comparison_per_class}

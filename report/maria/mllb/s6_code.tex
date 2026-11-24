@@ -49,8 +49,14 @@ python -m src.transformer_experiments all
 python report/make_numbers.py               # report/numbers.tex
 \end{lstlisting}
 \texttt{run} and \texttt{final} skip what has already been run, so an interrupted block can be resumed. The
-\texttt{report} step reads only the logs and the saved predictions, so tables and figures can be rebuilt
-without training. The cost of each configuration on the laptop is in Table~\ref{tab:mllb-cost}.
+cost of each configuration on the laptop is in Table~\ref{tab:mllb-cost}. Reproduction has three levels.
+(1) From a clean clone, without data or GPU, the test suite runs on synthetic data, and
+\file{report/make_numbers.py} rebuilds \file{numbers.tex} from the committed logs, which is all the reports
+need; we checked that it gives exactly the same macros. (2) With the PTB-XL files and the checkpoints,
+which are kept outside git and backed up separately, the \texttt{report} step of each block rebuilds its
+tables and figures; the interpretation figures (attention weights, input sensitivity) need the
+checkpoints. (3) Retraining repeats the runs; on a GPU, results can differ slightly from the logged ones,
+because PyTorch's fully deterministic mode is not enabled.
 
 \subsection{Tests}
 

@@ -98,6 +98,8 @@ def author_table(rows: list[dict], who: str) -> str:
              f"ID & Task & Role of {AUTHORS[who].split(' (')[0]} & Status \\\\",
              "\\midrule"]
     for r in rows:
+        if r["Status"] != "done":     # planned tasks are not activities yet
+            continue
         ro = role(r, who)
         if ro:
             lines.append(f"{tex(r['ID'])} & {tex(r['Task'])} & {tex(ro)} & {tex(r['Status'])} \\\\")

@@ -7,11 +7,11 @@
 
 \subsection{Task and dataset}
 
-PTB-XL is a public collection of clinical 12-lead electrocardiograms of 10\,s, annotated by
-cardiologists \cite{wagner2020ptbxl,ptbxl_physionet,pollard2026physionet}. Version 1.0.3 has \edaNRecordsAll{} records from
+PTB-XL is a public collection of clinical 12-lead electrocardiograms of 10\,s
+\cite{wagner2020ptbxl,ptbxl_physionet,pollard2026physionet}. Version 1.0.3 has \edaNRecordsAll{} records from
 \edaNPatientsAll{} patients, at 500\,Hz and in a version downsampled to 100\,Hz; we use 100\,Hz, which
 gives 1000 samples per lead, the sampling rate of the benchmark on this dataset
-\cite{strodthoff2021deep}. Its licence (CC BY 4.0) was checked on the PhysioNet page. The task is
+\cite[p.~1520]{strodthoff2021deep}. Its licence (CC BY 4.0) was checked on the PhysioNet page. The task is
 multi-label classification of the five diagnostic superclasses: normal ECG (NORM), myocardial
 infarction (MI), ST/T change (STTC), conduction disturbance (CD) and hypertrophy (HYP). A record can
 carry several superclasses, so a model outputs five logits, one per class, trained with a binary
@@ -33,8 +33,8 @@ A record gets superclass $c$ if any of its codes is a diagnostic statement of cl
 likelihood. The alternative of keeping only statements with a likelihood above zero was first proposed
 by the AI assistant as ``the benchmark's rule'', without a source (Appendix~\ref{app:ai}). We checked it
 against the example script distributed with the dataset, which ignores the likelihood, and against the
-class counts of the PhysioNet page: only the rule we adopted reproduces them, and a test now checks the
-counts on every run of the pipeline. The class shares are NORM \edaPrevAllNORMPct{}, MI
+class counts of the PhysioNet page: only the rule we adopted reproduces them, and a test of the suite now
+compares the counts of the cache with that table. The class shares are NORM \edaPrevAllNORMPct{}, MI
 \edaPrevAllMIPct{}, STTC \edaPrevAllSTTCPct{}, CD \edaPrevAllCDPct{} and HYP \edaPrevAllHYPPct{} of the
 labelled records, and \edaFracMultilabelAllPct{} of them carry more than one superclass.
 
@@ -45,18 +45,18 @@ five zeros would tell the model ``none of these pathologies'', which is a false 
 negative. They are therefore left out of training, validation and test (decision D12), and they are
 spread evenly over the ten folds, so leaving them out does not unbalance any split. The benchmark does
 the same: it selects ``only samples with at least one label in the given label selection''
-\cite{strodthoff2021deep}. They were not wasted: the self-supervised pre-training of
+\cite[p.~1523]{strodthoff2021deep}. They were not wasted: the self-supervised pre-training of
 Section~\ref{sec:strategies} needs no labels and used the training-fold ones.
 
 \paragraph{Split.} We use the ten stratified folds shipped with the dataset, which keep all records of a
 patient in the same fold: training folds 1--8, validation fold 9, test fold 10, as in the benchmark,
 which trains ``on the first eight folds using the ninth and tenth fold as validation and test sets''
-\cite{strodthoff2021deep}. Patient-wise folds matter because \edaNPatientsSeveralRecords{} patients have
+\cite[p.~1521]{strodthoff2021deep}. Patient-wise folds matter because \edaNPatientsSeveralRecords{} patients have
 more than one record; with a random split, records of the same patient could fall in training and test,
 and the test score would partly measure memorisation of the patient. Folds 9 and 10 also have the best
 labels: the dataset authors describe them as ``folds with a particularly high label quality that are
-supposed to be used as validation and test sets'' \cite{wagner2020ptbxl}, and when they assigned ECGs of
-a patient without the ``clean'' flag, they excluded the ninth and tenth fold \cite{wagner2020ptbxl}. In
+supposed to be used as validation and test sets'' \cite[p.~4]{wagner2020ptbxl}, and when they assigned ECGs of
+a patient without the ``clean'' flag, they excluded the ninth and tenth fold \cite[p.~12]{wagner2020ptbxl}. In
 our data, \edaFracValidatedByHumanTestPct{} of the test records are human-validated, against
 \edaFracValidatedByHumanTrainPct{} of the training records. After removing the records without a
 superclass, the splits have \edaNLabelledTrain{}, \edaNLabelledVal{} and \edaNLabelledTest{} records.

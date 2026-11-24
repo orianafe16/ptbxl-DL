@@ -15,12 +15,12 @@ our project did (Section~\ref{sec:strategies}).
 
 Transfer learning reuses what was learnt on one task or data distribution for another; a survey defines
 it as the area that ``groups approaches dealing with such an unpredictable distribution shift''
-\cite{monka2022survey}. In the course view it usually relies on manually labelled data in the source
+\cite[p.~2]{monka2022survey}. In the course view it usually relies on manually labelled data in the source
 task \cite{course_summary_0910}. A pre-trained network can be reused as a frozen feature extractor with a
-new linear classifier, or fine-tuned end to end \cite{radford2021learning}; fine-tuning uses a smaller
+new linear classifier, or fine-tuned end to end \cite[p.~11]{radford2021learning}; fine-tuning uses a smaller
 learning rate so as not to overwrite what was learnt, ``to prevent catastrophic forgetting''
-\cite{soltanieh2023indistribution}. On ECG, the benefit of pre-training grows as the target training set
-shrinks \cite{strodthoff2021deep}.
+\cite[p.~6]{soltanieh2023indistribution}. On ECG, the benefit of pre-training grows as the target training set
+shrinks \cite[p.~1524]{strodthoff2021deep}.
 
 \emph{Takeaway from our project.} The frozen ECG-GPT with a linear probe was weaker than training from
 scratch with all the labels; fine-tuning was better than both, with all the labels and with 10\,\% of
@@ -30,13 +30,13 @@ result.
 \subsection*{2. Self-supervised learning}
 
 Self-supervised learning learns features without manual labels, to overcome their scarcity
-\cite{soltanieh2022analysis}. The model solves a pretext task built from the data itself and is then reused;
+\cite[p.~1]{soltanieh2022analysis}. The model solves a pretext task built from the data itself and is then reused;
 the course notes that transfer and self-supervised learning both reuse knowledge and differ in the labels
 used for pre-training \cite{course_summary_0910}. On 12-lead ECG, a self-supervised model trained on half
 of the labelled data approximately reached the supervised performance at twice that amount
-\cite{mehari2022self}. A generative pretext task is the GPT recipe: a decoder-only Transformer trained to
-predict the next token \cite{radford2018improving}, an idea that has also been applied to ECG tokens
-\cite{yang2025heartllm}.
+\cite[pp.~7--8]{mehari2022self}. A generative pretext task is the GPT recipe: a decoder-only Transformer trained to
+predict the next token \cite[p.~3]{radford2018improving}, an idea that has also been applied to ECG tokens
+\cite[p.~1]{yang2025heartllm}.
 
 \emph{Takeaway from our project.} Next-sample prediction on lead II, without labels, gave a starting point
 that made the classifier far more label-efficient. But the generator chosen for being the best generator
@@ -47,12 +47,12 @@ representation for another.
 
 In zero-shot learning the classes of the target task are not seen with labels during training; in a
 visual-transfer survey it is defined as a task ``with labeled source domain data and unlabeled target
-domain data'' \cite{monka2022survey}. In NLP the terms zero-shot and few-shot come from the paper that
-presented GPT-3, as the course summary explains \cite{course_summary_0910}. With other modalities,
+domain data'' \cite[p.~4]{monka2022survey}. For NLP, the course takes its definitions of zero-shot and few-shot from the paper that
+presented GPT-3 \cite{course_summary_0910}. With other modalities,
 zero-shot needs the inputs and the class descriptions to share an embedding space (``multimodal
 correspondence'') \cite{course_summary_0910}. CLIP learns such a space from image--text pairs collected on
 the Internet and classifies by the similarity between an image and a sentence for each class
-\cite{radford2021learning}.
+\cite[pp.~3, 6]{radford2021learning}.
 
 \emph{Takeaway from our project.} CLIP worked zero-shot on everyday images (CIFAR-100) and recognised that
 our images were electrocardiograms, but it could not diagnose them. Zero-shot works only as far as the

@@ -1,6 +1,6 @@
 % =====================================================================
 % APPENDIX A (MLLB): use of AI code assistants
-% Source: docs/AI_USAGE_LOG.md (session log, Bounty candidates B1-B11).
+% Source: docs/AI_USAGE_LOG.md (Bounty candidates B4, B5, B8, B9, B18; one report per error).
 % =====================================================================
 \appendixbanner{APPENDIX A: USE OF AI CODE ASSISTANTS}
 \addcontentsline{toc}{section}{Appendix A: Use of AI code assistants}\label{app:ai-code}
@@ -16,21 +16,21 @@ logged in \texttt{docs/AI\_USAGE\_LOG.md}.
 
 \subsection*{Errors detected (candidates for the AI Error Bounty)}
 
+Every assistant error that we corrected is an entry of \texttt{docs/AI\_USAGE\_LOG.md} (B1--B19), and each
+one is documented in exactly one of our four reports. The five sheets below are the code errors of my
+blocks and of the shared work that I detected or that the assistant found in my runs:
 \begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
-  \item \textbf{Out of GPU memory when generating with a long context} (detected by me; Sheet C1).
-  \item \textbf{Tensors on two devices in the zero-shot code} (detected by Mar\'ia and me; Sheet C2).
-  \item \textbf{Commands given without changing to the repository folder} (detected by me; Sheet C3).
-  \item \textbf{A wrong cause given for the ``uncommitted code'' flag} (detected from my terminal output;
+  \item \textbf{Out of GPU memory when generating with a long context} (B8; detected by me; Sheet C1).
+  \item \textbf{A figure legend placed over a data point} (B18; detected by me; Sheet C2).
+  \item \textbf{Commands given without changing to the repository folder} (B9; detected by me; Sheet C3).
+  \item \textbf{A wrong cause given for the ``uncommitted code'' flag} (B5; found from my terminal output;
         Sheet C4).
-  \item \textbf{Files reported as written when an older copy had reached the folder}, several times in
-        different blocks (detected by the assistant itself when it re-read the folder). The rule of
-        comparing every written file with the intended version came from these cases.
-  \item \textbf{Smoke mode of the Dense report stopped} when it tried to pair runs evaluated on different
-        test records (detected by the assistant from the missing outputs of my smoke run; fixed with a
-        regression test).
-  \item \textbf{A wrong code comment} said that a non-persistent buffer is saved in the checkpoint
-        (detected by the assistant when checking the block note against the code; behaviour unchanged).
+  \item \textbf{The smoke mode of the Dense report stopped} (B4; found from the missing outputs of my smoke
+        run; Sheet C5).
 \end{enumerate}
+The other code errors of the project (tensors on two devices in the zero-shot code, stale copies of files
+written to the folder, a wrong code comment in the Transformer and a BibTeX error missed at compile time)
+are documented in Mar\'ia's MLLB report.
 
 \subsection*{AI Error Bounty sheets}
 
@@ -42,6 +42,7 @@ logged in \texttt{docs/AI\_USAGE\_LOG.md}.
         a context of 500 tokens, the attention matrices of 64 windows (64 $\times$ 4 heads $\times$ 500
         $\times$ 500 floats, several per layer) do not fit in 4\,GB. Training memory had been measured with
         \texttt{estimate}, generation memory had not, and the synthetic tests ran on the CPU.
+  \item[Detected by] Me, when the report step of my generative block failed on the laptop.
   \item[Proof] I ran \texttt{python -m src.generative\_experiments report}; it stopped with
         \texttt{CUDA error: out of memory} in \texttt{scores = q @ k.transpose(-2, -1)} while generating
         with the 5\,s context.
@@ -53,21 +54,20 @@ logged in \texttt{docs/AI\_USAGE\_LOG.md}.
         training path. A test on the CPU cannot reveal a memory limit of the GPU.
 \end{description}
 
-\subsubsection*{Sheet C2. Tensors on two devices (Claude)}
+\subsubsection*{Sheet C2. A legend over a data point (Claude)}
 \begin{description}[style=nextline,leftmargin=1.2em]
-  \item[Prompt] Write the zero-shot experiment with CLIP (task T24).
-  \item[Faulty response] \texttt{image\_features} moved the image embeddings to the CPU,
-        \texttt{text\_features} left the text embeddings on the GPU, and \texttt{zero\_shot\_probs}
-        multiplied them. The tests used a fake CLIP on the CPU only.
-  \item[Proof] \texttt{python -m src.zero\_shot run} stopped on the laptop with ``Expected all tensors to be
-        on the same device, but got mat2 is on cuda:0''.
-  \item[Correction] Both embeddings on the CPU before the product, with a regression test. The same
-        run's warning showed that the model had been loaded with GELU instead of the QuickGELU of the
-        original weights; it is now loaded as \texttt{ViT-B-32-quickgelu}. Run again on a clean commit.
-  \item[Reproduction] Remove \texttt{.cpu()} from \texttt{text\_features} and \texttt{zero\_shot\_probs} in
-        \texttt{src/zero\_shot.py} and run \texttt{python -m src.zero\_shot run --fast} on the GPU.
-  \item[Reflection] A second error (the activation) was visible in a warning of the same failed run:
-        reading the whole output of a failure, not only the last line, found it.
+  \item[Prompt] Write the final comparison (task T15): table and overview figure of every final model.
+  \item[Faulty response] \texttt{src/comparison.py::figure\_overview} fixed the legend at
+        \texttt{loc="lower left"}, the corner where the lowest row, zero-shot CLIP (macro AUROC near 0.5),
+        is drawn. The assistant inspected the figure on synthetic and on real data without noticing it.
+  \item[Detected by] Me, when reading the final figures for this report.
+  \item[Proof] In \texttt{report/figures/comparison\_overview.png} of 24 November, before the fix, the CLIP
+        dot and bar lay under the legend box.
+  \item[Correction] Legend outside the axes (\texttt{loc="center left", bbox\_to\_anchor=(1.01, 0.5)}),
+        commit \texttt{032cea4}; figure regenerated and inspected; no number changed.
+  \item[Reproduction] Put back \texttt{loc="lower left"} and run \texttt{python -m src.comparison report}.
+  \item[Reflection] ``Figure inspected'' had meant checking that the numbers were right, not that every
+        point was visible; a figure is checked as a reader sees it.
 \end{description}
 
 \subsubsection*{Sheet C3. Commands without the repository folder (Claude)}
@@ -75,6 +75,7 @@ logged in \texttt{docs/AI\_USAGE\_LOG.md}.
   \item[Prompt] What to run after the code of the learning-strategy block was delivered.
   \item[Faulty response] Activation of the environment and \texttt{python -m pytest -q tests} without
         \texttt{cd} into \texttt{ptbxl-dl}, although the terminal prompt showed the parent folder.
+  \item[Detected by] Me, when the first command failed in my terminal.
   \item[Proof] PowerShell answered that \texttt{.venv\textbackslash Scripts\textbackslash activate} was
         not found and ``ERROR: file or directory not found: tests''.
   \item[Correction] Every later list of commands starts with \texttt{cd C:\textbackslash Users\textbackslash ori\textbackslash DL\textbackslash ptbxl-dl}.
@@ -88,6 +89,8 @@ logged in \texttt{docs/AI\_USAGE\_LOG.md}.
   \item[Prompt] Why does the log of the trivial run say \texttt{git\_dirty: true}?
   \item[Faulty response] ``The run was made before the code was committed'', written as the cause in a
         block note.
+  \item[Detected by] The assistant, from the \texttt{git status --short} output that I pasted from my
+        Dense runs.
   \item[Proof] Every Dense run, all made after the commit with identical code, also said
         \texttt{git\_dirty: true}. From the \texttt{git status --short} output I pasted, the real cause
         appeared: each run writes its own predictions file before running \texttt{git status}, which lists
@@ -98,6 +101,28 @@ logged in \texttt{docs/AI\_USAGE\_LOG.md}.
         --max-epochs 1 --tag check} logs \texttt{git\_dirty: true}.
   \item[Reflection] A plausible explanation was accepted without a second observation; the second block
         provided it.
+\end{description}
+
+\subsubsection*{Sheet C5. The smoke mode of the Dense report stopped (Claude)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] Write the complete Dense block, with an \texttt{all --fast} smoke test of the whole
+        pipeline.
+  \item[Faulty response] In \texttt{--fast} mode \texttt{build\_summary} paired the final runs with the
+        trivial model on the test fold, but \texttt{--fast} runs see only 256 random test records and the
+        trivial run the whole fold, so the paired bootstrap stopped (``differ in test\_ecg\_id''). The
+        assistant's tests used a temporary run list without the trivial run, so they could not see it.
+  \item[Detected by] The assistant, when no \texttt{\_fast} summary, tables or figures appeared among the
+        outputs of my smoke run; it reproduced the error on a synthetic cache.
+  \item[Proof] The same call on a synthetic cache with a full-fold trivial run raises
+        \texttt{ValueError: ... differ in test\_ecg\_id}.
+  \item[Correction] No trivial comparison in \texttt{--fast} mode (full runs use the same test records and
+        were not affected); the test fixture lists a full-fold trivial run, plus a regression test.
+  \item[Reproduction] Remove \texttt{and not fast} from the trivial-comparison condition of
+        \file{src/dense_experiments.py::build_summary} and run the Dense tests
+        (\file{python -m pytest -q tests/test_dense.py}); the test
+        \file{test_fast_summary_skips_the_trivial_comparison} fails.
+  \item[Reflection] A smoke test is only useful if its outputs are checked: a missing file was the
+        symptom, not an error message.
 \end{description}
 
 \subsection*{Reflection}

@@ -4,7 +4,7 @@ Team: Oriana Ferraz De Jesus, María Martínez García-Taheño.
 Rule: decisions are written here **before** any code. A decision changes only by adding a dated entry, never by silently editing an old one.
 Tags: **[verify]** = not yet checked against the primary source. **[open]** = not decided.
 
-Last update: 2026-11-22.
+Last update: 2026-11-24.
 
 ## D0. Course requirements this plan must satisfy
 
@@ -566,13 +566,24 @@ Proposed by the assistant in chat DL 08 and accepted by OF and MM, who asked for
 - The 10 % probe reached its best epoch at about 47 of the 50 allowed (D14 budget): it is reported as limited by the epoch budget, as the generators of D19; not re-run.
 - The probe study found that every other generator of D19 gives better frozen features than `vocab2560`, selected by generation quality. The main grid stays with the model fixed in advance; the finding is reported (block note 08), D19 is not changed.
 
+## D21. Delivery of the four reports — DECIDED (2026-11-24)
+
+Decided in chat DL 12 (final review), where OF and MM asked the assistant to take the most suitable option for every open point and finish the delivery.
+
+- **Length.** The professor's hard limit is the structured summary of at most 3 pages: each report has a 2-page summary. The lists of tables and figures are removed (front matter). The body is kept: ablations are mandatory and the models carry 3 of the 5 points of the rubric, so no ablation result is cut; depth stays in each author's own blocks and the partner's blocks are summarised and attributed.
+- **Wording of effects.** In the four reports an effect is "consistent" only when the paired interval excludes 0 in all three seeds; one or two seeds of three are weak evidence (D15-D18 protocol, now written the same way in every report).
+- **AI Error Bounty.** Every error B1-B19 is documented in the sheets of exactly one report, the one of the author whose block or literature it concerns (B2, B3, B7, B11 together in one sheet, same error); every sheet has Prompt, Faulty response, Detected by, Proof, Correction, Reproduction and Reflection. The map is in `docs/AI_USAGE_LOG.md`, section 2.
+- **Reproduction.** Three levels, stated in the README and in both MLLB reports: (1) clean clone without data or GPU: tests and `make_numbers.py` (identical macros, checked in chat DL 12); (2) with data and checkpoints: the `report` steps; (3) retraining, with small GPU differences (D14). `results/checkpoints/` is copied to the OneDrive backup by `backup_dl.bat`; `requirements-lock.txt` is the `pip freeze` of the laptop environment.
+- **T18.** Closed without the first class assignments, which are not available: the PRDL annexes are written from checked quotes (D8, note of 2026-11-24); the task is renamed in `PLAN_DL.md` so that the contribution tables do not claim a reviewed first assignment.
+- **Contribution tables** list only completed tasks; T25 (submission) stays in the plan as `todo` until OF and MM submit.
+- **O5 closed.** The weekly summary of 20/11 and its notebook were never added to `contexto_DL/`. The generative block was built on the class notebooks that are there (D19) and is complete; the reports cite only those notebooks.
+- **Code licence.** MIT, in `LICENSE`; the data keep their CC BY 4.0 licence and are not redistributed.
+
 ## Open items
 
-| # | Item | Blocks |
-|---|---|---|
-| O5 | Weekly summary of 20/11 and the "simple autoregressive LLM-style model" notebook it mentions are not yet in `contexto_DL/`. D19 was built on the class notebooks that are there (`Sampling_in_Text_Generation.ipynb`, `TO_DO_MLLB_Keras_RNN_TextGeneration.ipynb`); add the summary when available and compare | Chat DL 13 (reference implementation) |
+None.
 
-Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository under Oriana's account, 2026-11-20). O3 (records without superclass left out; D12, 2026-11-20). O1 (pretext task: autoregressive next-sample prediction, D7 and D13, 2026-11-20). O6 (T23 done by OF, reviewed by MM; D19, 2026-11-21). O7 (published results: `report/published.json`, 8 rows of Table I of Strodthoff et al., journal version; final table regenerated on Oriana's laptop; 2026-11-24).
+Closed: O5 (weekly summary of 20/11 never available; D21, 2026-11-24). O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository under Oriana's account, 2026-11-20). O3 (records without superclass left out; D12, 2026-11-20). O1 (pretext task: autoregressive next-sample prediction, D7 and D13, 2026-11-20). O6 (T23 done by OF, reviewed by MM; D19, 2026-11-21). O7 (published results: `report/published.json`, 8 rows of Table I of Strodthoff et al., journal version; final table regenerated on Oriana's laptop; 2026-11-24).
 
 ## Change log
 
@@ -596,3 +607,4 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-22: Learning strategies and final comparison: transfer from the ECG-GPT (scratch, linear probe, fine-tuning; 100 % and 10 % of the labels drawn by patient; batch of 32 records; learning-rate ablations; probe study on every generator), 12 leads vs lead II on the final model of each family, zero-shot CLIP on CIFAR-100 and ECG images, final comparison table and the rule for published results (D20). O7 opened. Accepted by OF and MM in chat DL 08.
 - 2026-11-23: D20 note after the runs: runs before the commit (code checked unchanged, committed as 1b7b07f), zero-shot fix (B10) and QuickGELU model, 10 % probe limited by the epoch budget, probe-study finding. Decided by OF and MM in chat DL 08.
 - 2026-11-24: D8 note (checking stage, journal version of the benchmark, course materials as sources, closure rule for `[verify]`, T18 without the first assignments); O7 closed. Decided by OF and MM in chat DL 09.
+- 2026-11-24: delivery decisions (D21): length, wording of effects, one report per Bounty error, reproduction levels, T18 without first assignments, contribution tables, O5 closed, MIT licence. Decided in chat DL 12 at the request of OF and MM.

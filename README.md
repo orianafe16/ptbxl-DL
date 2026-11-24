@@ -7,9 +7,10 @@ Multi-label classification of the five diagnostic superclasses of PTB-XL
 (12-lead ECG, 100 Hz) with dense, convolutional, recurrent and Transformer
 models, compared under the same data split and evaluation protocol.
 
-Status: data pipeline, exploratory analysis, evaluation module, shared
-training loop, model blocks and generative block in place; learning
-strategies and final comparison in progress.
+Status: complete. Every block has been run, every result is in
+`results/logs/`, and the four DL reports (PRDL-DL and MLLB-DL of each
+author) are in `report/` (main files `oriana_prdl.tex`, `oriana_mllb.tex`,
+`maria_prdl.tex`, `maria_mllb.tex`).
 
 ## Structure
 
@@ -184,3 +185,48 @@ python -m pytest -q tests
 The `cu126` build needs an NVIDIA driver that supports CUDA 12.6 or later
 (`nvidia-smi` shows the supported version). Without a GPU, replace the
 `torch` line by `pip install torch`.
+
+`requirements-lock.txt` lists the exact versions of the environment that
+produced the results (`pip freeze`); the logs also record the versions of
+Python, PyTorch, CUDA, NumPy and scikit-learn of each run.
+
+## Reports
+
+Run from `ptbxl-dl/` after any change to the logs, the plan or the code
+excerpts, then compile from `report/` (pdfLaTeX + BibTeX; on Overleaf,
+upload `report/` and choose one of the four main files):
+
+```
+python report/make_numbers.py              # numbers.tex from results/logs (runs.json)
+python report/common/make_floats.py        # one float file per figure and table
+python report/common/make_contributions.py # contribution tables from docs/PLAN_DL.md
+python report/common/make_code_excerpts.py # code listings copied from src/
+cd report
+pdflatex oriana_prdl && bibtex oriana_prdl && pdflatex oriana_prdl && pdflatex oriana_prdl
+```
+
+The same for `oriana_mllb`, `maria_prdl` and `maria_mllb`. Check the end
+of both the `.log` and the `.blg` file.
+
+## Reproduction
+
+Three levels:
+
+1. Clean clone, no data and no GPU: `python -m pytest -q tests` (synthetic
+   data; the tests on the real cache are skipped) and
+   `python report/make_numbers.py`, which rebuilds `report/numbers.tex`, the
+   only input of the reports that comes from the results.
+2. With the PTB-XL files and the checkpoints (`results/checkpoints/`, not
+   committed, kept in the authors' backup): the `report` step of each block
+   rebuilds its summary, tables and figures; the interpretation figures and
+   the transfer experiments load checkpoints.
+3. Retraining: the commands of each block above, in order (Dense, CNN, RNN,
+   Transformer, generative, transfer, leads, zero-shot, comparison). GPU
+   runs can differ slightly from the logged ones because PyTorch's fully
+   deterministic mode is not enabled (DECISIONS D14).
+
+## Licence
+
+Code: MIT (see `LICENSE`). Data: PTB-XL 1.0.3, CC BY 4.0, not redistributed
+here. Cite Wagner et al. 2020 (Scientific Data, doi 10.1038/s41597-020-0495-6),
+the dataset (doi 10.13026/kfzx-aw45) and PhysioNet (Pollard et al. 2026).

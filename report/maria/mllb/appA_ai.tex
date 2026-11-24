@@ -1,7 +1,7 @@
 % =====================================================================
 % APPENDIX A (MLLB, Maria Martinez): use of AI code assistants
-% Sources: docs/AI_USAGE_LOG.md (session log; Bounty candidates B3, B6,
-% B10), CHATS protocol.
+% Sources: docs/AI_USAGE_LOG.md (Bounty candidates B6, B2/B3/B7/B11, B10,
+% B19; one report per error), CHATS protocol.
 % =====================================================================
 \appendixbanner{APPENDIX A: USE OF AI CODE ASSISTANTS}
 \addcontentsline{toc}{section}{Appendix A: Use of AI code assistants}\label{app:ai-code}
@@ -18,18 +18,18 @@ Every session is in \texttt{docs/AI\_USAGE\_LOG.md}.
 
 \subsection*{Errors detected (candidates for the AI Error Bounty)}
 
+Each assistant error of the project is documented in exactly one of our four reports. These four sheets
+cover the code errors of my blocks, of the shared zero-shot experiment and of the project's file handling:
 \begin{itemize}[leftmargin=1.2em,itemsep=2pt]
-  \item \textbf{A code comment that contradicted the code} in my Transformer model (Sheet C1; detected by
-        the assistant itself, after the runs).
-  \item \textbf{An incomplete copy of the decisions file} written to the folder in the evaluation block
-        (Sheet C2; detected by the assistant itself, before building on it).
-  \item \textbf{Tensors on two devices} in the zero-shot code (Sheet C3; detected by Oriana and me when the
-        run stopped on the laptop).
-  \item The other errors of the coding assistant (files reported as written when an older copy had reached
-        the folder in other blocks, a smoke test that stopped, a wrong cause for a log flag, commands without
-        the repository folder, out of memory when generating, a figure legend over a data point) are recorded
-        in the log; those of Oriana's blocks are in her report.
+  \item \textbf{A code comment that contradicted the code} in my Transformer model (B6; Sheet C1).
+  \item \textbf{Files reported as written when an older copy had reached the folder}, four times in four
+        blocks (B2, B3, B7, B11; Sheet C2).
+  \item \textbf{Tensors on two devices} in the zero-shot code (B10; detected by Oriana and me; Sheet C3).
+  \item \textbf{A clean compilation reported without reading the BibTeX log} (B19; Sheet C4).
 \end{itemize}
+The errors found in Oriana's blocks and runs (out of memory when generating, a figure legend over a data
+point, commands without the repository folder, a wrong cause for a log flag, a smoke test that stopped)
+are documented in her MLLB report.
 
 \subsection*{AI Error Bounty sheets}
 
@@ -39,6 +39,8 @@ Every session is in \texttt{docs/AI\_USAGE\_LOG.md}.
         tests.
   \item[Faulty response] The comment above \texttt{register\_buffer("pe", \ldots, persistent=False)} in
         \file{src/models/transformer.py} said that the positional-encoding buffer is ``saved with the model''.
+  \item[Detected by] The assistant, when it checked the PyTorch details of my block note against the code
+        after the runs.
   \item[Proof] With \texttt{persistent=False} PyTorch leaves the buffer out of \texttt{state\_dict()}, so it
         is not in the checkpoint: \texttt{'pe' in TransformerClassifier().state\_dict()} is \texttt{False},
         while the attribute \texttt{pe} exists.
@@ -52,21 +54,24 @@ Every session is in \texttt{docs/AI\_USAGE\_LOG.md}.
         the PyTorch points I can explain with this example.
 \end{description}
 
-\subsubsection*{Sheet C2. An incomplete file written to the folder (Claude)}
+\subsubsection*{Sheet C2. Older copies of files left in the folder (Claude)}
 \begin{description}[style=nextline,leftmargin=1.2em]
-  \item[Prompt] After we accepted the evaluation and training decisions, add the new decision and its
-        change-log line to \file{docs/DECISIONS.md}.
-  \item[Faulty response] The assistant edited the file in several steps and copied it to the folder right
-        away; the copy that arrived had only part of the changes.
-  \item[Proof] The size and the modification time of the file in the folder did not match the edited
-        version, and no other conversation had changed it.
-  \item[Correction] The complete file was copied again, and from then on every file was compared with the
-        intended version (by size or by content) before being reported as written; this check became part of
-        the common protocol of all conversations.
-  \item[Reproduction] Not in git, because the incomplete copy was never committed; the evidence is the two
-        sizes recorded in the log. The check is repeated at the end of every conversation.
-  \item[Reflection] An assistant that can write files can also leave the wrong version behind; ``done'' is
-        only true after looking at the folder.
+  \item[Prompt] Four times, in four blocks, to write files to the project folder after an edit: the EDA
+        decision D12 (B2), the evaluation decisions D14 in my evaluation block (B3), three files of the
+        generative block (B7), and \file{src/zero_shot.py} with \file{docs/DECISIONS.md} (B11).
+  \item[Faulty response] Each copy was reported as successful, or was about to be used, while the folder
+        still held the previous content, because the file was copied right after being written, before the
+        new version could be read.
+  \item[Detected by] The assistant itself each time, when it re-read the folder before the next step; from
+        B7 on, through the rule we added to the common protocol (check every written file in the folder).
+  \item[Proof] Sizes in the folder that did not match the intended files (for D14: 22,839 bytes instead of
+        28,866, with the assistant's own modification time, so no other conversation had changed it).
+  \item[Correction] Each file copied again after waiting, and compared by size or byte by byte with the
+        intended version before anyone was told it was written or asked to run anything.
+  \item[Reproduction] Not in git, because no incomplete copy was ever committed; the evidence is the sizes
+        recorded in \texttt{docs/AI\_USAGE\_LOG.md} (B2, B3, B7, B11). The check is repeated after every write.
+  \item[Reflection] The same error came back four times until checking became a rule rather than an
+        intention: an assistant that writes files must prove that the right version is there.
 \end{description}
 
 \subsubsection*{Sheet C3. Tensors on two devices (Claude)}
@@ -75,6 +80,7 @@ Every session is in \texttt{docs/AI\_USAGE\_LOG.md}.
   \item[Faulty response] The image features were moved to the CPU while the text features stayed on the
         GPU, and the two were multiplied. The assistant's tests used a fake CLIP on the CPU only, so they
         could not show it.
+  \item[Detected by] Oriana and me, when the run stopped on the laptop.
   \item[Proof] On the laptop the run stopped with \texttt{RuntimeError: Expected all tensors to be on the
         same device}.
   \item[Correction] Both feature sets are returned on the CPU, with a regression test. In the same fix the
@@ -84,6 +90,23 @@ Every session is in \texttt{docs/AI\_USAGE\_LOG.md}.
         \file{src/zero_shot.py} and run \texttt{python -m src.zero\_shot run --fast} on the GPU: same error.
   \item[Reflection] Tests on the CPU cannot catch device errors; the smoke run on the real GPU is a test in
         its own right and must not be skipped.
+\end{description}
+
+\subsubsection*{Sheet C4. A clean compilation reported without the BibTeX log (Claude)}
+\begin{description}[style=nextline,leftmargin=1.2em]
+  \item[Prompt] Compile the reports and check that they have no errors (the condition for closing a report).
+  \item[Faulty response] Oriana's two reports were reported three times as compiling with ``0 errors, 0
+        undefined'', checking only the LaTeX log. The BibTeX log had one error: an entry of
+        \file{report/references.bib} contained a comment, which BibTeX does not accept inside an entry, so the
+        rest of that entry was skipped. The reference still printed, so the PDF looked correct.
+  \item[Detected by] The assistant, when it compiled my reports and read the \texttt{.blg} file as well.
+  \item[Proof] The BibTeX logs of the earlier builds ended with ``(There was 1 error message)'' and pointed to
+        the line of the entry.
+  \item[Correction] The comment was moved out of the entry; every compilation since then checks the LaTeX log
+        and the BibTeX log (0 errors in the four reports).
+  \item[Reproduction] Put a \texttt{\% comment} line inside the entry \texttt{chelba2017ngram}, run BibTeX on
+        any report and read the end of its \texttt{.blg}.
+  \item[Reflection] ``It compiles'' has two logs; a check is only as good as the file it reads.
 \end{description}
 
 \subsection*{Reflection}

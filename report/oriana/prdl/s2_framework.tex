@@ -53,8 +53,11 @@ Resampling records instead of patients would give intervals that are too narrow.
 To compare two models we use the \emph{paired} bootstrap: both are evaluated on the same resamples,
 and the interval of the \emph{difference} is computed. Two models with overlapping individual intervals
 can still differ consistently, because most of the variation of a resample affects both in the same
-way. A model is called better only when the interval of the difference lies wholly above zero; the
-tables report in how many of the three seeds this happens (``seeds better / worse'').
+way. For one seed, a model is called better only when the interval of the difference lies wholly above
+zero; the tables report in how many of the three seeds this happens (``seeds better / worse''). An effect
+is called consistent only when it holds in all three seeds; one or two seeds of three are reported as weak
+evidence. The bootstrap interval reflects the finite test set, not the training randomness; the seeds
+cover the latter.
 
 \subsection{Model selection}
 

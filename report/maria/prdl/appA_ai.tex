@@ -8,22 +8,34 @@
 
 \subsection*{Workflow}
 
-Every interaction with an AI assistant is recorded in \texttt{docs/AI\_USAGE\_LOG.md} of the repository:
-date, conversation, who was working, what was asked, what the assistant produced and how we checked it.
-For the theory and the literature of this report, four stages were kept separate:
+The repository file \texttt{docs/AI\_USAGE\_LOG.md} records each session with an assistant: the date and
+conversation, who of us was present, the request, the output and the check we made. For literature the
+tools never verified each other; each had one job:
 \begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
-  \item \textbf{Perplexity} proposed candidate papers for each topic, without quotes or numbers; my topic
-        was the recurrent and attention models (task T17). We downloaded the PDFs by hand.
-  \item \textbf{NotebookLM}, restricted to those PDFs, answered one prompt per topic with, for each claim, a
-        literal quote with its file and printed page, or ``NOT FOUND''.
-  \item \textbf{Claude} checked every quote verbatim, page by page, against the text of the PDF; only the
-        checked quotes (\texttt{docs/literature/quotes.md}) are used in the reports. Course materials are
-        cited as course materials, never as the paper they mention.
-  \item \textbf{Claude} drafted this report from the block notes, the decisions log and the checked quotes.
-        I checked each sentence against the figures, the tables and the logs, and every interpretation
-        without a number behind it is written as a hypothesis.
+  \item \textbf{Perplexity} only listed candidate papers per topic (mine: recurrent and attention models,
+        task T17), with no quotes and no numbers; we downloaded the PDFs ourselves.
+  \item \textbf{NotebookLM}, limited to those PDFs, had to return for each claim a verbatim quote, the file
+        and the printed page, or ``NOT FOUND''.
+  \item \textbf{Claude} searched every quote in the text of its PDF, page by page; a quote enters the
+        reports only from \texttt{docs/literature/quotes.md}, where it is marked as checked. Course
+        materials support statements as course materials, never in place of the paper they mention.
+  \item \textbf{Claude} then drafted the report from the block notes, the decisions and the checked quotes,
+        and I went through each sentence against the logs, tables and figures; what no number supports is
+        written as a hypothesis.
 \end{enumerate}
-No output of one AI tool was accepted as the verification of another.
+
+\subsection*{Prompt strategy}
+
+A Perplexity prompt asked for sources and forbade content, so that nothing it wrote could reach the report
+by itself. An excerpt of the prompt for my topic (\texttt{docs/literature/prompts.md}, P2):
+\begin{quote}\small\itshape
+Gradient clipping for recurrent networks (Pascanu et al. 2013; Mikolov 2010), LSTM variants (Greff et al.
+2015), GRU (Cho et al. 2014). Additive attention over RNN states (Bahdanau et al. 2015), the Transformer
+(Vaswani et al. 2017), and Pre-LN versus Post-LN (Xiong et al. 2020). [\ldots] Mark ``no source found''
+where that is the case. Do not give quotes or numbers. Do not invent identifiers.
+\end{quote}
+Its answer was a list of papers; Mikolov 2010 and Xiong et al.\ 2020 did not reach our PDF folder, which is why
+those two claims were rewritten (below).
 
 \subsection*{Claims of my blocks that were checked before writing}
 
@@ -41,20 +53,22 @@ why positions do not help, the alignment of attention with the QRS) remain hypot
 
 \subsection*{Errors detected (candidates for the AI Error Bounty)}
 
+Every assistant error of the project is documented in exactly one of our four reports. The three below
+concern the data and the literature of my blocks:
 \begin{itemize}[leftmargin=1.2em,itemsep=2pt]
-  \item \textbf{A labelling rule stated from memory as the benchmark's} (Claude; Sheet P1). In my data
+  \item \textbf{A labelling rule stated from memory as the benchmark's} (Claude; B1; Sheet P1), in my data
         block, before any code.
-  \item \textbf{Wrong page numbers in most answers} (NotebookLM; Sheet P2), including quotes of my topic.
-  \item \textbf{The article's licence given as the dataset's} (NotebookLM; Sheet P3), a claim about the data
-        of my block.
-  \item Other NotebookLM errors of the same checking stage (two versions of the benchmark paper mixed, a
-        frequency band offered as support for a duration, top-$k$ sampling attributed to a secondary source,
-        statements attributed to documents that were not uploaded) are recorded in the log and in
-        Oriana's report.
+  \item \textbf{Wrong page numbers in most answers} (NotebookLM; B13; Sheet P2), including quotes of my
+        topic.
+  \item \textbf{The article's licence given as the dataset's} (NotebookLM; B14; Sheet P3), a claim about the
+        data of my block.
 \end{itemize}
-All three errors below were detected by the assistant itself, while checking its own claims or the
-answers of another tool, not by me; they are reported because they would have reached the report without
-that check.
+The other NotebookLM errors of the same checking stage (two versions of the benchmark paper mixed, a
+frequency band offered for a duration, top-$k$ sampling attributed to a secondary source, statements
+attributed to documents that were not uploaded) are documented in Oriana's PRDL report. The three errors
+below were caught by the assistant while checking its own claim or another tool's answer, in checks that
+we required: a factual claim needs a source (B1), and every NotebookLM quote is compared with its PDF
+(B13, B14, decision D8).
 
 \subsection*{AI Error Bounty sheets}
 
@@ -64,11 +78,13 @@ that check.
         (conversation of the data block, 20 November).
   \item[Faulty response] Assign a superclass only for diagnostic statements with a likelihood above zero,
         presented as ``what the reference benchmark does'', without a source.
+  \item[Detected by] The assistant itself, when we asked it to analyse the options before writing the
+        label code.
   \item[Proof] The example script distributed with PTB-XL assigns the superclass whatever the likelihood;
         with that rule the class counts equal the table of the PhysioNet page, while the proposed rule loses
         STTC records and the class-count test fails.
-  \item[Correction] Likelihood ignored (decision D2); a test compares the class counts with the published
-        table every time the cache is built.
+  \item[Correction] Likelihood ignored (decision D2); a test of the suite compares the class counts of the
+        cache with the published table.
   \item[Reproduction] \texttt{python -m src.prepare\_data} prints the counts. Changing the loop of
         \file{src/data.py::superclass_labels} so that it skips statements with likelihood 0 lowers the STTC
         count.
@@ -84,11 +100,14 @@ that check.
   \item[Faulty response] The quotes were mostly correct, but most answers gave wrong pages, in several
         papers (the dataset paper, the dropout paper, CLIP, and in my topic the paper on the difficulty of
         training recurrent networks).
+  \item[Detected by] The assistant, in the checking stage of decision D8.
   \item[Proof] Each quote was searched in the text of its PDF page by page, and the printed page was read
         on the page where it appears.
   \item[Correction] The pages in \texttt{docs/literature/quotes.md} are taken from the PDF, printed page
         first; no page given by NotebookLM is used.
   \item[Reproduction] Open each PDF at the page given in \texttt{quotes.md}; the quote is there.
+  \item[Reflection] A page number looks like a detail, but without the right page nobody can check the
+        quote; asking a tool for the page does not mean that it reads it.
 \end{description}
 
 \subsubsection*{Sheet P3. The article's licence given as the dataset's (NotebookLM)}
@@ -96,11 +115,14 @@ that check.
   \item[Prompt] For the dataset paper, the licence of the data, with a literal quote, file and page.
   \item[Faulty response] A quote with the licence of the published article, given as the licence of the
         dataset.
+  \item[Detected by] The assistant, in the checking stage of decision D8.
   \item[Proof] The quote is in the article's own copyright notice and says nothing about the data files.
   \item[Correction] Row not used (\texttt{quotes.md}, A16). The dataset licence had already been confirmed
         on the PhysioNet page by Oriana and me, and the report cites that page.
   \item[Reproduction] Read the licence notice at the end of the dataset paper and the licence on the
         PhysioNet page of PTB-XL 1.0.3.
+  \item[Reflection] A quote can be literal and about the wrong object: the licence of an article is not the
+        licence of the data it describes.
 \end{description}
 
 \subsection*{Reflection}

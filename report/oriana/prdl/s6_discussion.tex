@@ -35,10 +35,10 @@ state of the art; the comparison only shows that our pipeline is sound.
   \item The decisive design choice for ECG classification here is weight sharing over time with a
         pooled readout; the family name (convolution, recurrence, attention) matters much less, and the
         Dense network is a lower bound that shows why.
-  \item Inside each family, the ablations confirm the textbook role of each component mostly in the
-        \emph{training dynamics} (dropout against overfitting in the Dense network, skip connections and
-        batch norm for faster optimisation and, weakly, Pre-LN against Post-LN) and much less in the final metric.
-        Reading only the final AUROC would have hidden most of what the components do.
+  \item Inside each family, some components show their textbook role more clearly in the
+        \emph{training dynamics} than in the final metric: dropout against overfitting in the Dense
+        network, batch norm for faster convergence of the CNN and, weakly, Pre-LN against Post-LN. For
+        skip connections the evidence at our depth is too weak to claim anything.
   \item Self-supervised pre-training on unlabelled signals makes the same network far more
         label-efficient, but only when it is fine-tuned, and it did not overcome a better architectural
         bias trained from scratch.
@@ -66,14 +66,22 @@ state of the art; the comparison only shows that our pipeline is sound.
         hypothesis.
 \end{itemize}
 
+\paragraph{Clinical reading.} The per-class results (Table~\ref{tab:comparison_per_class}) matter more
+to a clinician than the macro average: with 12 leads the CNN ranks NORM best
+(\comparisonTestAurocNORMMeanTwelveCnn{}) and HYP worst (\comparisonTestAurocHYPMeanTwelveCnn{}), and
+MI and HYP lose most with lead II alone. An AUROC says how well records are ranked, not how a model
+behaves at a decision threshold; the F1 values at validation thresholds are the closer proxy. These
+models were trained and tested on one dataset, with no external validation and no calibration check, so
+they are a study of architectures, not a diagnostic tool.
+
 \subsection{Conclusions}
 
 \begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
   \item Convolutions with global pooling are the most effective of the basic modules for this task;
         recurrent and attention models come close, and a dense network on the raw signal does not.
-  \item Removing or adding a component inside a sound architecture changes the result little; its
-        effect shows in how the model trains. Ablations should therefore report training curves, not only
-        the final metric.
+  \item Removing or adding a component inside a sound architecture changes the result little; when a
+        component matters, it often shows first in how the model trains (dropout, batch norm), so
+        ablations should report training curves as well as the final metric.
   \item A model pre-trained without labels (our ECG-GPT) is a better starting point than random weights,
         especially with few labels, but its frozen features are weak, and the best pretext model for
         generation was the worst feature extractor.

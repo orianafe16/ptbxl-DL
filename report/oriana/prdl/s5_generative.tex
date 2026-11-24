@@ -123,9 +123,11 @@ probability tokens whose cumulative probability mass exceeds the pre-chosen thre
   \item \textbf{Greedy search collapses to a flat line} in every record for both models (flat share
         \generativeGenVocabTwoFiveSixZeroGreedyFracFlat{}): on a baseline, the most probable next value is
         ``the same value'', the ECG version of the repetitive loops of greedy text generation.
-  \item \textbf{Temperature controls realism.} $T = 0.5$ is still mostly flat; $T = 0.8$--1 gives
-        amplitude distributions close to the real ones (Table~\ref{tab:generative_sampling}) and beats
-        at roughly the right rate; $T = 1.5$ gives noise (standard deviation
+  \item \textbf{Temperature controls realism.} At $T = 0.5$ the selected model is still mostly flat
+        (flat share \generativeGenVocabTwoFiveSixZeroTZeroFiveFracFlat{}; the LSTM much less,
+        \generativeGenLstmTZeroFiveFracFlat{}); $T = 0.8$--1 gives amplitude distributions close to the
+        real ones (Table~\ref{tab:generative_sampling}) and beats at a plausible but imprecise rate
+        (item~4); $T = 1.5$ gives noise (standard deviation
         \generativeGenVocabTwoFiveSixZeroTOneFiveStdRatio{} times the real one).
   \item \textbf{A top-$k$ value is a statement about the token size.} With $V = 2560$, $k = 10$ keeps only
         values within about ten microvolts of the most probable one and generation becomes almost greedy

@@ -12,13 +12,13 @@ these experiments together (tasks T13, T14 and T24); the generator they reuse is
 \subsection{Self-supervised pre-training and transfer}
 
 \paragraph{Concepts.} Self-supervised learning is ``a feature learning technique for overcoming the
-challenges related to the scarcity of `labelled' data'' \cite{soltanieh2022analysis}: the model solves a
+challenges related to the scarcity of `labelled' data'' \cite[p.~1]{soltanieh2022analysis}: the model solves a
 pretext task that needs no manual labels and is then reused. The course distinguishes it from transfer
 learning by the labels used in pre-training, while noting that both reuse knowledge
 \cite{course_summary_0910}. A pre-trained network can be reused in two ways: a linear classifier on its
 frozen representation (linear probe), or end-to-end fine-tuning of the whole network
-\cite{radford2021learning}. Fine-tuning is usually done with a smaller learning rate ``to prevent
-catastrophic forgetting'' \cite{soltanieh2023indistribution}.
+\cite[p.~11]{radford2021learning}. Fine-tuning is usually done with a smaller learning rate ``to prevent
+catastrophic forgetting'' \cite[p.~6]{soltanieh2023indistribution}.
 
 \paragraph{Design (decision D20).} Our foundational model is the ECG-GPT of Section~\ref{sec:generative}:
 a small causal Transformer trained to predict the next sample of lead II, which is a pretext task without
@@ -43,8 +43,8 @@ fine-tuning wins because of the pre-trained weights or because of the rate.
         at the same rate (validation ablation).
   \item \textbf{Label efficiency.} Fine-tuning with 10\,\% of the labels beats training from scratch with
         all of them (\transferTestDiffMeanFinetuneFOneZeroVsScratchFOneZeroZero{}, all seeds). This
-        matches the literature on ECG, where the benefit of pre-training ``widens for smaller training
-        sets'' \cite{strodthoff2021deep}.
+        matches the literature on ECG, where the gap in favour of a model pre-trained (with labels) on PTB-XL ``widens for smaller training
+        sets'' \cite[p.~1524]{strodthoff2021deep}.
   \item \textbf{The frozen features are weakly diagnostic.} The linear probe is worse than scratch with
         all the labels (\transferTestDiffMeanProbeVsScratchFOneZeroZero{}) and better only with 10\,\%
         (\transferTestDiffMeanProbeVsScratchFOneZero{}). A hypothesis, not tested: predicting the next
@@ -80,9 +80,11 @@ all seeds: the dense network \leadsTestDiffMeanDense{}, the CNN \leadsTestDiffMe
 \leadsTestDiffMeanRnn{}, the RNN + attention \leadsTestDiffMeanRnnattn{} and the Transformer
 \leadsTestDiffMeanTransformer{}. The other eleven leads are not redundant with lead II for these
 superclasses, and the order of the families barely changes: the CNN stays first and the Transformer last
-of the four with shared weights. Part of the explanation is documented: anterior infarction is expressed
-``as ST elevation in some or all of leads V1 through V6'' \cite{wagner2009aha}, chest leads that a model
-of lead II does not see. That the same holds for hypertrophy is a hypothesis without a source.
+of the four with shared weights. MI and HYP lose most (Table~\ref{tab:comparison_per_class}). Part of the
+MI loss has a documented explanation: anterior infarction is expressed
+``as ST elevation in some or all of leads V1 through V6'' \cite[p.~e265]{wagner2009aha}, chest leads that a model
+of lead II does not see. This covers at most the anterior infarctions, not every MI record; any
+explanation for hypertrophy is a hypothesis without a source.
 
 \input{common/floats/tab_leads}
 
@@ -91,9 +93,9 @@ of lead II does not see. That the same holds for hypertrophy is a hypothesis wit
 \paragraph{Concept.} In zero-shot classification the model assigns classes it was not trained on with
 labels. With other modalities this ``is generally possible thanks to a Multimodal Correspondence'', a
 shared embedding space for the inputs and the class descriptions \cite{course_summary_0910}. CLIP builds
-one from ``400 million (image, text) pairs'' collected on the Internet \cite{radford2021learning}; it
+one from ``400 million (image, text) pairs'' collected on the Internet \cite[p.~3]{radford2021learning}; it
 classifies an image by the cosine similarity between its embedding and the embedding of a sentence for
-each class, scaled and passed through a softmax \cite{radford2021learning}. Our ECG-GPT has no text side:
+each class, scaled and passed through a softmax \cite[p.~6]{radford2021learning}. Our ECG-GPT has no text side:
 it can be transferred, but not used zero-shot.
 
 \paragraph{Experiment} (decision D20, on the class CLIP notebook \cite{course_nb_clip};
@@ -103,7 +105,8 @@ with the notebook's sentence. On lead II of PTB-XL drawn as an image, with one s
 test images are recognised as ``an electrocardiogram'' among six modality sentences
 (\zeroshotFracModalityEcgTestPct{}), but the macro AUROC is only \zeroshotTestMacroAuroc{}
 [\zeroshotTestMacroAurocLo{}, \zeroshotTestMacroAurocHi{}], below the trivial model, and the ST-T sentence
-wins for \zeroshotFracTopSTTCTestPct{} of the records. CLIP recognises the modality but not the diagnosis.
+wins for \zeroshotFracTopSTTCTestPct{} of the records; for MI, CD and HYP the per-class AUROC is even below
+0.5 (Table~\ref{tab:comparison_per_class}), i.e.\ the ranking is inverted. CLIP recognises the modality but not the diagnosis.
 Why it fails is a hypothesis: the source describes what kind of data CLIP was trained on, not whether ECG
 traces with diagnoses are among it.
 

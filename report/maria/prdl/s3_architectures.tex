@@ -48,11 +48,11 @@ exponentially with the distance, so a plain recurrent network remembers recent i
 distant ones and its training can become unstable. Gated cells reduce the first problem: the LSTM keeps
 a separate cell state updated additively through forget, input and output gates, and the GRU merges the
 gates into an update and a reset gate, a design that is ``motivated by the LSTM unit but is much
-simpler to compute and implement'' \cite{cho2014learning}. A large comparison of LSTM variants found
-that none of them improves on the standard LSTM significantly \cite{greff2017lstm}, which the course
+simpler to compute and implement'' \cite[p.~1725]{cho2014learning}. A large comparison of LSTM variants found
+that none of them improves on the standard LSTM significantly \cite[p.~1]{greff2017lstm}, which the course
 slides summarise as the variants being ``all about the same'' \cite{course_rnn_slides}. Against
 exploding gradients we clip the total gradient norm, a remedy that has been shown to work well in
-practice \cite{pascanu2013difficulty}.
+practice \cite[p.~6]{pascanu2013difficulty}.
 
 \paragraph{Design (DECISIONS D17).} A recurrent network needs one vector per time step. In the baseline
 the record is cut into 100 non-overlapping frames of 10 samples (100\,ms), and each step receives the
@@ -73,7 +73,7 @@ LSTM). Gradients are clipped at a total norm of \rnnGradClip{} in every configur
 \paragraph{Results.} Table~\ref{tab:rnn_ablations} and Figure~\ref{fig:rnn_ablations} give the
 validation results; my reading of them is the following.
 \begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
-  \item \textbf{Using every hidden state matters more than the cell or the direction.} Replacing the last
+  \item \textbf{Using every hidden state matters more than the direction.} Replacing the last
         state by the mean of all states changes the validation AUROC by \rnnDiffMeanMean{} (better in
         \rnnNSeedsBetterMean{} of \rnnNSeedsComparedMean{} seeds); a bidirectional network that still
         reads only its final states changes it by \rnnDiffMeanBi{} (\rnnNSeedsBetterBi{} better,
@@ -127,7 +127,7 @@ bidirectional network spreads it but gains nothing.
 \paragraph{Theory.} Attention was introduced in neural translation to remove the bottleneck of a single
 summary vector: instead of the encoder's last state, the decoder receives a weighted mean of all encoder
 states, with weights given by an alignment model that ``scores how well the inputs around position $j$
-and the output at position $i$ match'' \cite{bahdanau2015neural}. A classifier has no decoder, so the
+and the output at position $i$ match'' \cite[p.~3]{bahdanau2015neural}. A classifier has no decoder, so the
 query becomes a learned vector, the same for every record, as in the class notebook. For each step a
 score $e_t$ is computed from the hidden state $h_t$; a softmax over time turns the scores into weights
 $\alpha_t \ge 0$ that sum to 1; and the context vector $\sum_t \alpha_t h_t$ replaces the last state as
@@ -205,11 +205,11 @@ the two final models cannot be told apart.
 $x_i$ is projected into a query $q_i = x_i W_Q$, a key $k_i = x_i W_K$ and a value $v_i = x_i W_V$; the
 weights of query $i$ are $\mathrm{softmax}_j(q_i \cdot k_j / \sqrt{d_k})$ and its output is the weighted
 mean of the values. This is the ``Scaled Dot-Product Attention'' of the Transformer
-\cite{vaswani2017attention}; the division by $\sqrt{d_k}$ keeps the dot products from growing with the
+\cite[p.~4]{vaswani2017attention}; the division by $\sqrt{d_k}$ keeps the dot products from growing with the
 dimension and saturating the softmax. Multi-head attention runs several of these in parallel on smaller
 projections and mixes their outputs with a matrix $W_O$, which ``allows the model to jointly attend to
 information from different representation subspaces at different positions''
-\cite{vaswani2017attention}. Compared with RNN + attention, the weights come from comparing tokens with
+\cite[p.~5]{vaswani2017attention}. Compared with RNN + attention, the weights come from comparing tokens with
 each other, not with one learned query, and nothing is sequential: all tokens are processed at once.
 
 \paragraph{Design (DECISIONS D18).} The tokens are the same 100 patches of 10 samples as the RNN frames;
@@ -256,13 +256,13 @@ a negative value means that the component helped.
 position-wise feed-forward network (128 $\rightarrow$ 512 $\rightarrow$ 128 with GELU) transforms each
 token separately: attention mixes information between tokens, the feed-forward network inside each one.
 And each sub-layer has a residual connection and a LayerNorm. The original Transformer normalises after
-the addition, ``LayerNorm($x$ + Sublayer($x$))'' (Post-LN) \cite{vaswani2017attention}; our baseline puts
+the addition, ``LayerNorm($x$ + Sublayer($x$))'' (Post-LN) \cite[p.~3]{vaswani2017attention}; our baseline puts
 the LayerNorm before each sub-layer (Pre-LN), which according to the course slides converges to similar
 functions but ``simply makes the optimization much easier'' \cite{course_transformer_part2}. Dropout
 of 0.1 is applied to the output of each sub-layer before it is added, the rate of the base Transformer
-\cite{vaswani2017attention}. Self-attention by itself ignores the order of the tokens, so the baseline
+\cite[p.~7]{vaswani2017attention}. Self-attention by itself ignores the order of the tokens, so the baseline
 adds a sinusoidal positional encoding, the sine and cosine functions of different frequencies of the
-original paper \cite{vaswani2017attention}, and reads out the mean of the token outputs. The baseline has
+original paper \cite[p.~6]{vaswani2017attention}, and reads out the mean of the token outputs. The baseline has
 two blocks of 4 heads, $d_\text{model} = 128$ and \transformerParamsBase{} parameters, between the RNN
 baseline and the CNN. The ablations (Table~\ref{tab:transformer_ablations}) change depth, heads,
 positional encoding (none, learned), patch length (5, 25 and 50 samples), readout (a learned CLS token
@@ -289,8 +289,8 @@ prepended to the patches) and the LayerNorm placement (Post-LN).
         the order does not help is also a hypothesis: the five superclasses may depend mostly on the shape
         of each beat, which a set of patches keeps, while rhythm (RR intervals) would need the order. A
         label set that depends on rhythm would be the test.
-  \item \textbf{Heads, depth and readout barely matter beyond one block.} One, four or eight heads differ
-        by at most \transformerDiffMeanHeadsOne{} from the baseline; four blocks give
+  \item \textbf{Heads, depth and readout barely matter beyond one block.} One or eight heads differ
+        from the four of the baseline by \transformerDiffMeanHeadsOne{} and \transformerDiffMeanHeadsEight{}; four blocks give
         \transformerDiffMeanLayersFour{} at \onedec{\transformerEpochTimeMeanLayersFour}\,s per epoch
         instead of \onedec{\transformerEpochTimeMeanBase}\,s; a CLS token gives \transformerDiffMeanCls{}.
         None is better or worse in more than one seed.

@@ -81,10 +81,11 @@ on the same input is the CNN trained on lead II (Section~\ref{sec:leads}).
 
 \paragraph{A better generator does not give better features.} We also trained the same linear probe
 on every other generator of area 3 (Figure~\ref{fig:transfer_probe_study}). All of them give better
-frozen features than the selected one, chosen for being the best density model; the correlation
+frozen features than the selected one, chosen for being the best density model; the rank correlation
 between bits per sample and probe AUROC is positive (Spearman \transferProbeSpearmanFOneZeroZero{}
 with all labels, \transferProbeSpearmanFOneZero{} with 10\,\%), i.e.\ worse generators tend to give
-\emph{better} features. The LSTM generator gives the best probe with all labels
+\emph{better} features. With seven generators this correlation is descriptive, not a significant
+result; the robust observation is that every other generator beats the selected one. The LSTM generator gives the best probe with all labels
 (\transferValAurocMeanProbeLstmFOneZeroZero{} against \transferValAurocMeanProbeFOneZeroZero{}).
 \emph{Hypotheses, not tested:} with 2560 levels the embedding spends its capacity on fine amplitude
 detail; the LSTM state summarises the window more than a mean of causal outputs does. The selection

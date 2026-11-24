@@ -18,18 +18,18 @@ models and CD for the Transformer, and the ranking of the families with 12 leads
 \subsection{Comparison with published results}
 
 The last rows of Table~\ref{tab:comparison_final} are the eight models of the superclass column of
-Table~I of the PTB-XL benchmark \cite{strodthoff2021deep}, the only numbers of the project typed by hand,
+Table~I of the PTB-XL benchmark \cite[p.~1523]{strodthoff2021deep}, the only numbers of the project typed by hand,
 each stored with its file, page and quote. They share our task, our folds (training 1--8, validation 9,
 test 10), our sampling rate and our metric, and they also leave out the records without a superclass
-\cite{strodthoff2021deep}. But the setting is different in ways that matter, and the values are not
+\cite[pp.~1520--1523]{strodthoff2021deep}. But the setting is different in ways that matter, and the values are not
 adjusted:
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt]
   \item they train on windows of 2.5\,s and aggregate the predictions over windows ``using the
-        element-wise maximum'' \cite{strodthoff2021deep}, while our models see the whole 10\,s record;
-  \item they use the AdamW optimiser with a 1-cycle learning-rate schedule \cite{strodthoff2021deep};
+        element-wise maximum'' \cite[p.~1521]{strodthoff2021deep}, while our models see the whole 10\,s record;
+  \item they use the AdamW optimiser with a 1-cycle learning-rate schedule \cite[p.~1521]{strodthoff2021deep};
         we use Adam with a fixed rate;
   \item each published value is one trained model evaluated on the whole test set, with an interval given
-        as the maximal deviation of the bootstrap bounds \cite{strodthoff2021deep}; ours are means over
+        as the maximal deviation of the bootstrap bounds \cite[p.~1522]{strodthoff2021deep}; ours are means over
         three seeds, with patient-bootstrap intervals for the first seed.
 \end{itemize}
 With those caveats, our CNN (\comparisonTestAurocMeanTwelveCnn{}) and the published residual network
@@ -47,8 +47,10 @@ meant to compete with them, which the guidelines explicitly do not ask for \cite
   \item \textbf{One dataset, one task, small budgets.} Every conclusion is about five superclasses of
         PTB-XL; long memory or the order of events may matter for other labels (rhythm, for example),
         which we did not test.
-  \item \textbf{Three seeds.} They allow paired, per-seed statements, but the standard deviations over
-        seeds rest on three values.
+  \item \textbf{Three seeds and many comparisons.} Three seeds allow paired, per-seed statements, but
+        the standard deviations rest on three values, and dozens of ablations were compared on the same
+        validation fold without a correction for multiple comparisons; this is why only effects present
+        in all three seeds are called consistent.
   \item \textbf{Selection rules fixed in advance.} They protect the test fold, but they can select a
         configuration only marginally different from its neighbours (the two final recurrent models, or
         \texttt{no\_pos} and \texttt{patch5} in the Transformer).
@@ -57,6 +59,11 @@ meant to compete with them, which the guidelines explicitly do not ask for \cite
         observation, not a measured result.
   \item \textbf{Area 2.} The pre-trained model is small and pre-trained on PTB-XL itself, and zero-shot
         was tested with one general image--text model and fixed sentences.
+  \item \textbf{Clinical value.} An AUROC measures ranking, not behaviour at a decision threshold, and
+        per class the picture is uneven: with 12 leads the CNN ranks NORM best
+        (\comparisonTestAurocNORMMeanTwelveCnn{}) and HYP worst (\comparisonTestAurocHYPMeanTwelveCnn{}).
+        Without external validation or a calibration check these models study architectures; they are
+        not diagnostic tools.
 \end{itemize}
 
 \subsection{Conclusions}
@@ -65,8 +72,8 @@ meant to compete with them, which the guidelines explicitly do not ask for \cite
   \item \textbf{Weight sharing over time is the main ingredient.} All architectures that apply the same
         weights along the record (CNN, LSTM and GRU, attention models) are far above the dense network; the
         differences among them are small.
-  \item \textbf{For recurrent networks, reading all hidden states matters more than the cell or the
-        direction}, and a GRU was better than an LSTM. Attention pooling helped exactly as much as a mean
+  \item \textbf{For recurrent networks, reading all hidden states matters more than the
+        direction}, and a GRU was better than an LSTM by an even larger margin. Attention pooling helped exactly as much as a mean
         and spread its weights almost uniformly: on this task it worked as a learned mean.
   \item \textbf{Self-attention is built from parts that each add something}, with the largest gains from
         several heads and from the residual path with LayerNorm. But no Transformer used the order of the

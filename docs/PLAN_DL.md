@@ -4,7 +4,7 @@ Team: Oriana Ferraz De Jesus (OF), María Martínez García-Taheño (MM).
 Dataset: PTB-XL 1.0.3, 5 diagnostic superclasses (see `DECISIONS.md`).
 Working mode: both work together on Oriana's laptop. The assistant writes code, figures and report drafts and explains each technique; OF/MM execute, check and decide. No result counts until one of us has run it.
 
-Last update: 2026-11-24.
+Last update: 2026-11-24 (chat DL 12).
 
 ## Roles
 
@@ -27,7 +27,7 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | T1 | `DECISIONS.md` and `PLAN_DL.md` first version | OF | MM | done | OF + MM (drafted with the assistant) | MM | 2026-11-20 |
 | T2 | Decide the transfer-learning approach: own pre-trained model (not confirmed with the professor; raise it in the class discussion) | OF + MM | — | done | OF + MM | — | 2026-11-14 |
 | T3 | Verify licence and recommended folds on PhysioNet | OF + MM | — | done | OF + MM | — | 2026-11-14 |
-| T4 | Local project structure, `.gitignore`, environment file; GitHub repository later | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
+| T4 | Local project structure, `.gitignore`, environment file and GitHub repository | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
 | T5 | Download script, label construction, fold split, `Dataset`/`DataLoader` | MM | OF | done | MM (drafted with the assistant) | OF | 2026-11-20 |
 | T6 | EDA: class balance, co-occurrence, demographics, signal quality, example traces | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-20 |
 | T7 | Evaluation module: macro AUROC, bootstrap CI, JSON logging, `make_numbers.py` | MM | OF | done | MM (drafted with the assistant) | OF | 2026-11-20 |
@@ -41,14 +41,14 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | T15 | Final comparison table and figures; comparison with published results | OF + MM | — | done | OF + MM (drafted with the assistant) | — | 2026-11-24 |
 | T16 | Literature: dataset and CNN-related papers | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-24 |
 | T17 | Literature: RNN/Transformer-related papers | MM | OF | done | MM (drafted with the assistant) | OF | 2026-11-24 |
-| T18 | Reviewed first assignment (learning strategies) for the PRDL reports | each her own | cross | done | OF and MM, each her own (drafted with the assistant, without the first assignments: see change log) | cross (OF, MM) | 2026-11-24 |
-| T19 | PRDL-DL report (theory + critical analysis), opening with a summary of at most 3 pages | each her own | cross | done | OF (drafted with the assistant); MM (her own report, drafted with the assistant in chat DL 11) | MM (OF's report); OF's review of MM's report: chat DL 12 | 2026-11-24 |
-| T20 | MLLB-DL report (Section 0 AI environment, code, training, evaluation), opening with a summary of at most 3 pages | each her own | cross | done | OF (drafted with the assistant); MM (her own report, drafted with the assistant in chat DL 11) | MM (OF's report); OF's review of MM's report: chat DL 12 | 2026-11-24 |
-| T21 | `AI_USAGE_LOG.md` and AI Error Bounty sheets | each her own entries | cross | done | OF (drafted with the assistant); MM (her own entries, drafted with the assistant in chat DL 11) | MM (OF's entries); OF's review of MM's entries: chat DL 12 | 2026-11-24 |
-| T22 | Adversarial review before delivery; preparation of the class discussion and oral defence | OF + MM | — | todo | | | |
+| T18 | Learning-strategies annex of the PRDL reports (from checked quotes; the first class assignments were not available) | each her own | cross | done | OF and MM, each her own (drafted with the assistant) | cross (OF, MM) | 2026-11-24 |
+| T19 | PRDL-DL report (theory + critical analysis), opening with a summary of at most 3 pages | each her own | cross | done | OF (drafted with the assistant); MM (her own report, drafted with the assistant in chat DL 11) | cross (MM reviewed OF's report; OF reviewed MM's report in chat DL 12) | 2026-11-24 |
+| T20 | MLLB-DL report (Section 0 AI environment, code, training, evaluation), opening with a summary of at most 3 pages | each her own | cross | done | OF (drafted with the assistant); MM (her own report, drafted with the assistant in chat DL 11) | cross (MM reviewed OF's report; OF reviewed MM's report in chat DL 12) | 2026-11-24 |
+| T21 | `AI_USAGE_LOG.md` and AI Error Bounty sheets | each her own entries | cross | done | OF (drafted with the assistant); MM (her own entries, drafted with the assistant in chat DL 11) | cross (MM reviewed OF's entries; OF reviewed MM's entries in chat DL 12) | 2026-11-24 |
+| T22 | Adversarial review before delivery; preparation of the class discussion and oral defence | OF + MM | — | done | OF + MM (drafted with the assistant) | — | 2026-11-24 |
 | T23 | Generative autoregressive model (ECG-GPT): tokenisation of lead II, causal Transformer and LSTM, sampling with temperature, ablations (D13) | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-22 |
 | T24 | Zero-shot learning: theory and a short experiment on the class CLIP notebook | OF + MM | — | done | OF + MM (drafted with the assistant) | — | 2026-11-23 |
-| T25 | Initial draft of the DL reports submitted (due 1 December 2026) | each her own | — | todo | | | |
+| T25 | Submission of the DL reports (draft due 1 December 2026; final version in January) | each her own | — | todo | | | |
 
 ## Chats
 
@@ -107,3 +107,4 @@ No fixed calendar; the team moves on as blocks close. Dependencies:
 - 2026-11-24: chat DL 08 reopened for a presentation fix found in chat DL 10: the legend of `comparison_overview` hid the zero-shot CLIP point; moved outside the axes (commit 032cea4); `comparison report` and `make_numbers.py` run again by OF (340 numbers, 4,484 macros, no number changed). No task status changes.
 - 2026-11-24: chat DL 10 closed. T19, T20 and T21 done for OF: both reports and their AI appendices compile without errors (locally: PRDL 40 pages, MLLB 28, 2-page summary each, logo on the cover, no undefined reference or citation, BibTeX clean with the `references.bib` fixed by chat DL 11); reviewed by MM. Joint review of the four reports and the final version go to chat DL 12. T25 taken out of chat DL 10 by OF and MM's decision: back to `todo` (the submission of the 1 December draft is not tracked here).
 - 2026-11-24: chat DL 11 closed. T19, T20 and T21 for MM: María's PRDL-DL and MLLB-DL complete as a final version (`report/maria_{prdl,mllb}.tex`, `report/maria/`): 2-page summary, the three areas, own activities generated from this file, AI appendices with three Bounty sheets each (PRDL: B1, B13, B14; MLLB: B3, B6, B10) and the learning-strategies annex. Compiled by the assistant in its environment (PRDL 38 pages, MLLB 28; 0 LaTeX and BibTeX errors, no undefined reference or citation); not yet on Overleaf. Done by MM (drafted with the assistant); OF's review of MM's reports and the joint final version go to chat DL 12 (scope widened by OF and MM: joint review of the four reports, corrections and delivery). T25 stays `todo`.
+- 2026-11-24: chat DL 12 closed. T22 done (adversarial review of the four reports with six roles, corrections applied, Bounty completed with one report per error, reproduction checked, defence question bank in `PREGUNTAS_DEFENSA_DL.md` outside the repository). OF reviewed MM's reports and MM's Bounty entries (T19-T21 cross review complete). T4 and T18 reworded (T18 without the first assignments, DECISIONS D21); T25 renamed as the submission and left `todo` until OF and MM submit. Contribution tables regenerated (only completed tasks).

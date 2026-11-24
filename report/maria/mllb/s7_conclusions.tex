@@ -28,3 +28,24 @@
         cost table shows the price of recurrence over long sequences: the LSTMs over 1000 raw steps, with and
         without attention, were the slowest configurations of my blocks (Table~\ref{tab:mllb-cost}).
 \end{enumerate}
+
+\subsection{My activities in the team}
+
+Table~\ref{tab:contrib_mm_mllb} gives my role in each completed task, generated from the task log
+(\texttt{docs/PLAN\_DL.md}); ``did (shared)'' marks joint tasks.
+
+\begin{table}[htbp]
+\centering
+\caption{My role in each completed task (generated from \texttt{docs/PLAN\_DL.md}).}
+\label{tab:contrib_mm_mllb}
+\input{common/contributions_MM}
+\end{table}
+
+In code, my part was the data layer (\file{src/data.py}, \file{src/dataset.py}), the evaluation module
+and the run logs (\file{src/metrics.py}, \file{src/compare.py}, \file{src/runlog.py}), the recurrent
+models and the hand-written attention and Transformer (\file{src/models/rnn.py},
+\file{src/models/attention.py}, \file{src/models/transformer.py}) with their experiment scripts and tests.
+For each I went through the code and the tests with the assistant before launching the runs, read the
+logs and checked the figures. The training loop and the area-2 experiments were joint work with Oriana,
+whose code I reviewed; her implementations are summarised here from her block notes and credited to her.
+

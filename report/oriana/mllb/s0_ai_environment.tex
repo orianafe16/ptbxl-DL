@@ -65,3 +65,21 @@ explain. Seven rules limited it:
 \end{enumerate}
 In my own blocks I re-read every line of code with the assistant's explanation of each technique before
 running it, because the oral defence asks about the theory and about specific lines.
+
+\subsection{Prompt strategy and multi-step interaction}
+
+Each conversation of the project opened with a short, fixed prompt that gave the assistant its scope and
+forced a plan before any code. The start prompt of my generative block, translated from Spanish:
+\begin{quote}\small\itshape
+You are the chat ``DL 13 $\cdot$ Generative (ECG-GPT)'' of the Deep Learning project (PTB-XL) of Oriana
+Ferraz and Mar\'ia Mart\'inez. Working folder: C:\textbackslash Users\textbackslash ori\textbackslash DL.
+Before anything else read CHATS\_DL.md (common protocol and card 13), DECISIONS.md, PLAN\_DL.md and
+HANDOFF.md. Then tell us in a few lines what you have understood, what is missing and where you start.
+Do not write code or documents until we confirm.
+\end{quote}
+From there a block went through the same steps: the assistant proposed the decisions with their course
+sources; we accepted or changed them and they were written to \texttt{docs/DECISIONS.md}; the assistant
+wrote the code and its tests; I ran the tests, a smoke run and the real runs and pasted the output back;
+the assistant analysed the logs and wrote the block note; and the conversation closed with the plan, the
+log of \texttt{docs/AI\_USAGE\_LOG.md} and our commit. When an output was wrong, the next prompt contained
+the error message or the file listing, never a guess (Appendix~\ref{app:ai-code}).

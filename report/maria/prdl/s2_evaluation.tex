@@ -17,7 +17,7 @@ binary cross-entropy with logits, averaged over the five classes and the batch: 
 independent yes/no question, which is what a multi-label task needs (a softmax would force the five
 probabilities to compete and sum to 1). Probabilities are obtained afterwards as
 $\sigma(\text{logit})$. The optimiser is Adam with learning rate $10^{-3}$, whose hyper-parameters
-``typically require little tuning'' \cite{kingma2015adam}; batch 64, at most 50 epochs, and early
+``typically require little tuning'' \cite[p.~1]{kingma2015adam}; batch 64, at most 50 epochs, and early
 stopping with a patience of 5 epochs on the validation macro AUROC, after which the weights of the best
 epoch are restored.
 
@@ -28,7 +28,7 @@ five classes. The AUROC is the probability that a randomly chosen positive recor
 a randomly chosen negative one, so it needs no threshold and does not change with the class prevalence.
 Averaging over classes (macro) gives HYP, the rarest class, the same weight as NORM. It is also the
 metric of the benchmark, ``obtained by averaging class-wise AUCs over all classes''
-\cite{strodthoff2021deep}, which makes a comparison possible (Section~\ref{sec:discussion}).
+\cite[p.~1522]{strodthoff2021deep}, which makes a comparison possible (Section~\ref{sec:discussion}).
 
 \paragraph{Macro F1.} As a secondary metric, which does depend on a decision, each class gets the
 threshold that maximises its F1 on the validation fold (grid 0.01 to 0.99); the same thresholds are
@@ -55,7 +55,9 @@ its predictions record by record, so any two runs can be compared afterwards.
 dropout). Every configuration was trained with three seeds (42, 43, 44), and a configuration is compared
 with its reference trained with the same seed. Tables report the mean and standard deviation over the
 seeds and in how many seeds the paired interval excludes 0 in each direction. A factor is said to change
-the result only when it does so consistently.
+the result only when it does so consistently, that is, in all three seeds; one or two seeds of three
+are reported as weak evidence. The bootstrap interval reflects the finite test set; the seeds reflect the
+randomness of training.
 
 \subsection{Selection and use of the test fold}
 

@@ -67,7 +67,9 @@ def format_number(value) -> str | None:
         text = f"{abs(value):.3f}"
     else:
         return None
-    return ("\\ensuremath{-}" + text) if value < 0 else text
+    # A negative value that rounds to zero is printed as 0.000, not -0.000.
+    negative = value < 0 and text.strip("0.{,}") != ""
+    return ("\\ensuremath{-}" + text) if negative else text
 
 
 def format_pct(value: float) -> str:

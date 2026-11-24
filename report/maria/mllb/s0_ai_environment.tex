@@ -41,25 +41,38 @@ Overleaf & Compilation of the reports & --- \\
 
 \subsection{How the assistant was kept under control}
 
-An assistant that writes whole pipelines makes it easy to accept results one cannot explain. The rules we
-followed:
-\begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
-  \item \textbf{Decisions before code.} Each block began with a written proposal (architecture, ablation
-        grid, seeds, selection rule, outputs). We accepted or changed it, it was written as a dated entry of
-        \texttt{docs/DECISIONS.md}, and only then was code written. A decision changes only with a new
-        dated entry.
-  \item \textbf{We execute, the assistant does not.} The assistant never trained on the real data. We ran
-        the tests, the smoke runs (\texttt{--fast}) and the real runs, and pasted the output back. No result
-        counts until one of us has run it; the runs of my blocks were executed by me.
-  \item \textbf{No number typed by hand.} Every number of the reports is a macro generated from the run logs
-        (Section~\ref{sec:code}).
-  \item \textbf{No claim without a checked quote.} Literature claims come only from quotes checked against
-        the PDFs; interpretations that no number supports are written as hypotheses.
-  \item \textbf{Every figure inspected} against the numbers it shows before it was accepted.
-  \item \textbf{Every write checked.} After older copies of files reached the folder several times, every
-        file written by the assistant is compared with the intended version before it is reported as written.
-  \item \textbf{One block per conversation.} The work was split into one conversation per block, which share
-        only the project folder; each closes with a block note, the updated plan and log, and our commit.
-\end{enumerate}
-For my blocks I went through every function with the assistant's explanation before running it, because
-the oral defence asks about the theory and about specific lines of the code.
+The risk of an assistant that writes complete pipelines is a result nobody can explain. Our safeguards, in
+the order in which they act:
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+  \item \textbf{Plan first.} No code was written for a block until its design (architecture, ablations,
+        seeds, selection rule, outputs) had been proposed, discussed and stored as a dated entry of
+        \texttt{docs/DECISIONS.md}; later changes are new dated entries.
+  \item \textbf{Only our runs count.} The assistant tested on synthetic data and never trained on PTB-XL;
+        tests, smoke runs (\texttt{--fast}) and real runs were launched by us, mine by me, and their output
+        was pasted back.
+  \item \textbf{Numbers and quotes are generated, not typed.} The report's numbers are macros built from the
+        logs (Section~\ref{sec:code}); literature enters only through quotes checked in the PDFs, and
+        unmeasured explanations are labelled as hypotheses.
+  \item \textbf{Outputs are inspected.} Each figure was compared with the numbers it shows, and each file the
+        assistant wrote was compared with its intended version in the folder (Appendix~\ref{app:ai-code}).
+  \item \textbf{Small contexts.} Every block had its own conversation, sharing only the folder, and ended with
+        a block note, the updated plan and log, and our commit.
+\end{itemize}
+Before running anything of my blocks I went through each function with the assistant's explanation,
+because the oral defence asks about the theory and about specific lines of the code.
+
+\subsection{Prompt strategy and multi-step interaction}
+
+Every conversation started from a fixed prompt that stated its role and its reading list and asked for a
+summary before any work. The start prompt of my recurrent block, translated from Spanish:
+\begin{quote}\small\itshape
+You are the chat ``DL 06 $\cdot$ RNN'' of the Deep Learning project (PTB-XL) of Oriana Ferraz and Mar\'ia
+Mart\'inez. Working folder: C:\textbackslash Users\textbackslash ori\textbackslash DL. Before anything else
+read CHATS\_DL.md (common protocol and card 06), DECISIONS.md, PLAN\_DL.md and HANDOFF.md. Then tell us in
+a few lines what you have understood, what is missing and where you start. Do not write code or documents
+until we confirm.
+\end{quote}
+The interaction then had several steps with a human check between each: design proposal, decision, code
+and tests, our runs, analysis of the logs, block note and closing. Corrections were asked for with the
+evidence (the traceback, the pasted output, the file sizes in the folder), so that the assistant fixed the
+observed error and not a guessed one.

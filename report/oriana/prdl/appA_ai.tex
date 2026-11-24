@@ -28,22 +28,33 @@ literature of this report the flow had four stages, each with its own role:
 \end{enumerate}
 No output of one AI tool was accepted as verification of another.
 
+\subsection*{Prompt strategy}
+
+Each tool received prompts written for its role. Perplexity was asked only for candidate papers, ``no
+quotes, no numbers, no invented identifiers''. NotebookLM was given one prompt per topic, always with the
+same preamble, which forces a verifiable answer and makes ``not found'' an acceptable one:
+\begin{quote}\small\itshape
+Answer only from the uploaded sources. For each numbered claim below, return: (a) a literal quote copied
+exactly, at most 40 words; (b) the source file name; (c) the page number printed on the PDF page (not the
+viewer page). If a source does not contain the claim, write NOT FOUND. Do not paraphrase, summarise,
+combine sources or add anything that is not in the text.
+\end{quote}
+All prompts are in \texttt{docs/literature/prompts.md}. The answers were then checked by the assistant
+against the PDFs, which is the stage where the errors below appeared.
+
 \subsection*{Errors detected (candidates for the AI Error Bounty)}
 
+Each assistant error of the project is documented in exactly one of our four reports. The four sheets
+below are the errors of the scientific assistants that concern my literature (dataset, benchmark, CNN and
+generative models):
 \begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
-  \item \textbf{Two versions of the benchmark paper mixed} (NotebookLM; Sheet P1).
-  \item \textbf{Wrong page numbers} in most NotebookLM answers, e.g.\ quotes from page 12 of the dataset
-        paper given as page 8. Pages were re-read from the PDFs.
-  \item \textbf{The article's licence quoted as the dataset's} (NotebookLM). The open-access notice of
-        the journal article is not a statement about the data; the dataset licence was taken from the
-        PhysioNet page.
-  \item \textbf{A frequency band offered as support for a duration} (NotebookLM; Sheet P2).
-  \item \textbf{A secondary source quoted for top-$k$ sampling} (NotebookLM): Holtzman et al.'s
-        description was offered although the primary source, Fan et al., was among the PDFs; the report
-        cites Fan et al.
-  \item \textbf{Statements attributed to documents that were not uploaded} (NotebookLM; Sheet P4).
-  \item \textbf{A labelling rule stated from memory as the benchmark's} (Claude; Sheet P3).
+  \item \textbf{Two versions of the benchmark paper mixed} (NotebookLM; B12; Sheet P1).
+  \item \textbf{A frequency band offered as support for a duration} (NotebookLM; B15; Sheet P2).
+  \item \textbf{A secondary source quoted for top-$k$ sampling} (NotebookLM; B16; Sheet P3).
+  \item \textbf{Statements attributed to documents that were not uploaded} (NotebookLM; B17; Sheet P4).
 \end{enumerate}
+The wrong page numbers, the article's licence quoted as the dataset's and the labelling rule stated from
+memory by Claude are documented in Mar\'ia's PRDL report.
 
 \subsection*{AI Error Bounty sheets}
 
@@ -54,6 +65,8 @@ No output of one AI tool was accepted as verification of another.
   \item[Faulty response] The values of Table~I of the journal version attributed to the arXiv~v1 file,
         to its ``Table~II'' and to its page~4, plus a row (``naive'') that only exists in v1; one entry
         rendered as a symmetric 95\,\% interval.
+  \item[Detected by] The assistant, when it compared the answer with the two PDF versions in the
+        checking stage that we added to the flow (D8).
   \item[Proof] Table~II of arXiv~v1 (page~4) prints different intervals for several models; Table~I of
         the journal version (p.~1523) has no ``naive'' row; the paper defines its bracket notation on
         p.~1522 \cite{strodthoff2021deep}.
@@ -71,6 +84,8 @@ No output of one AI tool was accepted as verification of another.
   \item[Prompt] A literal quote supporting the duration of the QRS complex (the reason first given for
         a CNN kernel of seven samples).
   \item[Faulty response] A quote giving the frequency band of the QRS complex.
+  \item[Detected by] The assistant, in the checking stage (D8): the claim and the quote were about
+        different quantities.
   \item[Proof] A band in hertz is not a duration in milliseconds; no PDF of the folder states the
         duration.
   \item[Correction] The report states only what is ours: a kernel of seven samples spans 70\,ms at
@@ -81,21 +96,21 @@ No output of one AI tool was accepted as verification of another.
         the claim with the quote, not only the quote with the PDF.
 \end{description}
 
-\subsubsection*{Sheet P3. A rule stated from memory as the benchmark's (Claude)}
+\subsubsection*{Sheet P3. A secondary source for top-$k$ sampling (NotebookLM)}
 \begin{description}[style=nextline,leftmargin=1.2em]
-  \item[Prompt] Which decisions were needed before writing the label code, and which option was best.
-  \item[Faulty response] Assign a superclass only for statements with likelihood above 0, ``which is
-        what the reference benchmark does'', stated without a source.
-  \item[Proof] The script distributed with PTB-XL assigns the superclass whatever the likelihood; with
-        that rule the class counts equal the table of the PhysioNet page, while the proposed rule loses
-        STTC records and the class-count test fails.
-  \item[Correction] Likelihood ignored (decision D2); the class counts are checked by a test against the
-        published table.
-  \item[Reproduction] \texttt{python -m src.prepare\_data} prints the counts; changing the loop of
-        \file{src/data.py::superclass_labels} to skip statements with likelihood 0 lowers STTC.
-  \item[Reflection] ``This is what the benchmark does'' is a factual claim and needs the same check as a
-        quote. The error was caught by the assistant itself when we asked it to analyse the options, before
-        any code depended on it.
+  \item[Prompt] Prompt N4 (generative models), claim 2: a literal quote for top-$k$ sampling, with file
+        and page.
+  \item[Faulty response] Holtzman et al.'s description of top-$k$ sampling, given as the source, although
+        the primary source, Fan et al.\ 2018, was among the uploaded PDFs.
+  \item[Detected by] The assistant, in the checking stage of the literature flow that we added (decision
+        D8); we re-read the corrected quote before using it.
+  \item[Proof] \texttt{P18-1082.pdf}, p.~893: ``We randomly sample from the k = 10 most likely candidates
+        from this distribution.''
+  \item[Correction] Section~\ref{sec:generative} cites Fan et al.\ for top-$k$ and Holtzman et al.\ only for
+        nucleus sampling (\texttt{quotes.md}, D3 and D4).
+  \item[Reproduction] Search ``top-k'' in \texttt{P18-1082.pdf} and in \texttt{1904.09751v2.pdf}.
+  \item[Reflection] A correct quote can still be attributed to the wrong paper; the primary source is part
+        of the claim.
 \end{description}
 
 \subsubsection*{Sheet P4. Statements from documents that were not uploaded (NotebookLM)}
@@ -104,6 +119,7 @@ No output of one AI tool was accepted as verification of another.
         the sources support them.
   \item[Faulty response] A list of ``statements'' that were the source definitions themselves, three of
         them marked ``NOT SUPPORTED'', although no first assignment had been uploaded.
+  \item[Detected by] The assistant, in the checking stage (D8); no first assignment had been uploaded.
   \item[Proof] No first assignment among the PDFs of the notebook; the ``statements'' repeat word for
         word the quotes of the previous answer.
   \item[Correction] The answer was not used. The learning-strategies annex (Appendix~\ref{app:strategies})
@@ -113,8 +129,8 @@ No output of one AI tool was accepted as verification of another.
         about.
 \end{description}
 
-These errors were found in the checking stage, by the assistant comparing each answer with the PDFs;
-the corrected quotes were then re-read by us before use.
+These errors were found in the checking stage that we added to the flow after the first round of answers:
+the assistant compared each answer with the PDFs, and we re-read the corrected quotes before using them.
 
 \subsection*{Reflection}
 

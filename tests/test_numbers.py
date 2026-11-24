@@ -33,6 +33,7 @@ def test_number_formats():
     assert f(7) == "7"
     assert f(0.87654) == "0.877"
     assert f(-0.0123) == "\\ensuremath{-}0.012"
+    assert f(-0.0004) == "0.000"          # no "-0.000"
     assert f(float("nan")) is None
     assert f(True) is None
     assert make_numbers.format_pct(0.2563) == "25.6\\%"
