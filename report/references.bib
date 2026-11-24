@@ -1,0 +1,249 @@
+% references.bib -- chat DL 09, 2026-11-24.
+% Every field was read from the first page of the PDF in contexto_DL/literature/
+% (no identifier typed from memory). Where the PDF does not show the venue, the
+% arXiv version that was quoted is cited, so page numbers in quotes.md match.
+% Entries marked "% [verify]" have no PDF in the folder yet: do not cite them
+% until the PDF is added and the quote is checked.
+
+% ---- A. PTB-XL and the benchmark ----
+@article{strodthoff2021deep,
+  author  = {Strodthoff, Nils and Wagner, Patrick and Schaeffter, Tobias and Samek, Wojciech},
+  title   = {Deep Learning for {ECG} Analysis: Benchmarks and Insights from {PTB-XL}},
+  journal = {IEEE Journal of Biomedical and Health Informatics},
+  volume  = {25},
+  number  = {5},
+  pages   = {1519--1528},
+  year    = {2021},
+  doi     = {10.1109/JBHI.2020.3022989},
+  eprint  = {2004.13701},
+  archivePrefix = {arXiv}
+}
+
+@article{wagner2020ptbxl,
+  author  = {Wagner, Patrick and Strodthoff, Nils and Bousseljot, Ralf-Dieter and Kreiseler, Dieter and Lunze, Fatima I. and Samek, Wojciech and Schaeffter, Tobias},
+  title   = {{PTB-XL}, a large publicly available electrocardiography dataset},
+  journal = {Scientific Data},
+  volume  = {7},
+  pages   = {154},
+  year    = {2020},
+  doi     = {10.1038/s41597-020-0495-6}
+}
+
+@article{wagner2009aha,
+  author  = {Wagner, Galen S. and Macfarlane, Peter and Wellens, Hein and Josephson, Mark and Gorgels, Anton and Mirvis, David M. and Pahlm, Olle and Surawicz, Borys and Kligfield, Paul and Childers, Rory and Gettes, Leonard S.},
+  title   = {{AHA/ACCF/HRS} Recommendations for the Standardization and Interpretation of the Electrocardiogram. {Part VI}: Acute Ischemia/Infarction},
+  journal = {Circulation},
+  volume  = {119},
+  pages   = {e262--e270},
+  year    = {2009},
+  doi     = {10.1161/CIRCULATIONAHA.108.191098}
+}
+
+% ---- B. Architectures and training ----
+@inproceedings{kingma2015adam,
+  author    = {Kingma, Diederik P. and Ba, Jimmy Lei},
+  title     = {Adam: A Method for Stochastic Optimization},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2015},
+  eprint    = {1412.6980},
+  archivePrefix = {arXiv}
+}
+
+@article{srivastava2014dropout,
+  author  = {Srivastava, Nitish and Hinton, Geoffrey and Krizhevsky, Alex and Sutskever, Ilya and Salakhutdinov, Ruslan},
+  title   = {Dropout: A Simple Way to Prevent Neural Networks from Overfitting},
+  journal = {Journal of Machine Learning Research},
+  volume  = {15},
+  pages   = {1929--1958},
+  year    = {2014}
+}
+
+@misc{ioffe2015batch,
+  author = {Ioffe, Sergey and Szegedy, Christian},
+  title  = {Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift},
+  year   = {2015},
+  eprint = {1502.03167},
+  archivePrefix = {arXiv}
+}
+
+@misc{he2016deep,
+  author = {He, Kaiming and Zhang, Xiangyu and Ren, Shaoqing and Sun, Jian},
+  title  = {Deep Residual Learning for Image Recognition},
+  year   = {2015},
+  eprint = {1512.03385},
+  archivePrefix = {arXiv}
+}
+
+@misc{zhou2016learning,
+  author = {Zhou, Bolei and Khosla, Aditya and Lapedriza, Agata and Oliva, Aude and Torralba, Antonio},
+  title  = {Learning Deep Features for Discriminative Localization},
+  year   = {2015},
+  eprint = {1512.04150},
+  archivePrefix = {arXiv}
+}
+
+@misc{pascanu2013difficulty,
+  author = {Pascanu, Razvan and Mikolov, Tomas and Bengio, Yoshua},
+  title  = {On the difficulty of training Recurrent Neural Networks},
+  year   = {2013},
+  eprint = {1211.5063},
+  archivePrefix = {arXiv}
+}
+
+@article{greff2017lstm,
+  author  = {Greff, Klaus and Srivastava, Rupesh K. and Koutn{\'\i}k, Jan and Steunebrink, Bas R. and Schmidhuber, J{\"u}rgen},
+  title   = {{LSTM}: A Search Space Odyssey},
+  journal = {IEEE Transactions on Neural Networks and Learning Systems},
+  year    = {2017},
+  doi     = {10.1109/TNNLS.2016.2582924},
+  eprint  = {1503.04069},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{cho2014learning,
+  author    = {Cho, Kyunghyun and van Merri{\"e}nboer, Bart and Gulcehre, Caglar and Bahdanau, Dzmitry and Bougares, Fethi and Schwenk, Holger and Bengio, Yoshua},
+  title     = {Learning Phrase Representations using {RNN} Encoder--Decoder for Statistical Machine Translation},
+  booktitle = {Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  pages     = {1724--1734},
+  year      = {2014}
+}
+
+@inproceedings{bahdanau2015neural,
+  author    = {Bahdanau, Dzmitry and Cho, KyungHyun and Bengio, Yoshua},
+  title     = {Neural Machine Translation by Jointly Learning to Align and Translate},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2015},
+  eprint    = {1409.0473},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{vaswani2017attention,
+  author    = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N. and Kaiser, {\L}ukasz and Polosukhin, Illia},
+  title     = {Attention Is All You Need},
+  booktitle = {31st Conference on Neural Information Processing Systems (NIPS 2017)},
+  year      = {2017},
+  eprint    = {1706.03762},
+  archivePrefix = {arXiv}
+}
+
+@article{adam2025comparative,
+  author  = {{\'A}d{\'a}m, Norbert and Val'ko, D{\'a}vid and Balogh, Zolt{\'a}n and Mado{\v s}, Branislav and Hurtuk, J{\'a}n},
+  title   = {Comparative evaluation of filtration techniques for {ECG} signal denoising with emphasis on stationary wavelet transform},
+  journal = {Scientific Reports},
+  year    = {2025},
+  doi     = {10.1038/s41598-025-26476-1}
+}
+
+% ---- C. Learning strategies ----
+@misc{radford2021learning,
+  author = {Radford, Alec and Kim, Jong Wook and Hallacy, Chris and Ramesh, Aditya and Goh, Gabriel and Agarwal, Sandhini and Sastry, Girish and Askell, Amanda and Mishkin, Pamela and Clark, Jack and Krueger, Gretchen and Sutskever, Ilya},
+  title  = {Learning Transferable Visual Models From Natural Language Supervision},
+  year   = {2021},
+  eprint = {2103.00020},
+  archivePrefix = {arXiv}
+}
+
+@misc{mehari2022self,
+  author = {Mehari, Temesgen and Strodthoff, Nils},
+  title  = {Self-supervised representation learning from 12-lead {ECG} data},
+  year   = {2022},
+  eprint = {2103.12676},
+  archivePrefix = {arXiv}
+}
+
+@misc{soltanieh2022analysis,
+  author = {Soltanieh, Sahar and Etemad, Ali and Hashemi, Javad},
+  title  = {Analysis of Augmentations for Contrastive {ECG} Representation Learning},
+  year   = {2022},
+  eprint = {2206.07656},
+  archivePrefix = {arXiv}
+}
+
+@misc{soltanieh2023indistribution,
+  author = {Soltanieh, Sahar and Hashemi, Javad and Etemad, Ali},
+  title  = {In-Distribution and Out-of-Distribution Self-supervised {ECG} Representation Learning for Arrhythmia Detection},
+  year   = {2024},
+  eprint = {2304.06427},
+  archivePrefix = {arXiv}
+}
+
+@misc{monka2022survey,
+  author = {Monka, Sebastian and Halilaj, Lavdim and Rettinger, Achim},
+  title  = {A Survey on Visual Transfer Learning using Knowledge Graphs},
+  year   = {2022},
+  eprint = {2201.11794},
+  archivePrefix = {arXiv}
+}
+
+% [verify] PDF of arXiv 2005.14165 not in contexto_DL/literature/
+% @misc{brown2020language, title = {Language Models are Few-Shot Learners}, year = {2020}, eprint = {2005.14165}}
+
+% ---- D. Generative autoregressive models ----
+@techreport{radford2018improving,
+  author      = {Radford, Alec and Narasimhan, Karthik and Salimans, Tim and Sutskever, Ilya},
+  title       = {Improving Language Understanding by Generative Pre-Training},
+  institution = {OpenAI},
+  year        = {2018}
+}
+
+@techreport{radford2019language,
+  author      = {Radford, Alec and Wu, Jeffrey and Child, Rewon and Luan, David and Amodei, Dario and Sutskever, Ilya},
+  title       = {Language Models are Unsupervised Multitask Learners},
+  institution = {OpenAI},
+  year        = {2019}
+}
+
+@inproceedings{fan2018hierarchical,
+  author    = {Fan, Angela and Lewis, Mike and Dauphin, Yann},
+  title     = {Hierarchical Neural Story Generation},
+  booktitle = {Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Long Papers)},
+  pages     = {889--898},
+  year      = {2018}
+}
+
+@inproceedings{holtzman2020curious,
+  author    = {Holtzman, Ari and Buys, Jan and Du, Li and Forbes, Maxwell and Choi, Yejin},
+  title     = {The Curious Case of Neural Text Degeneration},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2020},
+  eprint    = {1904.09751},
+  archivePrefix = {arXiv}
+}
+
+@misc{haviv2022transformer,
+  author = {Haviv, Adi and Ram, Ori and Press, Ofir and Izsak, Peter and Levy, Omer},
+  title  = {Transformer Language Models without Positional Encodings Still Learn Positional Information},
+  year   = {2022},
+  eprint = {2203.16634},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{han2025ecgbyte,
+  author    = {Han, William Jongwon and Duan, Chaojing and Rosenberg, Michael A. and Liu, Emerson and Zhao, Ding},
+  title     = {{ECG-Byte}: A Tokenizer for End-to-End Generative Electrocardiogram Language Modeling},
+  booktitle = {Proceedings of Machine Learning Research (Machine Learning for Healthcare)},
+  volume    = {298},
+  pages     = {1--38},
+  year      = {2025},
+  eprint    = {2412.14373},
+  archivePrefix = {arXiv}
+}
+
+@misc{yang2025heartllm,
+  author = {Yang, Jinning and Sun, Wenjie and Shi, Wen},
+  title  = {{HeartLLM}: Discretized {ECG} Tokenization for {LLM}-Based Diagnostic Reasoning},
+  year   = {2026},
+  eprint = {2508.15338},
+  archivePrefix = {arXiv}
+}
+
+@techreport{chelba2017ngram,
+  author      = {Chelba, Ciprian and Norouzi, Mohammad and Bengio, Samy},
+  title       = {N-gram Language Modeling using Recurrent Neural Network Estimation},
+  institution = {Google},
+  type        = {Google Tech Report},
+  year        = {2017}, % [verify] year not printed on the PDF
+}
+
+% [verify] PDF of arXiv 1609.03499 (WaveNet) not in contexto_DL/literature/
+% [verify] PDF of arXiv 2303.09395 (Text-to-ECG) not in contexto_DL/literature/

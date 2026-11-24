@@ -335,7 +335,15 @@
     "test_diff_mean_zeroshot_vs_trivial": -0.19131692851595994,
     "test_n_better_zeroshot_vs_trivial": 0,
     "test_n_worse_zeroshot_vs_trivial": 1,
-    "test_n_compared_zeroshot_vs_trivial": 1
+    "test_n_compared_zeroshot_vs_trivial": 1,
+    "published_strodthoff_resnet1d_wang": 0.93,
+    "published_strodthoff_xresnet1d101": 0.928,
+    "published_strodthoff_lstm": 0.927,
+    "published_strodthoff_fcn_wang": 0.925,
+    "published_strodthoff_inception1d": 0.921,
+    "published_strodthoff_lstm_bidir": 0.921,
+    "published_strodthoff_wavelet_nn": 0.874,
+    "published_strodthoff_ensemble": 0.934
   },
   "seeds": [
     42,
@@ -593,10 +601,99 @@
       "b": "trivial"
     }
   ],
-  "published": [],
+  "published": [
+    {
+      "key": "strodthoff_resnet1d_wang",
+      "label": "resnet1d\\_wang, 12 leads",
+      "value": 0.93,
+      "metric": "macro AUROC (test)",
+      "setting": "PTB-XL, experiment super-diag. (5 superclasses; only records with at least one superclass label), 12 leads, 100 Hz, train folds 1-8, validation fold 9, test fold 10; macro AUC on the test fold; one trained model, point estimate on the whole test set, 95% bootstrap interval as maximal absolute deviation in parentheses; 2.5 s random windows in training, element-wise maximum over half-overlapping windows at test time; AdamW with 1-cycle schedule",
+      "source": "strodthoff2021deep",
+      "file": "contexto_DL/literature/Deep_Learning_for_ECG_Analysis_Benchmarks_and_Insights_from_PTB-XL.pdf",
+      "page": "1523 (PDF page 5), Table I",
+      "quote": "Table I, row \"resnet1d_wang\", column \"super-diag.\": \".930(05)\""
+    },
+    {
+      "key": "strodthoff_xresnet1d101",
+      "label": "xresnet1d101, 12 leads",
+      "value": 0.928,
+      "metric": "macro AUROC (test)",
+      "setting": "PTB-XL, experiment super-diag. (5 superclasses; only records with at least one superclass label), 12 leads, 100 Hz, train folds 1-8, validation fold 9, test fold 10; macro AUC on the test fold; one trained model, point estimate on the whole test set, 95% bootstrap interval as maximal absolute deviation in parentheses; 2.5 s random windows in training, element-wise maximum over half-overlapping windows at test time; AdamW with 1-cycle schedule",
+      "source": "strodthoff2021deep",
+      "file": "contexto_DL/literature/Deep_Learning_for_ECG_Analysis_Benchmarks_and_Insights_from_PTB-XL.pdf",
+      "page": "1523 (PDF page 5), Table I",
+      "quote": "Table I, row \"xresnet1d101\", column \"super-diag.\": \".928(05)\""
+    },
+    {
+      "key": "strodthoff_lstm",
+      "label": "lstm, 12 leads",
+      "value": 0.927,
+      "metric": "macro AUROC (test)",
+      "setting": "PTB-XL, experiment super-diag. (5 superclasses; only records with at least one superclass label), 12 leads, 100 Hz, train folds 1-8, validation fold 9, test fold 10; macro AUC on the test fold; one trained model, point estimate on the whole test set, 95% bootstrap interval as maximal absolute deviation in parentheses; 2.5 s random windows in training, element-wise maximum over half-overlapping windows at test time; AdamW with 1-cycle schedule",
+      "source": "strodthoff2021deep",
+      "file": "contexto_DL/literature/Deep_Learning_for_ECG_Analysis_Benchmarks_and_Insights_from_PTB-XL.pdf",
+      "page": "1523 (PDF page 5), Table I",
+      "quote": "Table I, row \"lstm\", column \"super-diag.\": \".927(05)\""
+    },
+    {
+      "key": "strodthoff_fcn_wang",
+      "label": "fcn\\_wang, 12 leads",
+      "value": 0.925,
+      "metric": "macro AUROC (test)",
+      "setting": "PTB-XL, experiment super-diag. (5 superclasses; only records with at least one superclass label), 12 leads, 100 Hz, train folds 1-8, validation fold 9, test fold 10; macro AUC on the test fold; one trained model, point estimate on the whole test set, 95% bootstrap interval as maximal absolute deviation in parentheses; 2.5 s random windows in training, element-wise maximum over half-overlapping windows at test time; AdamW with 1-cycle schedule",
+      "source": "strodthoff2021deep",
+      "file": "contexto_DL/literature/Deep_Learning_for_ECG_Analysis_Benchmarks_and_Insights_from_PTB-XL.pdf",
+      "page": "1523 (PDF page 5), Table I",
+      "quote": "Table I, row \"fcn_wang\", column \"super-diag.\": \".925(06)\""
+    },
+    {
+      "key": "strodthoff_inception1d",
+      "label": "inception1d, 12 leads",
+      "value": 0.921,
+      "metric": "macro AUROC (test)",
+      "setting": "PTB-XL, experiment super-diag. (5 superclasses; only records with at least one superclass label), 12 leads, 100 Hz, train folds 1-8, validation fold 9, test fold 10; macro AUC on the test fold; one trained model, point estimate on the whole test set, 95% bootstrap interval as maximal absolute deviation in parentheses; 2.5 s random windows in training, element-wise maximum over half-overlapping windows at test time; AdamW with 1-cycle schedule",
+      "source": "strodthoff2021deep",
+      "file": "contexto_DL/literature/Deep_Learning_for_ECG_Analysis_Benchmarks_and_Insights_from_PTB-XL.pdf",
+      "page": "1523 (PDF page 5), Table I",
+      "quote": "Table I, row \"inception1d\", column \"super-diag.\": \".921(06)\""
+    },
+    {
+      "key": "strodthoff_lstm_bidir",
+      "label": "lstm\\_bidir, 12 leads",
+      "value": 0.921,
+      "metric": "macro AUROC (test)",
+      "setting": "PTB-XL, experiment super-diag. (5 superclasses; only records with at least one superclass label), 12 leads, 100 Hz, train folds 1-8, validation fold 9, test fold 10; macro AUC on the test fold; one trained model, point estimate on the whole test set, 95% bootstrap interval as maximal absolute deviation in parentheses; 2.5 s random windows in training, element-wise maximum over half-overlapping windows at test time; AdamW with 1-cycle schedule",
+      "source": "strodthoff2021deep",
+      "file": "contexto_DL/literature/Deep_Learning_for_ECG_Analysis_Benchmarks_and_Insights_from_PTB-XL.pdf",
+      "page": "1523 (PDF page 5), Table I",
+      "quote": "Table I, row \"lstm_bidir\", column \"super-diag.\": \".921(06)\""
+    },
+    {
+      "key": "strodthoff_wavelet_nn",
+      "label": "Wavelet+NN, 12 leads",
+      "value": 0.874,
+      "metric": "macro AUROC (test)",
+      "setting": "PTB-XL, experiment super-diag. (5 superclasses; only records with at least one superclass label), 12 leads, 100 Hz, train folds 1-8, validation fold 9, test fold 10; macro AUC on the test fold; one trained model, point estimate on the whole test set, 95% bootstrap interval as maximal absolute deviation in parentheses; 2.5 s random windows in training, element-wise maximum over half-overlapping windows at test time; AdamW with 1-cycle schedule",
+      "source": "strodthoff2021deep",
+      "file": "contexto_DL/literature/Deep_Learning_for_ECG_Analysis_Benchmarks_and_Insights_from_PTB-XL.pdf",
+      "page": "1523 (PDF page 5), Table I",
+      "quote": "Table I, row \"Wavelet+NN\", column \"super-diag.\": \".874(07)\""
+    },
+    {
+      "key": "strodthoff_ensemble",
+      "label": "ensemble, 12 leads",
+      "value": 0.934,
+      "metric": "macro AUROC (test)",
+      "setting": "PTB-XL, experiment super-diag. (5 superclasses; only records with at least one superclass label), 12 leads, 100 Hz, train folds 1-8, validation fold 9, test fold 10; macro AUC on the test fold; one trained model, point estimate on the whole test set, 95% bootstrap interval as maximal absolute deviation in parentheses; 2.5 s random windows in training, element-wise maximum over half-overlapping windows at test time; AdamW with 1-cycle schedule",
+      "source": "strodthoff2021deep",
+      "file": "contexto_DL/literature/Deep_Learning_for_ECG_Analysis_Benchmarks_and_Insights_from_PTB-XL.pdf",
+      "page": "1523 (PDF page 5), Table I",
+      "quote": "Table I, row \"ensemble\", column \"super-diag.\": \".934(05)\""
+    }
+  ],
   "meta": {
-    "created": "2026-11-23T00:18:43",
-    "git_commit": "5f8d0ac",
+    "created": "2026-11-24T16:35:23",
+    "git_commit": "2047846",
     "git_dirty": false,
     "python": "3.12.10",
     "torch": "2.14.1+cu126",

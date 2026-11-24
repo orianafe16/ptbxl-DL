@@ -123,6 +123,13 @@ Reference points to verify through that flow before citing any number:
 - Wagner et al. 2020, PTB-XL dataset paper.
 - Strodthoff et al. 2021, "Deep Learning for ECG Analysis: Benchmarks and Insights from PTB-XL" (arXiv 2004.13701) and its repository `helme/ecg_ptbxl_benchmarking`.
 
+**2026-11-24 (OF + MM, chat DL 09):**
+- A fourth stage is added to the flow: the assistant checks every NotebookLM quote verbatim, page by page, against the text of the PDF in `contexto_DL/literature/`; only checked quotes (`docs/literature/quotes.md`) are used. Reason: six NotebookLM errors in the first round (AI Error Bounty B12-B17).
+- The benchmark figures are taken from the journal version (IEEE JBHI 25(5), 2021, Table I, p. 1523), not from arXiv v1, whose intervals differ; the bibliography cites the version that was quoted, so pages match.
+- Course materials (slides, weekly summaries) may support a statement and are cited as course materials, never as the primary paper they mention.
+- A statement without a checked quote is reworded, stated as a hypothesis or left out; it is not kept as `[verify]` in a delivered report. Closure of every `[verify]` of the project: `quotes.md`, section G.
+- T18: the first assignments (class presentations on learning strategies) are not available; T18 becomes the cited material for the learning-strategies annex asked for in the weekly summary of 9/10 (`docs/literature/learning_strategies.md`); each author writes her annex in her report chat.
+
 ## D9. Reports and authorship — DECIDED (2026-11-14)
 
 - Four documents: PRDL-DL and MLLB-DL for Oriana, PRDL-DL and MLLB-DL for María, as the course rule requires.
@@ -564,9 +571,8 @@ Proposed by the assistant in chat DL 08 and accepted by OF and MM, who asked for
 | # | Item | Blocks |
 |---|---|---|
 | O5 | Weekly summary of 20/11 and the "simple autoregressive LLM-style model" notebook it mentions are not yet in `contexto_DL/`. D19 was built on the class notebooks that are there (`Sampling_in_Text_Generation.ipynb`, `TO_DO_MLLB_Keras_RNN_TextGeneration.ipynb`); add the summary when available and compare | Chat DL 13 (reference implementation) |
-| O7 | Published results for the final comparison (T15, D20): only figures quoted literally by chat DL 09, written in `report/published.json` with file, page and quote. Until then the comparison table has no published rows | Chat DL 09 → chat DL 08 |
 
-Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository under Oriana's account, 2026-11-20). O3 (records without superclass left out; D12, 2026-11-20). O1 (pretext task: autoregressive next-sample prediction, D7 and D13, 2026-11-20). O6 (T23 done by OF, reviewed by MM; D19, 2026-11-21).
+Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository under Oriana's account, 2026-11-20). O3 (records without superclass left out; D12, 2026-11-20). O1 (pretext task: autoregressive next-sample prediction, D7 and D13, 2026-11-20). O6 (T23 done by OF, reviewed by MM; D19, 2026-11-21). O7 (published results: `report/published.json`, 8 rows of Table I of Strodthoff et al., journal version; final table regenerated on Oriana's laptop; 2026-11-24).
 
 ## Change log
 
@@ -589,3 +595,4 @@ Closed: O2 (licence and folds verified on PhysioNet, 2026-11-14). O4 (repository
 - 2026-11-22: D19 note after the runs: 50-epoch budget reached, median epoch time, smaller generation batches for long contexts. Decided by OF and MM in chat DL 13.
 - 2026-11-22: Learning strategies and final comparison: transfer from the ECG-GPT (scratch, linear probe, fine-tuning; 100 % and 10 % of the labels drawn by patient; batch of 32 records; learning-rate ablations; probe study on every generator), 12 leads vs lead II on the final model of each family, zero-shot CLIP on CIFAR-100 and ECG images, final comparison table and the rule for published results (D20). O7 opened. Accepted by OF and MM in chat DL 08.
 - 2026-11-23: D20 note after the runs: runs before the commit (code checked unchanged, committed as 1b7b07f), zero-shot fix (B10) and QuickGELU model, 10 % probe limited by the epoch budget, probe-study finding. Decided by OF and MM in chat DL 08.
+- 2026-11-24: D8 note (checking stage, journal version of the benchmark, course materials as sources, closure rule for `[verify]`, T18 without the first assignments); O7 closed. Decided by OF and MM in chat DL 09.

@@ -36,6 +36,9 @@ Source for the AI appendix of the four reports. Append only. Lives in `ptbxl-dl/
 | 2026-11-22 | DL 08 Learning strategies and comparison | OF + MM | Read the project files, the transfer-learning and CLIP course material; propose and decide the block ("sí a todo, adelante con lo más adecuado", full final version at once) | Decision D20 (T13: scratch / linear probe / fine-tuning of the ECG-GPT `vocab2560` with 100 % and 10 % of the labels drawn by patient, batch of 32 records, learning-rate ablations, probe study on every generator; T14: final model of each family on lead II; T24: CLIP ViT-B/32 zero-shot on CIFAR-100 and on ECG images with prompts fixed in advance; T15: final comparison, published results only from literal quotes) with course sources (pytorch_transfer_learning_colab and BERT notebooks for the learning rates, Interacting_with_CLIP, weekly summary 9/10); activation memory of the batch measured on the CPU with the real checkpoint (about 1.1 GB for 32 records) | Accepted by OF and MM before any run |
 | 2026-11-22 | DL 08 Learning strategies and comparison | OF + MM | Write the code of T13, T14, T15 and T24 and its tests | `src/transfer.py`, `src/transfer_experiments.py`, `src/leads_experiments.py`, `src/zero_shot.py`, `src/comparison.py`, `tests/test_strategies.py` (22 tests, then 23), `notebooks/08_zero_shot_clip.ipynb`, README and requirements updates; full suite run by the assistant on a clean CPU copy (306 passed, 5 skipped without the cache); real checkpoint loaded and the real 12-lead final logs read before delivery; open_clip API checked with an untrained ViT-B/32; tables compiled with pdfLaTeX (one unescaped underscore fixed) and figures inspected on synthetic data | Executed on Oriana's laptop by OF and MM: `pytest`, `estimate`, the four `--fast` steps, `transfer run --group main`, `leads all`, `transfer run`, the reports, `make_numbers.py`; the runs were made before the commit (D20 note); zero-shot failed (B10), fixed and run again at 5f8d0ac |
 | 2026-11-23 | DL 08 Learning strategies and comparison | OF + MM | Analyse the results; write the block note | Logs and summaries read from the folder; commits and `git_dirty` checked in the logs; `src/` checked unchanged on the laptop (size and modification time) to document the uncommitted runs; figures inspected; dated D20 note; `docs/blocks/08_learning_strategies_comparison.md` (finding: the generator selected for generation gives the worst frozen features) | Block note and results read by OF and MM |
+| 2026-11-23 | DL 00 Coordination | OF + MM | Check the closing of chat DL 08, update the chat cards and write the start prompt of chat DL 09 | Commits and summary logs checked on the laptop; card 08 closed except O7; notes passed to cards 09, 10, 11; format of `report/published.json` taken from `src/comparison.py`; chat 09 prompt | [to confirm by OF and MM] |
+| 2026-11-23 | DL 09 Literature | OF + MM | Read the project files; design the literature flow with one prompt per stage | `docs/literature/prompts.md`: four Perplexity prompts (candidate papers, no quotes, no numbers) and five NotebookLM prompts (literal quote, file and printed page, or NOT FOUND); a checking stage by the assistant added to D8; the GPT-3 paper flagged as Brown et al. 2020 (the course cites it starting with Mann) | Perplexity and NotebookLM run by OF (T16) and MM (T17); PDFs downloaded by hand into `contexto_DL/literature/` (32 files) |
+| 2026-11-24 | DL 09 Literature | OF + MM | Check the NotebookLM answers N1-N5 against the PDFs; write the published results for O7, the quotes, the bibliography and the closure of every `[verify]` | Every quote searched verbatim, page by page, in the text of its PDF (pdftotext, script in the assistant's workspace); Table I of the journal version of Strodthoff et al. read from the rendered page (it is an image) and compared with arXiv v1; six NotebookLM errors found (B12-B17); further quotes taken directly from the PDFs (Vaswani, Bahdanau, He, Cho, Fan, AHA 2009, ECG-Byte, HeartLLM) and from the course material (Transformer Part II slide 36, RNN slide 64, summary 9/10), all checked the same way; `report/published.json` (8 rows, validated with the rule of `src/comparison.py`), `docs/literature/quotes.md` (sections A-G, closure table), `report/references.bib` (27 entries, fields read from each PDF's first page), `docs/literature/learning_strategies.md` (annex material, T18 without the first assignments) | OF ran `python -m src.comparison report` and `python report/make_numbers.py` on Oriana's laptop (340 numbers, 18 models; 4,484 macros from 11 logs); the assistant read `comparison_final.tex`, `comparison_summary.json` and `numbers.tex` from the folder (8 published rows and macros present); T16 done by OF and reviewed by MM, T17 done by MM and reviewed by OF, T18 each her own with cross review |
 
 ## 2. AI Error Bounty candidates
 
@@ -141,6 +144,54 @@ Template:
 - Correction: copied again after waiting a few seconds; the folder copies were compared byte by byte with the intended files before OF and MM were told to run anything or that the file was written.
 - Reproduction (how to check it again): compare the size or content of a copied file in the folder with the assistant's file right after the copy.
 
+### B12 — NotebookLM mixed two versions of the benchmark paper (tool: NotebookLM)
+- Date, chat, detected by: 2026-11-24, DL 09 Literature; detected by the assistant when checking the NotebookLM answer N1 against the PDFs.
+- Prompt: N1 of `docs/literature/prompts.md`, claim 1 (macro AUROC of every model in the superclass task, with value, interval and table).
+- Wrong answer: values of Table I of the journal version (IEEE JBHI 2021) attributed to the arXiv v1 file, its "TABLE II" caption and page 4, plus a `naive` row that exists only in v1; ".930(05)" rendered as a symmetric 95 % CI "0.930 ± 0.005".
+- Evidence that it was wrong: v1, PDF page 4, prints different intervals for several models (e.g. resnet1d_wang .930(06), Wavelet+NN .874(08)); the journal Table I (p. 1523) has no `naive` row; the paper defines the notation as the maximal absolute deviation between point estimate and bootstrap bounds (p. 1522).
+- Correction: `report/published.json` takes the values from the journal Table I, read by the assistant from the rendered page, with file, printed page and cell.
+- Reproduction (how to check it again): compare Table II of `2004.13701v1.pdf` (p. 4) with Table I of the journal PDF (p. 1523).
+
+### B13 — NotebookLM gave wrong page numbers (tool: NotebookLM)
+- Date, chat, detected by: 2026-11-24, DL 09 Literature; detected by the assistant.
+- Prompt: preamble of every NotebookLM prompt ("the page number printed on the PDF page (not the viewer page)").
+- Wrong answer: wrong pages in most answers, e.g. Wagner et al. 2020: 2, 8, 4, 12 for quotes on pages 1, 12-13, 6, 15; Srivastava et al.: 1941 for a quote on 1955; CLIP: 4 and 22 for 6 and 11.
+- Evidence that it was wrong: each quote searched in the text of the PDF, page by page; the printed page read on that page.
+- Correction: pages in `quotes.md` taken from the PDF, printed page first.
+- Reproduction (how to check it again): open each PDF at the page given in `quotes.md`.
+
+### B14 — NotebookLM quoted the article's licence as the dataset's (tool: NotebookLM)
+- Date, chat, detected by: 2026-11-24, DL 09 Literature; detected by the assistant.
+- Prompt: N1, claim 7 (licence of the dataset).
+- Wrong answer: "This article is licensed under a Creative Commons Attribution 4.0 International License ..." given as the licence of PTB-XL.
+- Evidence that it was wrong: the sentence is the open-access notice of the Scientific Data article (p. 15), not a statement about the data.
+- Correction: not used; the dataset licence stays as confirmed on PhysioNet on 2026-11-14.
+- Reproduction (how to check it again): `s41597-020-0495-6.pdf`, p. 15.
+
+### B15 — NotebookLM supported a QRS duration with a frequency band (tool: NotebookLM)
+- Date, chat, detected by: 2026-11-24, DL 09 Literature; detected by the assistant.
+- Prompt: N2, claim 8 (QRS duration; low-frequency content of the ECG).
+- Wrong answer: a quote giving the QRS complex as "10–50 Hz" offered for the duration claim.
+- Evidence that it was wrong: a frequency band is not a duration; no source in the folder gives the duration.
+- Correction: the D16 reason is reworded to "kernel 7 = 70 ms at 100 Hz" (`quotes.md` B9); the quote is used only for the frequency claim (B10, partial).
+- Reproduction (how to check it again): `s41598-025-26476-1.pdf`, p. 12.
+
+### B16 — NotebookLM attributed top-k sampling to a secondary source (tool: NotebookLM)
+- Date, chat, detected by: 2026-11-24, DL 09 Literature; detected by the assistant.
+- Prompt: N4, claim 2 (top-k sampling).
+- Wrong answer: Holtzman et al.'s description of top-k quoted as the source, although Fan et al. 2018 (the primary source) was in the notebook.
+- Evidence that it was wrong: `P18-1082.pdf`, p. 893: "We randomly sample from the k = 10 most likely candidates from this distribution."
+- Correction: `quotes.md` D3 cites Fan et al.
+- Reproduction (how to check it again): search "top-k" in both PDFs.
+
+### B17 — NotebookLM listed statements that are not in any uploaded assignment (tool: NotebookLM)
+- Date, chat, detected by: 2026-11-24, DL 09 Literature; detected by the assistant.
+- Prompt: N5 (statements of the uploaded first assignment and their support).
+- Wrong answer: the "statements" were the source definitions themselves, and three "NOT SUPPORTED" statements could not be traced to any uploaded assignment (none was in the folder).
+- Evidence that it was wrong: no first assignment among the PDFs in `contexto_DL/literature/`; the "statements" repeat the quotes of N3 word for word.
+- Correction: N5 not used; T18 built from the checked quotes (`learning_strategies.md`) by decision of OF and MM.
+- Reproduction (how to check it again): compare the N5 answer with the N3 answer.
+
 ## 3. Notes on unverified assistant statements
 
 Statements the assistant flagged itself as unverified, and their outcome.
@@ -188,3 +239,5 @@ Statements the assistant flagged itself as unverified, and their outcome.
 | 2026-11-23 | Fewer bits per sample give worse probe features because of the 2560-level embedding or the LSTM's summarising state (block note 08) | Hypotheses of the assistant, not tested; the correlation itself is measured |
 | 2026-11-23 | Lead II alone misses MI and HYP information visible in other leads (block note 08) | Hypothesis of the assistant; per-class numbers in `comparison_per_class.tex`; clinical part [verify], chat 09 |
 | 2026-11-23 | CLIP fails on ECG diagnosis because its training pairs do not tie ECG traces to diagnoses; its above-chance NORM and STTC scores come from simple visual properties (block note 08) | Hypothesis; CLIP's training data [verify], chat 09 |
+
+**2026-11-24, chat DL 09:** every `[verify]` of the table above, of the block notes and of `HANDOFF.md` is closed in `docs/literature/quotes.md`, section G: with a checked quote (sex coding, folds 9-10, records without superclass, dropout, batch norm, Greff, Bahdanau, Vaswani, He, Zhou, GPT, top-k, nucleus, Haviv, ECG autoregressive models, CLIP's training data, perplexity), with a course source (Pre-LN, Transformer Part II slide 36), or by rewording or leaving the statement out (Adam vs SGD, QRS duration, Mikolov 2010, mu-law, HYP leads, NORM with conduction findings). The explanations listed above as hypotheses remain hypotheses; the CLIP failure stays a hypothesis because the source does not say whether ECG images with diagnoses are in its training data.

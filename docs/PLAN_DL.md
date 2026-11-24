@@ -4,7 +4,7 @@ Team: Oriana Ferraz De Jesus (OF), María Martínez García-Taheño (MM).
 Dataset: PTB-XL 1.0.3, 5 diagnostic superclasses (see `DECISIONS.md`).
 Working mode: both work together on Oriana's laptop. The assistant writes code, figures and report drafts and explains each technique; OF/MM execute, check and decide. No result counts until one of us has run it.
 
-Last update: 2026-11-23.
+Last update: 2026-11-24.
 
 ## Roles
 
@@ -38,10 +38,10 @@ Status: `todo` / `doing` / `done`. "Done by" and "Reviewed by" are filled in onl
 | T12 | Self-attention step by step (single layer, attention maps) and Transformer + ablations | MM | OF | done | MM (drafted with the assistant) | OF | 2026-11-21 |
 | T13 | Transfer learning: ECG-GPT (T23) reused on the 5 superclasses, scratch vs frozen vs fine-tuning, 10% and 100% labels | OF + MM | — | done | OF + MM (drafted with the assistant) | — | 2026-11-23 |
 | T14 | Cross-cutting ablation: 12 leads vs single lead | OF + MM | — | done | OF + MM (drafted with the assistant) | — | 2026-11-23 |
-| T15 | Final comparison table and figures; comparison with published results | OF + MM | — | doing | | | |
-| T16 | Literature: dataset and CNN-related papers | OF | MM | todo | | | |
-| T17 | Literature: RNN/Transformer-related papers | MM | OF | todo | | | |
-| T18 | Reviewed first assignment (learning strategies) for the PRDL reports | each her own | cross | todo | | | |
+| T15 | Final comparison table and figures; comparison with published results | OF + MM | — | done | OF + MM (drafted with the assistant) | — | 2026-11-24 |
+| T16 | Literature: dataset and CNN-related papers | OF | MM | done | OF (drafted with the assistant) | MM | 2026-11-24 |
+| T17 | Literature: RNN/Transformer-related papers | MM | OF | done | MM (drafted with the assistant) | OF | 2026-11-24 |
+| T18 | Reviewed first assignment (learning strategies) for the PRDL reports | each her own | cross | done | OF and MM, each her own (drafted with the assistant, without the first assignments: see change log) | cross (OF, MM) | 2026-11-24 |
 | T19 | PRDL-DL report (theory + critical analysis), opening with a summary of at most 3 pages | each her own | cross | todo | | | |
 | T20 | MLLB-DL report (Section 0 AI environment, code, training, evaluation), opening with a summary of at most 3 pages | each her own | cross | todo | | | |
 | T21 | `AI_USAGE_LOG.md` and AI Error Bounty sheets | each her own entries | cross | todo | | | |
@@ -102,3 +102,4 @@ No fixed calendar; the team moves on as blocks close. Dependencies:
 - 2026-11-21: T11 done (LSTM/GRU and RNN + attention, 12 configurations x 3 seeds on validation, two final models on test with 3 seeds compared with the final CNN, Dense and trivial models, summary, tables and interpretation figures; DECISIONS D17). Executed by MM on Oriana's laptop (runs at commit cae71d5); reviewed by OF.
 - 2026-11-22: T23 done (ECG-GPT and LSTM generators of lead II, 8 configurations x 3 seeds on validation, counting baselines, generation with greedy, temperature and top-k sampling, summary, tables and figures; pre-trained model for T13 selected: `vocab2560`; DECISIONS D19). Executed by OF on Oriana's laptop (runs at commit f010618, summary at 6326057); reviewed by MM. Owner of T23 confirmed (O6 closed).
 - 2026-11-23: T13, T14 and T24 done in chat DL 08 (DECISIONS D20 and its note of 2026-11-23): 66 transfer runs, 15 one-lead runs and the zero-shot run, executed on Oriana's laptop (runs at f69c72f with the new code committed as 1b7b07f; zero-shot at 5f8d0ac). Done by OF and MM (shared tasks, each run by whoever it belonged to); no reviewer assigned in this plan. T15: final comparison table, per-class table, cross-block comparisons and figures done; the comparison with published results waits for literal quotes from chat DL 09 (O7), so T15 stays `doing`.
+- 2026-11-24: T15, T16, T17 and T18 done in chat DL 09. O7 closed: `report/published.json` with the 8 models of the super-diag. column of Table I of Strodthoff et al. (journal version), each with file, page and quote; `python -m src.comparison report` and `python report/make_numbers.py` run by OF on Oriana's laptop (the final table now has the published rows). Literature: NotebookLM answers checked quote by quote against the PDFs (`docs/literature/quotes.md`), `report/references.bib`, and every `[verify]` of the project closed (`quotes.md`, section G). T18: the first assignments (class presentations) are not in the folder; by decision of OF and MM, T18 is the cited material for the learning-strategies annex asked for in the weekly summary of 9/10 (`docs/literature/learning_strategies.md`). T16 done by OF, reviewed by MM; T17 done by MM, reviewed by OF; T18 each her own, cross review.
